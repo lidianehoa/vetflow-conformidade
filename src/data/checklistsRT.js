@@ -98,6 +98,8 @@ export const TIPO_PARA_AREA = {
   dedetizadora:         "controle_pragas",
   creche_hotel:         "creche_hotel",
   laticinio:            "producao_origem_animal",
+  industria_poa:        "producao_origem_animal",
+  entreposto_poa:       "producao_origem_animal",
 };
 
 // ── Mapa tipo → IDs dos checklists disponíveis ───────────────
@@ -127,6 +129,8 @@ export const CHECKLISTS_POR_TIPO = {
   quarentenario:        ["AE_CK_03"],
   creche_hotel:         ["CH_CK_01", "CH_CK_02"],
   laticinio:            ["LT_CK_01", "POA_CK_02", "IA_CK_01"],
+  industria_poa:        ["POA_CK_01", "POA_CK_02", "POA_CK_04", "POA_CK_05", "POA_CK_06", "POA_CK_07"],
+  entreposto_poa:       ["POA_CK_01", "POA_CK_02", "POA_CK_03", "POA_CK_04"],
 };
 
 // ── TODOS OS CHECKLISTS ───────────────────────────────────────
@@ -469,6 +473,48 @@ export const CHECKLISTS = {
       "Registrar desvios no relatório mensal do RT",
       "Planejar treinamento para equipes com desvios recorrentes",
     ],
+  },
+
+  POA_CK_05: {
+    id: "POA_CK_05",
+    area: "producao_origem_animal",
+    nome: "Dados Estatísticos e SIF (Art. 74)",
+    objetivo: "Verificar o envio de dados estatísticos e o preenchimento dos livros de ocorrência.",
+    frequencia: "mensal",
+    responsavelPreenchimento: "RT",
+    legislacao: "RIISPOA Art. 74",
+    itens: [
+      { id:"POA_CK05_01", categoria:"SIF", desc:"Dados estatísticos de produção enviados ao SIF até o 10º dia útil?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK05_02", categoria:"SIF", desc:"Livro de Ocorrências do RT atualizado com todos os desvios e ações?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK05_03", categoria:"SIF", desc:"Paralisação de atividades comunicada com 72h de antecedência?", class:"MAIOR", peso:5 },
+      { id:"POA_CK05_04", categoria:"SIF", desc:"Arquivos de movimentação de produtos controlados conferidos?", class:"CRÍTICO", peso:10 }
+    ],
+    acoesCorretivas: [
+      "Regularizar envio imediato em caso de atraso",
+      "Registrar justificativa no Livro de Ocorrências",
+      "Notificar a gerência sobre a obrigatoriedade dos prazos"
+    ]
+  },
+
+  POA_CK_06: {
+    id: "POA_CK_06",
+    area: "producao_origem_animal",
+    nome: "Indústria POA — Registro e Rotulagem",
+    objetivo: "Garantir que todos os produtos possuam registro e rotulagem aprovados.",
+    frequencia: "trimestral",
+    responsavelPreenchimento: "RT",
+    legislacao: "RIISPOA; Decreto 9.013/2017",
+    itens: [
+      { id:"POA_CK06_01", categoria:"Rotulagem", desc:"Rótulos em uso conferem exatamente com o memorial aprovado no SIF/SIE?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK06_02", categoria:"Rotulagem", desc:"Presença obrigatória do selo do serviço de inspeção e carimbo do RT?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK06_03", categoria:"Rotulagem", desc:"Datas de validade e lotes impressos de forma legível e indelével?", class:"MAIOR", peso:5 },
+      { id:"POA_CK06_04", categoria:"Registro", desc:"Processos de renovação de registro de produtos iniciados em tempo hábil?", class:"MAIOR", peso:5 }
+    ],
+    acoesCorretivas: [
+      "Suspender expedição de produtos com rotulagem incorreta",
+      "Corrigir artes de rótulos e submeter nova aprovação se necessário",
+      "Recolher lotes com informações divergentes (Recall)"
+    ]
   },
 
   POA_CK_07: {
@@ -1049,6 +1095,8 @@ export const LABEL_TIPO = {
   quarentenario:        "Quarentenário",
   creche_hotel:         "Creche / Hotel para Cães",
   laticinio:            "Laticínio / Lácteos",
+  industria_poa:        "Indústria POA (SIF/SIE)",
+  entreposto_poa:       "Entreposto POA",
 };
 
 const VENCIMENTOS_BOVINOS_BASE = [
@@ -1128,5 +1176,18 @@ export const VENCIMENTOS_POR_TIPO = {
     { campo: "vencLaudoLeite",   label: "Laudo de Qualidade do Leite (CCS/CPP)", diasAlerta: 15 },
     { campo: "vencLicAmbiental", label: "Licença Ambiental de Operação",        diasAlerta: 60 },
     { campo: "vencReceituario",  label: "Receituário veterinário mais recente",  diasAlerta: 30 },
+  ],
+  industria_poa: [
+    { campo: "vencArt",         label: "A.R.T. (Anual)",          diasAlerta: 30 },
+    { campo: "vencMapa",        label: "Registro SIF/SIE",        diasAlerta: 60 },
+    { campo: "vencAlvara",      label: "Alvará Sanitário",         diasAlerta: 45 },
+    { campo: "vencManualBP",    label: "PPHO / PACs",             diasAlerta: 30 },
+    { campo: "vencPotabilidade",label: "Laudo de Água",           diasAlerta: 15 },
+    { campo: "vencLicAmbiental",label: "Licença Ambiental",        diasAlerta: 60 },
+  ],
+  entreposto_poa: [
+    { campo: "vencArt",         label: "A.R.T. (Anual)",          diasAlerta: 30 },
+    { campo: "vencMapa",        label: "Registro Inspeção",       diasAlerta: 60 },
+    { campo: "vencAlvara",      label: "Alvará Sanitário",         diasAlerta: 45 },
   ],
 };

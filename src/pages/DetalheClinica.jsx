@@ -77,8 +77,8 @@ export default function DetalheClinica() {
   }, [location.state]);
 
   useEffect(() => {
-    if (!clinicaId) return;
-    (async () => {
+    const carregar = async () => {
+      if (!clinicaId || typeof clinicaId !== 'string') return;
       try {
         const snap = await getDoc(doc(db, "clinicas", clinicaId));
         if (snap.exists()) {
@@ -118,7 +118,8 @@ export default function DetalheClinica() {
       } finally {
         setLoading(false);
       }
-    })();
+    };
+    carregar();
   }, [clinicaId]);
 
   if (loading) return (

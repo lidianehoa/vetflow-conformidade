@@ -11,7 +11,6 @@ import SaveIcon from "@mui/icons-material/Save";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Conquistas from "./Conquistas";

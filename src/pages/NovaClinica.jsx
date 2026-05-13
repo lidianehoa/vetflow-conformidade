@@ -56,6 +56,14 @@ export default function NovaClinica() {
     vencDezinfest: "",
     possuiCameras: false,
     possuiIsolamento: false,
+    // Bovinos
+    vencPncebt: "",
+    vencSisbov: "",
+    possuiConfinamento: false,
+    possuiOrdenhaMecanica: false,
+    // Indústria POA
+    vencPoa: "",
+    tipoInspecao: "municipal",
   });
 
   const handleChange = (e) => {
@@ -578,6 +586,83 @@ export default function NovaClinica() {
                 </Grid>
               </>
             )}
+
+            {/* Campos Específicos: Bovinocultura */}
+            {(formData.tipo === "bovinocultura_corte" || formData.tipo === "bovinocultura_leite") && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Vencimento PNCEBT (Próximo Teste)"
+                    name="vencPncebt"
+                    type="date"
+                    value={formData.vencPncebt}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Vencimento SISBOV / Certificadora"
+                    name="vencSisbov"
+                    type="date"
+                    value={formData.vencSisbov}
+                    onChange={handleChange}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Stack direction="row" spacing={3}>
+                    <FormControlLabel
+                      control={<Checkbox name="possuiConfinamento" checked={formData.possuiConfinamento} onChange={handleChange} />}
+                      label="Possui Confinamento?"
+                    />
+                    {formData.tipo === "bovinocultura_leite" && (
+                      <FormControlLabel
+                        control={<Checkbox name="possuiOrdenhaMecanica" checked={formData.possuiOrdenhaMecanica} onChange={handleChange} />}
+                        label="Ordenha Mecânica?"
+                      />
+                    )}
+                  </Stack>
+                </Grid>
+              </>
+            )}
+
+            {/* Campos Específicos: Indústria POA */}
+            {formData.tipo === "industria_poa" && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Vencimento Registro POA (SIF/SIE/SIM)"
+                    name="vencPoa"
+                    type="date"
+                    value={formData.vencPoa}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    select
+                    label="Nível de Inspeção"
+                    name="tipoInspecao"
+                    value={formData.tipoInspecao}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                  >
+                    <MenuItem value="federal">Federal (SIF)</MenuItem>
+                    <MenuItem value="estadual">Estadual (SIE/SISP)</MenuItem>
+                    <MenuItem value="municipal">Municipal (SIM)</MenuItem>
+                  </TextField>
+                </Grid>
+              </>
+            )}
+
 
             <Grid item xs={12} mt={2}>
               <Button

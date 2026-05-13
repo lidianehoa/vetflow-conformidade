@@ -111,8 +111,8 @@ export default function App() {
             <Route path="/dashboard"       element={<Dashboard />} />
             
             {/* Hubs */}
-            <Route path="/auditorias"      element={<HubAuditoria />} />
-            <Route path="/auditorias/nova" element={<HubAuditoria />} />
+            <Route path="/auditorias"      element={<NovaAuditoria />} />
+            <Route path="/auditorias/nova" element={<NovaAuditoria />} />
             <Route path="/documentacao"    element={<HubDocumentacao />} />
 
             {/* Sub-páginas de formulários/edição (Full Screen) */}

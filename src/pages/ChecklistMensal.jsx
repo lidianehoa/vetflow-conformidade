@@ -38,7 +38,7 @@ export default function ChecklistMensal() {
 
   // Carrega os detalhes da clínica ativa
   useEffect(() => {
-    if (!userData?.selectedClinicaId) {
+    if (!userData?.selectedClinicaId || typeof userData.selectedClinicaId !== 'string') {
       setLoading(false);
       return;
     }

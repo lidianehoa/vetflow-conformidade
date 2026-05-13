@@ -35,13 +35,13 @@ import { getAreaById } from "../data/rtTypes";
 const DRAWER_WIDTH = 220;
 
 const MENU_ITEMS = [
-  { label: "Cockpit",        icon: <DashboardIcon />,          path: "/dashboard",       recurso: "dashboard" },
-  { label: "Estabelecimentos",icon: <BusinessCenterIcon />,     path: "/central-rt",     recurso: null },
-  { label: "Auditar",        icon: <AssignmentIcon />,         path: "/auditorias",      recurso: "novaAuditoria", badge: "PRINCIPAL" },
-  { label: "Rotina",         icon: <CalendarMonthIcon />,      path: "/rotina",         recurso: null },
-  { label: "Documentação",   icon: <FolderIcon />,             path: "/documentacao",    recurso: null },
-  { label: "SIPEAGRO",       icon: <ScienceIcon />,            path: "/controlados",    recurso: null },
-  { label: "Perfil",         icon: <BusinessIcon />,           path: "/perfil",         recurso: null },
+  { label: "⚡ Cockpit",          icon: <DashboardIcon />,          path: "/dashboard",       recurso: "dashboard" },
+  { label: "🏢 Estabelecimentos", icon: <BusinessCenterIcon />,     path: "/central-rt",     recurso: null },
+  { label: "✅ Auditar",          icon: <AssignmentIcon />,         path: "/auditorias",      recurso: "novaAuditoria", badge: "PRINCIPAL" },
+  { label: "📋 Rotina Diária",    icon: <CalendarMonthIcon />,      path: "/rotina",         recurso: null },
+  { label: "📁 Documentação",     icon: <FolderIcon />,             path: "/documentacao",    recurso: null },
+  { label: "💊 SIPEAGRO / GTA",   icon: <ScienceIcon />,            path: "/controlados",    recurso: null },
+  { label: "👤 Meu Perfil",       icon: <BusinessIcon />,           path: "/perfil",         recurso: null },
 ];
 
 export default function Layout() {
@@ -62,33 +62,37 @@ export default function Layout() {
       const hoje = new Date();
 
       // 1. Vencimentos da Clínica selecionada
-      const cSnap = await getDoc(doc(db, "clinicas", userData.selectedClinicaId));
-      if (cSnap.exists()) {
-        const d = cSnap.data();
-        const camposVenc = VENCIMENTOS_POR_TIPO[d.tipo] || [];
-        
-        camposVenc.forEach(c => {
-          if (d[c.campo]) {
-            const v = new Date(d[c.campo]);
-            const diff = (v - hoje) / (1000 * 60 * 60 * 24);
-            if (diff <= 0) {
-              alerts.push({ id: c.campo, titulo: "VENCIDO", desc: `${c.label} expirou!`, tipo: "error" });
-            } else if (diff <= (c.diasAlerta || 30)) {
-              alerts.push({ id: c.campo, titulo: "Vencimento", desc: `${c.label} vence em ${Math.ceil(diff)}d`, tipo: "warning" });
+      if (userData?.selectedClinicaId && typeof userData.selectedClinicaId === 'string' && userData.selectedClinicaId.trim() !== '') {
+        const cSnap = await getDoc(doc(db, "clinicas", userData.selectedClinicaId));
+        if (cSnap.exists()) {
+          const d = cSnap.data();
+          const camposVenc = VENCIMENTOS_POR_TIPO[d.tipo] || [];
+          
+          camposVenc.forEach(c => {
+            if (d[c.campo]) {
+              const v = new Date(d[c.campo]);
+              const diff = (v - hoje) / (1000 * 60 * 60 * 24);
+              if (diff <= 0) {
+                alerts.push({ id: c.campo, titulo: "VENCIDO", desc: `${c.label} expirou!`, tipo: "error" });
+              } else if (diff <= (c.diasAlerta || 30)) {
+                alerts.push({ id: c.campo, titulo: "Vencimento", desc: `${c.label} vence em ${Math.ceil(diff)}d`, tipo: "warning" });
+              }
             }
-          }
-        });
+          });
+        }
       }
 
       // 2. Estoque de Controlados
-      const qE = query(collection(db, "controlados", userData.uid, "estoque"), where("status", "==", "ativo"));
-      const eSnap = await getDocs(qE);
-      eSnap.forEach(docE => {
-        const item = docE.data();
-        if (item.volumeTotal > 0 && (item.volumeRestante / item.volumeTotal) <= 0.1) {
-          alerts.push({ id: docE.id, titulo: "Estoque Baixo", desc: `${item.substancia} (< 10%)`, tipo: "warning" });
-        }
-      });
+      if (userData?.uid) {
+        const qE = query(collection(db, "controlados", userData.uid, "estoque"), where("status", "==", "ativo"));
+        const eSnap = await getDocs(qE);
+        eSnap.forEach(docE => {
+          const item = docE.data();
+          if (item.volumeTotal > 0 && (item.volumeRestante / item.volumeTotal) <= 0.1) {
+            alerts.push({ id: docE.id, titulo: "Estoque Baixo", desc: `${item.substancia} (< 10%)`, tipo: "warning" });
+          }
+        });
+      }
 
       // 3. Documentos Pessoais do RT (User Profile)
       const camposRT = [

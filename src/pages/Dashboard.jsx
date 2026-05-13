@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Grid, Paper, Button, Chip, Card, CardContent,
   LinearProgress, Divider, Alert, Stack,
+  Accordion, AccordionSummary, AccordionDetails,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import DescriptionIcon from "@mui/icons-material/Description";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -88,7 +90,7 @@ export default function Dashboard() {
 
   // Carregar dados da unidade (vencimentos + área RT)
   useEffect(() => {
-    if (!userData?.selectedClinicaId) return;
+    if (!userData?.selectedClinicaId || typeof userData.selectedClinicaId !== 'string') return;
     getDoc(doc(db, "clinicas", userData.selectedClinicaId))
       .then((snap) => { if (snap.exists()) setUnidade({ id: snap.id, ...snap.data() }); })
       .catch(() => {});
@@ -139,7 +141,7 @@ export default function Dashboard() {
     }).finally(() => setLoading(false));
 
     // Carregar Alertas de Estoque (SIPEAGRO) para PRO
-    if (userData?.plan === "pro") {
+    if (userData?.plan === "pro" && userData?.uid) {
       const qE = query(collection(db, "controlados", userData.uid, "estoque"), where("status", "==", "ativo"));
       getDocs(qE).then(snap => {
         const criticos = snap.docs.filter(d => {
@@ -382,22 +384,31 @@ export default function Dashboard() {
       <Card sx={{ mb: 3, border: "1.5px solid #e8f5e9", borderRadius: 3, p: 2, bgcolor: "#fff" }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box sx={{ p: 1, bgcolor: "#e8f5e9", borderRadius: 2, color: "#1b4332" }}>
-              <AssignmentIcon />
+            <Box sx={{ p: 1, bgcolor: "#e8f5e9", borderRadius: 2, color: "#1b4332", display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 44 }}>
+              {totalAuditorias > 0 ? (
+                <Typography fontSize={24}>{getNivel(scoreGeral).emoji}</Typography>
+              ) : (
+                <AssignmentIcon />
+              )}
             </Box>
             <Box>
               <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: "uppercase" }}>
                 Última Auditoria Realizada
               </Typography>
               <Typography variant="subtitle1" fontWeight={800} color="#1b4332">
-                {totalAuditorias > 0 ? `Score: ${scoreGeral}% · ${ultimaData}` : "Nenhuma auditoria realizada nesta unidade"}
+                {totalAuditorias > 0 ? (
+                  <>
+                    Score: <span style={{ color: scoreGeral >= 80 ? "#2e7d32" : "#c62828" }}>{scoreGeral}%</span> · {ultimaData}
+                    <Chip label={getNivel(scoreGeral).label} size="small" sx={{ ml: 1, height: 18, fontSize: 10, fontWeight: 700 }} />
+                  </>
+                ) : "Nenhuma auditoria realizada nesta unidade"}
               </Typography>
             </Box>
           </Box>
-          <Button variant="outlined" size="small"
+          <Button variant="contained" size="small"
             onClick={() => navigate("/auditorias")}
-            sx={{ borderRadius: 2, fontWeight: 700, borderColor: "#1b4332", color: "#1b4332" }}>
-            Ver Histórico
+            sx={{ borderRadius: 2, fontWeight: 700, background: "#1b4332", color: "#fff", "&:hover": { background: "#143628" } }}>
+            Auditar Agora
           </Button>
         </Stack>
       </Card>
@@ -414,7 +425,7 @@ export default function Dashboard() {
                 <Button
                   size="small"
                   startIcon={<DescriptionIcon />}
-                  onClick={() => navigate("/termos")}
+                  onClick={() => navigate("/documentacao")}
                   variant="outlined"
                   sx={{ borderColor: "#1b4332", color: "#1b4332", borderRadius: 2, fontSize: 11 }}
                 >
@@ -423,7 +434,7 @@ export default function Dashboard() {
                 <Button
                   size="small"
                   startIcon={<AssignmentIcon />}
-                  onClick={() => navigate("/auditorias/nova")}
+                  onClick={() => navigate("/auditorias")}
                   variant="contained"
                   sx={{ background: "#1b4332", color: "#fff", borderRadius: 2, fontSize: 11 }}
                 >
@@ -437,7 +448,7 @@ export default function Dashboard() {
             <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 1, mb: 2, flexWrap: "wrap" }}>
               {["A","B","C","D","E"].map((s, i) => (
                 <Chip key={s} label={`${s}: ${scores[i]}%`} size="small"
-                  sx={{ background: scores[i] >= 70 ? "#e8f5e9" : "#fff3e0", color: scores[i] >= 70 ? "#1b4332" : "#e65100", fontWeight: 700, fontSize: 10 }} />
+                  sx={{ background: scores[i] >= 70 ? "#e8f5e9" : "#1b4332", color: scores[i] >= 70 ? "#1b4332" : "#fff", fontWeight: 700, fontSize: 10 }} />
               ))}
             </Box>
 
@@ -445,7 +456,7 @@ export default function Dashboard() {
               fullWidth
               size="small"
               variant="outlined"
-              onClick={() => navigate("/relatorios-crmv")}
+              onClick={() => navigate("/documentacao")}
               startIcon={<EmojiEventsIcon sx={{ fontSize: 14 }} />}
               sx={{
                 color: "#1565c0", borderColor: "#1565c0",
@@ -505,11 +516,11 @@ export default function Dashboard() {
               </Typography>
               <Grid container spacing={1} sx={{ mt: 0.5 }}>
                 {[
-                  { label: "Rel. CRMV",     icon: <EmojiEventsIcon sx={{ fontSize: 16 }} />, path: "/relatorios-crmv", isNovo: true  },
+                  { label: "Rel. CRMV",     icon: <EmojiEventsIcon sx={{ fontSize: 16 }} />, path: "/documentacao", isNovo: true  },
                   { label: "Rotina Diária", icon: <CalendarMonthIcon sx={{ fontSize: 16 }} />, path: "/rotina",          isNovo: true  },
-                  { label: "Planilhas",     icon: <TableChartIcon  sx={{ fontSize: 16 }} />, path: "/planilhas",       isNovo: true  },
-                  { label: "Gerar TCLE",    icon: <DescriptionIcon sx={{ fontSize: 16 }} />, path: "/termos",          isNovo: false },
-                  { label: "Nova Auditoria",icon: <AddCircleIcon   sx={{ fontSize: 16 }} />, path: "/auditorias/nova", isNovo: false },
+                  { label: "Planilhas",     icon: <TableChartIcon  sx={{ fontSize: 16 }} />, path: "/documentacao",       isNovo: true  },
+                  { label: "Gerar TCLE",    icon: <DescriptionIcon sx={{ fontSize: 16 }} />, path: "/documentacao",          isNovo: false },
+                  { label: "Nova Auditoria",icon: <AddCircleIcon   sx={{ fontSize: 16 }} />, path: "/auditorias", isNovo: false },
                 ].map((acao) => (
                   <Grid item xs={6} key={acao.label}>
                     <Box
@@ -560,70 +571,82 @@ export default function Dashboard() {
               </Box>
             </Box>
 
-            <Grid container>
-              {/* Seletor de Semana (Lateral no Desktop, Topo no Mobile) */}
-              <Grid item xs={12} md={3} sx={{ borderRight: { md: "1.5px solid #1b433220" }, bgcolor: "#fff" }}>
-                <Box sx={{ p: 1 }}>
-                  {planningData.map((data, idx) => (
-                    <Box
-                      key={idx}
-                      onClick={() => setActiveWeek(idx)}
-                      sx={{
-                        p: 2, mb: 1, borderRadius: 3, cursor: "pointer", transition: "all 0.2s",
-                        bgcolor: activeWeek === idx ? "#1b4332" : "transparent",
-                        color: activeWeek === idx ? "#fff" : "#1b4332",
-                        "&:hover": { bgcolor: activeWeek === idx ? "#1b4332" : "#f0fdf4" }
-                      }}
-                    >
-                      <Typography variant="overline" sx={{ fontWeight: 900, lineHeight: 1, opacity: 0.8 }}>Semana {idx + 1}</Typography>
-                      <Typography variant="subtitle2" fontWeight={800}>{data.focus}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Grid>
-
-              {/* Conteúdo da Semana Ativa */}
-              <Grid item xs={12} md={9} sx={{ p: 3, bgcolor: "#fff" }}>
-                <Typography variant="subtitle1" fontWeight={900} color="#1b4332" mb={3} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CalendarMonthIcon sx={{ color: "#52b788" }} />
-                  {planningData[activeWeek].week}
-                </Typography>
-
-                <Grid container spacing={2}>
-                  {planningData[activeWeek].tasks.map((task) => (
-                    <Grid item xs={12} key={task.id}>
+            <Box sx={{ p: 2 }}>
+              {planningData.map((data, idx) => (
+                <Accordion 
+                  key={idx} 
+                  elevation={0} 
+                  sx={{ 
+                    mb: 1, 
+                    border: "1.5px solid #e8f5e9", 
+                    borderRadius: "12px !important",
+                    "&:before": { display: "none" }
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#1b4332" }} />}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                       <Box sx={{ 
-                        display: "flex", alignItems: "center", justifyContent: "space-between", 
-                        p: 2, borderRadius: 3, border: "1.2px solid #e8f5e9",
-                        transition: "all 0.2s",
-                        "&:hover": { borderColor: "#1b4332", bgcolor: "#f9fdfa" }
+                        width: 32, height: 32, borderRadius: "50%", 
+                        bgcolor: "#e8f5e9", color: "#1b4332",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontWeight: 900, fontSize: 12
                       }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                          <Box sx={{ 
-                            p: 1, borderRadius: 2, 
-                            bgcolor: task.urgent ? "#fff3e0" : "#f0fdf4",
-                            color: task.urgent ? "#e65100" : "#1b4332"
-                          }}>
-                            {task.urgent ? <WarningAmberIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" fontWeight={700} color="#1b4332">{task.text}</Typography>
-                            <Typography variant="caption" sx={{ color: "#aaa", fontWeight: 800, textTransform: "uppercase", fontSize: 9 }}>
-                              Base Legal: {task.source}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Box sx={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid #e8f5e9" }} />
+                        {idx + 1}
                       </Box>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={800} color="#1b4332">
+                          {data.week}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Foco: {data.focus}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pt: 0 }}>
+                    <Grid container spacing={1.5}>
+                      {data.tasks.map((task) => (
+                        <Grid item xs={12} key={task.id}>
+                          <Box sx={{ 
+                            display: "flex", alignItems: "center", justifyContent: "space-between", 
+                            p: 1.5, borderRadius: 2, border: "1px solid #f0fdf4",
+                            bgcolor: "#fcfdfc"
+                          }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                              <Box sx={{ 
+                                p: 0.8, borderRadius: 1.5, 
+                                bgcolor: task.urgent ? "#fff3e0" : "#f0fdf4",
+                                color: task.urgent ? "#e65100" : "#1b4332"
+                              }}>
+                                {task.urgent ? <WarningAmberIcon sx={{ fontSize: 18 }} /> : <CheckCircleIcon sx={{ fontSize: 18 }} />}
+                              </Box>
+                              <Box>
+                                <Typography variant="body2" fontWeight={700} color="#1b4332" sx={{ fontSize: "0.85rem" }}>{task.text}</Typography>
+                                <Typography variant="caption" sx={{ color: "#aaa", fontWeight: 800, textTransform: "uppercase", fontSize: 8 }}>
+                                  Base Legal: {task.source}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Box sx={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid #e8f5e9" }} />
+                          </Box>
+                        </Grid>
+                      ))}
                     </Grid>
-                  ))}
-                </Grid>
-              </Grid>
-            </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
 
             {/* Rodapé de Alertas */}
             <Box sx={{ p: 2, bgcolor: "#fafafa", borderTop: "1.5px solid #1b433220" }}>
               <Grid container spacing={2}>
+                {clinicaData?.areaAtuacao === "industria_poa" && (
+                  <Grid item xs={12}>
+                    <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ borderRadius: 3, mb: 1 }}>
+                      <strong>Alerta POA:</strong> Envio de dados estatísticos ao SIF obrigatório até o 10º dia útil do mês (RIISPOA Art. 74).
+                    </Alert>
+                  </Grid>
+                )}
                 <Grid item xs={12} md={6}>
                   <Alert icon={<BuildIcon fontSize="small" />} severity="warning" sx={{ borderRadius: 3, "& .MuiAlert-message": { fontSize: "0.75rem" } }}>
                     <strong>Alerta Crítico (SIPEAGRO):</strong> Relatórios de psicotrópicos devem ser fechados mensalmente para evitar multas.

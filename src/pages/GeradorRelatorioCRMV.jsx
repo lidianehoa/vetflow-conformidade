@@ -39,6 +39,7 @@ export default function GeradorRelatorioCRMV() {
     const loadData = async () => {
       try {
         setLoading(true);
+        if (!userData?.selectedClinicaId || typeof userData.selectedClinicaId !== 'string') return;
         // Carregar dados da clínica selecionada
         const snapUnidade = await getDoc(doc(db, "clinicas", userData.selectedClinicaId));
         if (snapUnidade.exists()) {

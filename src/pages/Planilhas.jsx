@@ -48,7 +48,7 @@ export default function Planilhas() {
   const [expanded, setExpanded] = useState(planilhasData.areas[0].id);
 
   useEffect(() => {
-    if (!userData?.uid) return;
+    if (!userData?.uid || typeof userData.uid !== 'string') return;
     getDoc(doc(db, "unidades", userData.uid))
       .then((snap) => {
         if (snap.exists()) setUnidade(snap.data());

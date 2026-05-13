@@ -307,7 +307,7 @@ export default function Documentos() {
   const [abaAtiva, setAbaAtiva] = useState(0);
 
   useEffect(() => {
-    if (!userData?.uid) return;
+    if (!userData?.uid || typeof userData.uid !== 'string') return;
     getDoc(doc(db, "unidades", userData.uid))
       .then((snap) => {
         if (snap.exists() && snap.data().areaAtuacao) {

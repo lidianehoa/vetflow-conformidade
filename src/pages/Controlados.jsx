@@ -82,7 +82,10 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
   const [form, setForm] = useState(emptyForm);
 
   const carregar = async () => {
-    setLoading(true);
+    if (!uid || typeof uid !== 'string') {
+      setLoading(false);
+      return;
+    }
     try {
       const [ano, mes] = mesRef.split("-");
       const inicio = new Date(ano, mes - 1, 1);
@@ -108,7 +111,7 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
     setSaving(true);
     try {
       // Se for PRO e for SAÍDA, tenta abater do estoque automaticamente
-      if (userData?.plan === "pro" && form.tipo === "saida") {
+      if (userData?.plan === "pro" && form.tipo === "saida" && uid && typeof uid === 'string') {
         const estoqueRef = collection(db, "controlados", uid, "estoque");
         const qE = query(estoqueRef, where("substancia", "==", form.substancia), where("numeroLote", "==", form.numeroLote));
         const snapE = await getDocs(qE);
@@ -123,6 +126,8 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
           });
         }
       }
+
+      if (!uid || typeof uid !== 'string') throw new Error("UID inválido");
 
       await addDoc(collection(db, "controlados", uid, "movimentacoes"), {
         ...form,
@@ -504,6 +509,7 @@ function AbaEstoque({ uid }) {
 
         if (window.confirm(`Deseja importar ${novosItens.length} medicamentos encontrados na NFe?`)) {
           setLoading(true);
+          if (!uid || typeof uid !== 'string') return;
           for (const item of novosItens) {
             await addDoc(collection(db, "controlados", uid, "estoque"), {
               ...item,
@@ -522,7 +528,10 @@ function AbaEstoque({ uid }) {
   };
 
   const carregar = async () => {
-    setLoading(true);
+    if (!uid || typeof uid !== 'string') {
+      setLoading(false);
+      return;
+    }
     try {
       const snap = await getDocs(
         query(collection(db, "controlados", uid, "estoque"), orderBy("criadoEm", "desc"))
@@ -754,7 +763,10 @@ function AbaGTA({ uid }) {
   const [form, setForm] = useState(emptyForm);
 
   const carregar = async () => {
-    setLoading(true);
+    if (!uid || typeof uid !== 'string') {
+      setLoading(false);
+      return;
+    }
     try {
       const snap = await getDocs(
         query(collection(db, "gtas", uid, "registros"), orderBy("criadoEm", "desc"))
