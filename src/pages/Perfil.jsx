@@ -10,6 +10,11 @@ import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import SaveIcon from "@mui/icons-material/Save";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Conquistas from "./Conquistas";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { updatePassword } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -71,6 +76,14 @@ export default function Perfil() {
   const [erro, setErro] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [alterandoSenha, setAlterandoSenha] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState(0);
+
+  const ABAS_PERFIL = [
+    { label: "Identidade Profissional", icon: <BusinessIcon fontSize="small" /> },
+    { label: "Saúde Ocupacional",       icon: <HealthAndSafetyIcon fontSize="small" /> },
+    { label: "Conquistas",              icon: <EmojiEventsIcon fontSize="small" /> },
+    { label: "Estabelecimentos",        icon: <BusinessCenterIcon fontSize="small" /> },
+  ];
 
   useEffect(() => {
     if (!userData?.uid) return;
@@ -193,39 +206,164 @@ export default function Perfil() {
       {sucesso && <Alert severity="success" sx={{ mb: 3, borderRadius: 3 }}>Perfil salvo com sucesso! ✅</Alert>}
       {erro && <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>{erro}</Alert>}
 
-      <Grid container spacing={3}>
-        {/* 1. Identidade Profissional */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
-            <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={3}>
-              1. Identidade Profissional & Foto
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 3 }}>
-              <Avatar src={form.fotoUrl} sx={{ width: 100, height: 100, bgcolor: "#e8f5e9", border: "2px solid #c8e6c9" }}>
-                {!form.fotoUrl && <PhotoCameraIcon sx={{ fontSize: 40, color: "#52b788" }} />}
-              </Avatar>
-              <Box>
-                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFotoUpload} />
-                <Button
-                  variant="outlined"
-                  startIcon={uploadingFoto ? <CircularProgress size={16} /> : <PhotoCameraIcon />}
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploadingFoto}
-                  sx={{ borderColor: "#1b4332", color: "#1b4332", borderRadius: 3 }}
-                >
-                  {uploadingFoto ? "Enviando..." : "Alterar Foto Profissional"}
-                </Button>
-                <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>Recomendado: Foto de rosto com jaleco, max 2MB</Typography>
-              </Box>
-            </Box>
-          </Paper>
-        </Grid>
+      <Box sx={{ borderBottom: "1px solid", borderColor: "divider",
+        position: "sticky", top: 64, bgcolor: "#f0fdf4", zIndex: 10, mb: 0 }}>
+        <Tabs value={abaAtiva} onChange={(_, v) => setAbaAtiva(v)}
+          sx={{ px: 3, "& .MuiTab-root": { fontWeight: 700, fontSize: 13, textTransform: "none", minHeight: 48 },
+            "& .Mui-selected": { color: "#1b4332" },
+            "& .MuiTabs-indicator": { bgcolor: "#1b4332" } }}>
+          {ABAS_PERFIL.map((a, i) => <Tab key={i} label={a.label} icon={a.icon} iconPosition="start" />)}
+        </Tabs>
+      </Box>
 
-        {/* 2. Documentação Legal & Saúde Ocupacional (Blindagem 360°) */}
-        <Grid item xs={12}>
+      {abaAtiva === 0 && (
+        <Box sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            {/* Identidade Profissional & Foto */}
+            <Grid item xs={12}>
+              <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
+                <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={3}>
+                  1. Identidade Profissional & Foto
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 3 }}>
+                  <Avatar src={form.fotoUrl} sx={{ width: 100, height: 100, bgcolor: "#e8f5e9", border: "2px solid #c8e6c9" }}>
+                    {!form.fotoUrl && <PhotoCameraIcon sx={{ fontSize: 40, color: "#52b788" }} />}
+                  </Avatar>
+                  <Box>
+                    <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFotoUpload} />
+                    <Button
+                      variant="outlined"
+                      startIcon={uploadingFoto ? <CircularProgress size={16} /> : <PhotoCameraIcon />}
+                      onClick={() => fileRef.current?.click()}
+                      disabled={uploadingFoto}
+                      sx={{ borderColor: "#1b4332", color: "#1b4332", borderRadius: 3 }}
+                    >
+                      {uploadingFoto ? "Enviando..." : "Alterar Foto Profissional"}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>Recomendado: Foto de rosto com jaleco, max 2MB</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
+
+            {/* Dados de Contato e Bio */}
+            <Grid item xs={12}>
+              <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
+                <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={3}>
+                  2. Dados de Contato e Bio
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="Nome Completo" fullWidth
+                      value={form.rtNome || form.displayName} onChange={(e) => setField("rtNome", e.target.value)} />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <TextField 
+                      label="CRMV (Ex: 1234 MS)" 
+                      fullWidth
+                      value={form.crmv} 
+                      onChange={(e) => setField("crmv", e.target.value)}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Tooltip title="Validar no SISCAD (CFMV)">
+                              <IconButton 
+                                size="small" 
+                                color="primary"
+                                onClick={() => {
+                                  const [num, uf] = form.crmv.split(" ");
+                                  const url = `https://siscad.cfmv.gov.br/consultapublica/index`;
+                                  window.open(url, "_blank");
+                                }}
+                              >
+                                <VerifiedUserIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <TextField label="Telefone" fullWidth
+                      value={form.telefone} onChange={(e) => setField("telefone", e.target.value)} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField label="Bio Profissional / Resumo Curricular" multiline rows={3} fullWidth
+                      value={form.bio} onChange={(e) => setField("bio", e.target.value)}
+                      placeholder="Conte um pouco sobre sua trajetória como RT..." />
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+
+            {/* Áreas de Especialização */}
+            <Grid item xs={12}>
+              <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
+                <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={2}>
+                  3. Áreas de Especialização
+                </Typography>
+                <Grid container spacing={1}>
+                  {["Pequenos Animais", "Grandes Animais", "Laticínios & Lácteos", "Inspeção POA", "Vigilância Sanitária", "Laboratórios", "Bem-estar Animal", "Gestão de Resíduos"].map(esp => (
+                    <Grid item key={esp}>
+                      <Chip
+                        label={esp}
+                        onClick={() => {
+                          const newEsp = form.especialidades?.includes(esp)
+                            ? form.especialidades.filter(e => e !== esp)
+                            : [...(form.especialidades || []), esp];
+                          setField("especialidades", newEsp);
+                        }}
+                        variant={form.especialidades?.includes(esp) ? "filled" : "outlined"}
+                        sx={{
+                          bgcolor: form.especialidades?.includes(esp) ? "#1b4332" : "transparent",
+                          color: form.especialidades?.includes(esp) ? "#fff" : "#1b4332",
+                          borderColor: "#1b4332",
+                          fontWeight: 700
+                        }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Paper>
+            </Grid>
+
+            {/* Segurança e Senha */}
+            <Grid item xs={12}>
+              <Paper elevation={0} sx={{ border: "1.5px solid #ffebee", borderRadius: 4, p: 3 }}>
+                <Typography variant="subtitle1" fontWeight={700} color="#c62828" mb={2}>
+                  4. Segurança da Conta
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                  <TextField 
+                    label="Nova Senha" 
+                    type="password" 
+                    size="small" 
+                    sx={{ flex: 1, minWidth: 200 }}
+                    value={novaSenha}
+                    onChange={e => setNovaSenha(e.target.value)}
+                  />
+                  <Button
+                    variant="contained"
+                    color="error"
+                    disabled={alterandoSenha || !novaSenha}
+                    onClick={handleTrocarSenha}
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
+                  >
+                    {alterandoSenha ? <CircularProgress size={16} color="inherit" /> : "Alterar Senha Agora"}
+                  </Button>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
+
+      {abaAtiva === 1 && (
+        <Box sx={{ p: 3 }}>
           <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
             <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={3} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <VerifiedUserIcon color="primary" /> 2. Documentação Legal & Saúde (Res. CFMV 1562/23)
+              <VerifiedUserIcon color="primary" /> Saúde e Segurança Ocupacional (Res. CFMV 1562/23)
             </Typography>
             
             <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ mb: 2, display: "block" }}>Documentos Profissionais</Typography>
@@ -244,7 +382,7 @@ export default function Perfil() {
             <Divider sx={{ mb: 3 }} />
 
             <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ mb: 2, display: "block" }}>
-              <HealthAndSafetyIcon sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'middle' }} /> Saúde e Segurança Ocupacional
+              <HealthAndSafetyIcon sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'middle' }} /> Imunização e Sorologia
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={4}>
@@ -267,154 +405,43 @@ export default function Perfil() {
               )}
             </Box>
           </Paper>
-        </Grid>
+        </Box>
+      )}
 
-        {/* 3. Dados de Contato e Bio */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
-            <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={3}>
-              3. Dados de Contato e Bio
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField label="Nome Completo" fullWidth
-                  value={form.rtNome || form.displayName} onChange={(e) => setField("rtNome", e.target.value)} />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField 
-                  label="CRMV (Ex: 1234 MS)" 
-                  fullWidth
-                  value={form.crmv} 
-                  onChange={(e) => setField("crmv", e.target.value)}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Tooltip title="Validar no SISCAD (CFMV)">
-                          <IconButton 
-                            size="small" 
-                            color="primary"
-                            onClick={() => {
-                              const [num, uf] = form.crmv.split(" ");
-                              const url = `https://siscad.cfmv.gov.br/consultapublica/index`;
-                              window.open(url, "_blank");
-                            }}
-                          >
-                            <VerifiedUserIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField label="Telefone" fullWidth
-                  value={form.telefone} onChange={(e) => setField("telefone", e.target.value)} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField label="Bio Profissional / Resumo Curricular" multiline rows={3} fullWidth
-                  value={form.bio} onChange={(e) => setField("bio", e.target.value)}
-                  placeholder="Conte um pouco sobre sua trajetória como RT..." />
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
+      {abaAtiva === 2 && <Conquistas />}
 
-        {/* 2. Áreas de Expertise */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
-            <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={2}>
-              2. Áreas de Especialização
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={3}>
-              Selecione as áreas em que você possui maior experiência técnica para personalização de consultoria.
-            </Typography>
-            <Grid container spacing={1}>
-              {["Pequenos Animais", "Grandes Animais", "Laticínios & Lácteos", "Inspeção POA", "Vigilância Sanitária", "Laboratórios", "Bem-estar Animal", "Gestão de Resíduos"].map(esp => (
-                <Grid item key={esp}>
-                  <Chip
-                    label={esp}
-                    onClick={() => {
-                      const newEsp = form.especialidades?.includes(esp)
-                        ? form.especialidades.filter(e => e !== esp)
-                        : [...(form.especialidades || []), esp];
-                      setField("especialidades", newEsp);
-                    }}
-                    variant={form.especialidades?.includes(esp) ? "filled" : "outlined"}
-                    sx={{
-                      bgcolor: form.especialidades?.includes(esp) ? "#1b4332" : "transparent",
-                      color: form.especialidades?.includes(esp) ? "#fff" : "#1b4332",
-                      borderColor: "#1b4332",
-                      fontWeight: 700
-                    }}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Grid>
-
-        {/* 3. Meus Estabelecimentos (Atalho) */}
-        <Grid item xs={12}>
+      {abaAtiva === 3 && (
+        <Box sx={{ p: 3 }}>
           <Card elevation={0} sx={{ bgcolor: "#f1f8f6", borderRadius: 4, border: "1.5px dashed #b7e4c7" }}>
             <CardContent sx={{ textAlign: "center", py: 4 }}>
               <BusinessCenterIcon sx={{ fontSize: 48, color: "#1b4332", mb: 1 }} />
               <Typography variant="h6" fontWeight={800} color="#1b4332">Gestão de Estabelecimentos</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 500, mx: "auto", mb: 3 }}>
-                Lembre-se: os dados de CNPJ, Logos de clínicas e Áreas de Atuação específicos de cada empresa agora são gerenciados individualmente na Central RT.
+                Gerencie seus clientes, logos, CNPJs e áreas de atuação em um único lugar.
               </Typography>
               <Button
                 variant="contained"
                 onClick={() => navigate("/central-rt")}
                 sx={{ bgcolor: "#1b4332", borderRadius: 2, fontWeight: 700 }}
               >
-                Gerenciar Meus Clientes
+                Ir para Central RT
               </Button>
             </CardContent>
           </Card>
-        </Grid>
-
-        {/* 4. Segurança e Senha */}
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ border: "1.5px solid #ffebee", borderRadius: 4, p: 3 }}>
-            <Typography variant="subtitle1" fontWeight={700} color="#c62828" mb={2}>
-              4. Segurança da Conta
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={3}>
-              Deseja alterar sua senha de acesso? Escolha uma senha forte (mínimo 6 caracteres).
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-              <TextField 
-                label="Nova Senha" 
-                type="password" 
-                size="small" 
-                sx={{ flex: 1, minWidth: 200 }}
-                value={novaSenha}
-                onChange={e => setNovaSenha(e.target.value)}
-              />
-              <Button
-                variant="contained"
-                color="error"
-                disabled={alterandoSenha || !novaSenha}
-                onClick={handleTrocarSenha}
-                sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
-              >
-                {alterandoSenha ? <CircularProgress size={16} color="inherit" /> : "Alterar Senha Agora"}
-              </Button>
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+      )}
 
       {/* Salvar rodapé */}
-      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-        <Button id="btn-salvar-perfil-bottom" variant="contained"
-          startIcon={salvando ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
-          onClick={handleSalvar} disabled={salvando}
-          sx={{ background: "#1b4332", color: "#fff", borderRadius: 3, fontWeight: 700, px: 4 }}>
-          {salvando ? "Salvando..." : "Salvar Perfil"}
-        </Button>
-      </Box>
+      {abaAtiva !== 2 && (
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
+          <Button id="btn-salvar-perfil-bottom" variant="contained"
+            startIcon={salvando ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+            onClick={handleSalvar} disabled={salvando}
+            sx={{ background: "#1b4332", color: "#fff", borderRadius: 3, fontWeight: 700, px: 4 }}>
+            {salvando ? "Salvando..." : "Salvar Perfil"}
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }

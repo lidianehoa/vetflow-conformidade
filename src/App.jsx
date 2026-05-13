@@ -25,6 +25,8 @@ import GerarLaudo    from "./pages/GerarLaudo";
 import RotinaDiaria  from "./pages/RotinaDiaria";
 import TrilhaAuditoria from "./pages/TrilhaAuditoria";
 import Conquistas from "./pages/Conquistas";
+import HubAuditoria from "./pages/HubAuditoria";
+import HubDocumentacao from "./pages/HubDocumentacao";
 
 // Layout & guards
 import Layout         from "./components/Layout";
@@ -106,24 +108,33 @@ export default function App() {
             <Route index element={<CentralRT />} />
             <Route path="/central-rt"      element={<CentralRT />} />
             <Route path="/clinicas/nova"   element={<NovaClinica />} />
-            <Route path="/clinicas/:clinicaId" element={<DetalheClinica />} />
             <Route path="/dashboard"       element={<Dashboard />} />
-            <Route path="/trilha-auditoria" element={<TrilhaAuditoria />} />
-            <Route path="/conquistas"       element={<Conquistas />} />
-            <Route path="/auditorias/nova" element={<NovaAuditoria />} />
-            <Route path="/relatorios-crmv" element={<RelatoriosCRMV />} />
+            
+            {/* Hubs */}
+            <Route path="/auditorias"      element={<HubAuditoria />} />
+            <Route path="/auditorias/nova" element={<HubAuditoria />} />
+            <Route path="/documentacao"    element={<HubDocumentacao />} />
+
+            {/* Sub-páginas de formulários/edição (Full Screen) */}
+            <Route path="/documentos/gerar/:id"      element={<GerarDocumento />} />
+            <Route path="/planilhas/editar/:id"      element={<EditarPlanilha />} />
+            <Route path="/laudos/emitir/:tipoId"     element={<GerarLaudo />} />
+            <Route path="/laudos/gerar/:id"          element={<GerarLaudo />} />
             <Route path="/relatorios-crmv/gerar/:id" element={<GeradorRelatorioCRMV />} />
-            <Route path="/documentos"      element={<Documentos />} />
-            <Route path="/documentos/gerar/:id" element={<GerarDocumento />} />
-            <Route path="/planilhas"       element={<Planilhas />} />
-            <Route path="/planilhas/editar/:id" element={<EditarPlanilha />} />
+
+            {/* Redirects para compatibilidade */}
+            <Route path="/trilha-auditoria"  element={<Navigate to="/auditorias" replace />} />
+            <Route path="/conquistas"        element={<Navigate to="/perfil" replace />} />
+            <Route path="/documentos"        element={<Navigate to="/documentacao" replace />} />
+            <Route path="/planilhas"         element={<Navigate to="/documentacao" replace />} />
+            <Route path="/laudos"            element={<Navigate to="/documentacao" replace />} />
+            <Route path="/relatorios-crmv"   element={<Navigate to="/documentacao" replace />} />
+
             <Route path="/perfil"          element={<Perfil />} />
             <Route path="/controlados"     element={<Controlados />} />
-            <Route path="/laudos"          element={<Laudos />} />
-            <Route path="/laudos/novo"     element={<NovaLaudoSelecao />} />
-            <Route path="/laudos/emitir/:tipoId" element={<GerarLaudo />} />
-            <Route path="/laudos/gerar/:id" element={<GerarLaudo />} />
             <Route path="/rotina"          element={<RotinaDiaria />} />
+            <Route path="/clinicas/nova"   element={<NovaClinica />} />
+            <Route path="/clinicas/:clinicaId" element={<DetalheClinica />} />
           </Route>
 
           {/* Fallback */}

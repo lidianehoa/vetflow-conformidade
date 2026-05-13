@@ -379,25 +379,25 @@ export default function Dashboard() {
         ))}
       </Grid>
 
-      <Card sx={{ mb: 2, border: "0.5px solid", borderColor: "divider",
-        background: "linear-gradient(135deg, #1565c008, #e6510008)",
-        borderRadius: 3, p: 2 }}>
+      <Card sx={{ mb: 3, border: "1.5px solid #e8f5e9", borderRadius: 3, p: 2, bgcolor: "#fff" }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Box>
-            <Typography fontWeight={700} fontSize={14}>
-              🎯 Trilha de Auditoria — Diretrizes CFMV/CRMVs 2023
-            </Typography>
-            <Typography fontSize={12} color="text.secondary">
-              {userData?.gamificacao
-                ? `${getNivel(userData.gamificacao?.historico_scores?.[0] ?? 0).emoji} ${getNivel(userData.gamificacao?.historico_scores?.[0] ?? 0).nome} · ${userData.gamificacao?.xp?.toLocaleString("pt-BR") ?? 0} XP`
-                : "Avalie seu compliance com base nas Diretrizes CFMV 2023"
-              }
-            </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ p: 1, bgcolor: "#e8f5e9", borderRadius: 2, color: "#1b4332" }}>
+              <AssignmentIcon />
+            </Box>
+            <Box>
+              <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: "uppercase" }}>
+                Última Auditoria Realizada
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={800} color="#1b4332">
+                {totalAuditorias > 0 ? `Score: ${scoreGeral}% · ${ultimaData}` : "Nenhuma auditoria realizada nesta unidade"}
+              </Typography>
+            </Box>
           </Box>
-          <Button variant="contained" size="small"
-            onClick={() => navigate("/trilha-auditoria")}
-            sx={{ borderRadius: 2, fontWeight: 700, whiteSpace: "nowrap" }}>
-            Auditar Agora
+          <Button variant="outlined" size="small"
+            onClick={() => navigate("/auditorias")}
+            sx={{ borderRadius: 2, fontWeight: 700, borderColor: "#1b4332", color: "#1b4332" }}>
+            Ver Histórico
           </Button>
         </Stack>
       </Card>

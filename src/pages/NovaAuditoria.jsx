@@ -12,9 +12,20 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import InfoIcon from "@mui/icons-material/Info";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
+import NavigateBefore from "@mui/icons-material/NavigateBefore";
+import NavigateNext from "@mui/icons-material/NavigateNext";
+import CheckCircle from "@mui/icons-material/CheckCircle";
+import Star from "@mui/icons-material/Star";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Stack from "@mui/material/Stack";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { getGamificacaoPorArea, getNivel } from "../data/gamificacao";
 import { useUserData } from "../components/ProtectedRoute";
 import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
@@ -464,6 +475,41 @@ const STATUS_OPCOES = [
   { val: RESULTADOS.NAO_APLICAVEL,label: "N/A",           color: "#757575" },
 ];
 
+const TIPOS_AUDITORIA = [
+  {
+    id: "rotina",
+    label: "Rotina RT",
+    icon: "📋",
+    descricao: "Verificação rápida dos itens de rotina do mês. Cobre os blocos principais da área.",
+    cor: "#1b4332",
+    bg: "#e8f5e9",
+    ganhaXP: true,
+    secoesFiltradas: "blocos_compactos", // usa os Accordions existentes com subset de itens
+  },
+  {
+    id: "completa",
+    label: "Auditoria Completa",
+    icon: "🔍",
+    descricao: "Roteiro técnico completo por área. Todos os blocos e itens da especialidade.",
+    cor: "#0d47a1",
+    bg: "#e3f2fd",
+    ganhaXP: true,
+    secoesFiltradas: "blocos_completos", // usa todos os Accordions existentes (fluxo atual)
+  },
+  {
+    id: "trilha_cfmv",
+    label: "Trilha CFMV 2023",
+    icon: "⭐",
+    descricao: "Auditoria guiada pelas Diretrizes de RT do Sistema CFMV/CRMVs 2023. Com gamificação ativa.",
+    cor: "#6a1b9a",
+    bg: "#f3e5f5",
+    ganhaXP: true,
+    xpBonus: 50, // XP extra por usar a trilha completa
+    secoesFiltradas: "secoes_trilha",   // usa SECOES_TRILHA do gamificacao.js
+    gameMode: true,
+  },
+];
+
 export default function NovaAuditoria() {
   const userData = useUserData();
   const navigate = useNavigate();
@@ -480,6 +526,13 @@ export default function NovaAuditoria() {
   
   const [tipoRT, setTipoRT] = useState("titular");
   const [identificacao, setIdentificacao] = useState("");
+  const [tipoAuditoria, setTipoAuditoria] = useState("completa");
+  const [secaoTrilhaAtual, setSecaoTrilhaAtual] = useState(0);
+  const [gamData, setGamData] = useState(null);
+  const [xpGanho, setXpGanho] = useState(0);
+  const [badgesDesbloqueados, setBadgesDesbloqueados] = useState([]);
+  const [missoesAtualizadas, setMissoesAtualizadas] = useState([]);
+
   const [respostas, setRespostas] = useState({});
   const [evidencias, setEvidencias] = useState({});
   const [parecerRT, setParecerRT] = useState("");
@@ -493,9 +546,17 @@ export default function NovaAuditoria() {
     }
     setLoadingClinica(true);
     getDoc(doc(db, "clinicas", userData.selectedClinicaId))
-      .then(snap => { if (snap.exists()) setClinica({ id: snap.id, ...snap.data() }); })
+      .then(snap => { 
+        if (snap.exists()) setClinica({ id: snap.id, ...snap.data() }); 
+      })
       .finally(() => setLoadingClinica(false));
-  }, [userData?.selectedClinicaId]);
+
+    // Carregar gamificação
+    getDoc(doc(db, "users", userData.uid))
+      .then(snap => {
+        if (snap.exists()) setGamData(snap.data().gamificacao);
+      });
+  }, [userData?.selectedClinicaId, userData.uid]);
 
   const isPOA = ["acougue","frigorifico","laticinios","embutidos","pescados","mel_apicultura"].includes(clinica?.tipo);
   const isAgro = ["producao_rural", "bovinocultura_corte", "bovinocultura_leite"].includes(clinica?.tipo);
@@ -515,8 +576,14 @@ export default function NovaAuditoria() {
     }
     const area = clinica.tipo === "creche_hotel" ? "creche_hotel" : (clinica.tipo === "bovinocultura_corte" ? "bovinocultura_corte" : (clinica.tipo === "bovinocultura_leite" ? "bovinocultura_leite" : (clinica.areaAtuacao || "pequenos_animais")));
     const especificos = BLOCOS_POR_AREA[area] || BLOCOS_POR_AREA[clinica.tipo] || BLOCOS_POR_AREA.pequenos_animais;
+    
+    if (tipoAuditoria === "rotina") {
+      // Filtra apenas alguns blocos ou itens para rotina
+      return [...especificos.slice(0, 1), ...BLOCOS_TRANSVERSAIS];
+    }
+    
     return [...especificos, ...BLOCOS_TRANSVERSAIS];
-  }, [clinica, isPOA]);
+  }, [clinica, isPOA, tipoAuditoria]);
 
   const score = useMemo(() => {
     const todos = blocosAtivos.flatMap(b => b.itens);
@@ -539,24 +606,71 @@ export default function NovaAuditoria() {
     setSalvando(true);
     try {
       const sId = gerarSmartId(userData.uid);
+      const uid = userData.uid;
+      const areaAtual = clinica?.areaAtuacao || "pequenos_animais";
+
+      // Calcular XP se for trilha CFMV
+      let xpGanhoFinal = 0;
+      let badgesNovos = [];
+      let missoesNovas = [];
+
+      if (tipoAuditoria === "trilha_cfmv") {
+        const { calcularScoreTrilha, calcularXPAuditoria } = await import("../data/gamificacao");
+        const { SECOES_TRILHA, BADGES, MISSOES } = getGamificacaoPorArea(areaAtual);
+        const res = calcularScoreTrilha(respostas, SECOES_TRILHA);
+        const hist = gamData?.historico_scores ?? [];
+        xpGanhoFinal = calcularXPAuditoria(res, hist) + TIPOS_AUDITORIA.find(t => t.id === "trilha_cfmv").xpBonus;
+
+        // Verificar badges e missões
+        const auditorias_locais = [{ ...res, respostas,
+          itensConformes: Object.entries(respostas).filter(([,v]) => v === "conforme").map(([id]) => ({ id })) }];
+        badgesNovos = BADGES.filter(b => !gamData?.badges?.includes(b.id) && b.criterio?.(userData, auditorias_locais));
+        missoesNovas = MISSOES.filter(m => !gamData?.missoes_concluidas?.includes(m.id)
+          && m.passos.every(p => p.itemAuditoria ? respostas[p.itemAuditoria] === "conforme" : true));
+
+        // Atualizar gamificação no Firestore
+        const novoXP = (gamData?.xp ?? 0) + xpGanhoFinal + badgesNovos.reduce((acc, b) => acc + (b.xp ?? 0), 0);
+        const novo_hist = [score, ...(gamData?.historico_scores ?? [])].slice(0, 12);
+
+        await setDoc(doc(db, "users", uid), {
+          gamificacao: {
+            xp: novoXP,
+            badges: [...(gamData?.badges ?? []), ...badgesNovos.map(b => b.id)],
+            missoes_concluidas: [...(gamData?.missoes_concluidas ?? []), ...missoesNovas.map(m => m.id)],
+            historico_scores: novo_hist,
+            ultima_auditoria: serverTimestamp(),
+          }
+        }, { merge: true });
+
+        setXpGanho(xpGanhoFinal);
+        setBadgesDesbloqueados(badgesNovos);
+        setMissoesAtualizadas(missoesNovas);
+      }
+
+      // Salvar auditoria (igual ao fluxo atual + novos campos)
       await addDoc(collection(db, "auditorias"), {
-        userId: userData.uid,
+        userId: uid,
         clinicaId: clinica?.id || null,
         smartId: sId,
         nomeProntuario: identificacao,
         tipoRT,
-        secaoId: isPOA ? `POA-Compliance360-${clinica?.tipo}` : "Roteiro Detalhado 2024",
+        tipoAuditoria,                        // NOVO: "rotina" | "completa" | "trilha_cfmv"
+        secaoId: tipoAuditoria === "trilha_cfmv"
+          ? "TRILHA_CFMV_2023"
+          : isPOA ? `POA-${clinica?.tipo}` : "Roteiro Detalhado 2024",
         score,
-        areaAuditada: isPOA ? "producao_origem_animal" : (clinica?.tipo === "creche_hotel" ? "creche_hotel" : (clinica?.tipo === "bovinocultura_corte" ? "bovinocultura_corte" : (clinica?.tipo === "bovinocultura_leite" ? "bovinocultura_leite" : (clinica?.areaAtuacao || "pequenos_animais")))),
+        areaAuditada: clinica?.areaAtuacao ?? "pequenos_animais",
         respostas,
         evidencias,
         parecerRT,
         plano5W2H: w5h2,
-        // Metadados de imutabilidade e retenção legal (5 anos)
-        dataExpiracaoRetencao: new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString(),
+        xpGanho: xpGanhoFinal,
+        badgesDesbloqueados: badgesNovos.map(b => b.id),
         imutavel: true,
+        dataExpiracaoRetencao: new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString(),
         criadoEm: serverTimestamp(),
       });
+
       setEtapa("concluido");
     } catch (err) {
       console.error(err);
@@ -604,8 +718,33 @@ export default function NovaAuditoria() {
         <Grid container spacing={3}>
           <Grid item xs={12} md={7}>
             <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: "1.5px solid #e8f5e9" }}>
-              <Typography variant="subtitle1" fontWeight={800} color="#1b4332" mb={3}>Identificação</Typography>
+              <Typography variant="subtitle1" fontWeight={800} color="#1b4332" mb={3}>Configuração da Auditoria</Typography>
               
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="caption" fontWeight={800} color="text.secondary">TIPO DE AUDITORIA</Typography>
+                <Box sx={{ mt: 1 }}>
+                  {TIPOS_AUDITORIA.map(tipo => (
+                    <Card key={tipo.id}
+                      onClick={() => setTipoAuditoria(tipo.id)}
+                      sx={{
+                        mb: 1.5, p: 2, cursor: "pointer", border: `2px solid`,
+                        borderColor: tipoAuditoria === tipo.id ? tipo.cor : "transparent",
+                        bgcolor: tipoAuditoria === tipo.id ? tipo.bg : "background.paper",
+                        transition: "all .15s",
+                      }}>
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Typography fontSize={24}>{tipo.icon}</Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography fontWeight={700} fontSize={14} sx={{ color: tipo.cor }}>{tipo.label}</Typography>
+                          <Typography fontSize={11} color="text.secondary">{tipo.descricao}</Typography>
+                        </Box>
+                        {tipoAuditoria === tipo.id && <CheckCircleIcon sx={{ color: tipo.cor }} />}
+                      </Stack>
+                    </Card>
+                  ))}
+                </Box>
+              </Box>
+
               <Box sx={{ mb: 3 }}>
                 <Typography variant="caption" fontWeight={800} color="text.secondary">VÍNCULO DO RT</Typography>
                 <Grid container spacing={1} mt={0.5}>
@@ -633,7 +772,7 @@ export default function NovaAuditoria() {
                 variant="contained" fullWidth disabled={!identificacao.trim() || !clinica}
                 onClick={() => setEtapa("auditoria")}
                 sx={{ bgcolor: "#1b4332", py: 2, borderRadius: 3, fontWeight: 800 }}
-              >Iniciar Auditoria de Especialidade</Button>
+              >Iniciar Inspeção</Button>
             </Paper>
           </Grid>
           
@@ -654,7 +793,20 @@ export default function NovaAuditoria() {
         </Grid>
       )}
 
-      {etapa === "auditoria" && (
+      {etapa === "auditoria" && tipoAuditoria === "trilha_cfmv" && (
+        <TrilhaGuiada
+          secoesFiltradas={getGamificacaoPorArea(clinica?.areaAtuacao || "pequenos_animais").SECOES_TRILHA}
+          secaoAtual={secaoTrilhaAtual}
+          setSecaoAtual={setSecaoTrilhaAtual}
+          respostas={respostas}
+          setRespostas={setRespostas}
+          onConcluir={() => setEtapa("conclusao")}
+          onVoltar={() => setEtapa("inicio")}
+          gamData={gamData}
+        />
+      )}
+
+      {etapa === "auditoria" && tipoAuditoria !== "trilha_cfmv" && (
         <Box>
           <Paper elevation={0} sx={{ p: 2, mb: 4, borderRadius: 3, border: "1.5px solid #e8f5e9", display: "flex", gap: 3, alignItems: "center" }}>
             <Box sx={{ flex: 1 }}>
@@ -738,13 +890,162 @@ export default function NovaAuditoria() {
       )}
 
       {etapa === "concluido" && (
-        <Box textAlign="center" py={10}>
-          <CheckCircleIcon sx={{ fontSize: 80, color: "#1b4332", mb: 2 }} />
-          <Typography variant="h4" fontWeight={900}>Auditoria Registrada!</Typography>
-          <Typography color="text.secondary" mb={4}>ID de Verificação: {smartId}</Typography>
-          <Button variant="contained" onClick={() => navigate("/central-rt")} sx={{ bgcolor: "#1b4332" }}>Voltar para Central</Button>
+        <Box textAlign="center" py={6}>
+          <Typography fontSize={48} mb={1}>{getNivel(score).emoji}</Typography>
+          <Typography variant="h5" fontWeight={900}>{score}% — {getNivel(score).nome}</Typography>
+          <Typography color="text.secondary" mb={2}>Smart ID: {smartId}</Typography>
+
+          {tipoAuditoria === "trilha_cfmv" && xpGanho > 0 && (
+            <Chip icon={<Star />} label={`+${xpGanho} XP ganhos`}
+              sx={{ mb: 2, bgcolor: "#fff9c4", color: "#f57f17", fontWeight: 700 }} />
+          )}
+
+          {badgesDesbloqueados.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography fontWeight={700} sx={{ mb: 1 }}>🎉 Conquistas desbloqueadas!</Typography>
+              <Stack direction="row" justifyContent="center" flexWrap="wrap" gap={1}>
+                {badgesDesbloqueados.map(b => (
+                  <Chip key={b.id} label={`🏅 ${b.nome}`} size="small"
+                    sx={{ bgcolor: `${b.cor}20`, color: b.cor, fontWeight: 700 }} />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button variant="outlined" onClick={() => navigate("/central-rt")}>Voltar à Central</Button>
+            <Button variant="contained" onClick={() => { setEtapa("inicio"); setRespostas({}); setSecaoTrilhaAtual(0); }}
+              sx={{ bgcolor: "#1b4332", fontWeight: 700 }}>Nova Auditoria</Button>
+          </Stack>
         </Box>
       )}
+    </Box>
+  );
+}
+
+// Renderiza uma seção por vez com barra de progresso e navegação anterior/próxima
+function TrilhaGuiada({ secoesFiltradas, secaoAtual, setSecaoAtual, respostas, setRespostas, onConcluir, onVoltar, gamData }) {
+  const secao = secoesFiltradas[secaoAtual];
+  const total = secoesFiltradas.length;
+  const itensDaSecao = secao?.itens ?? [];
+  const respondidosSecao = itensDaSecao.filter(i => respostas[i.id] && respostas[i.id] !== "Pendente").length;
+  const pctSecao = itensDaSecao.length > 0 ? Math.round((respondidosSecao / itensDaSecao.length) * 100) : 0;
+
+  const iconMap = {
+    Gavel: "⚖️", Label: "🏷️", Factory: "🏭",
+    FactCheck: "✅", Groups: "👥", Nature: "🌿", LocalShipping: "🚛",
+  };
+
+  return (
+    <Box>
+      {/* Mini-mapa de seções */}
+      <Stack direction="row" spacing={0.5} sx={{ mb: 2 }}>
+        {secoesFiltradas.map((s, i) => {
+          const itensS = s.itens ?? [];
+          const respS = itensS.filter(it => respostas[it.id] && respostas[it.id] !== "Pendente").length;
+          const pctS = itensS.length > 0 ? Math.round((respS / itensS.length) * 100) : 0;
+          return (
+            <Tooltip key={s.id} title={s.nome}>
+              <Box onClick={() => setSecaoAtual(i)} sx={{ flex: 1, cursor: "pointer" }}>
+                <Box sx={{
+                  height: 6, borderRadius: 3,
+                  bgcolor: i === secaoAtual ? s.cor : pctS === 100 ? "#2e7d32" : pctS > 0 ? `${s.cor}60` : "divider",
+                  transition: "all .2s",
+                }} />
+                <Typography fontSize={9} textAlign="center" sx={{ color: i === secaoAtual ? s.cor : "text.tertiary", mt: 0.3 }}>
+                  {s.letra}
+                </Typography>
+              </Box>
+            </Tooltip>
+          );
+        })}
+      </Stack>
+
+      {/* Cabeçalho da seção */}
+      <Card sx={{ mb: 2, border: `2px solid ${secao.cor}20`, bgcolor: secao.corBg ?? "#f9f9f9" }}>
+        <CardContent sx={{ py: 1.5 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Typography fontSize={22}>{iconMap[secao.icon] ?? "📋"}</Typography>
+            <Box sx={{ flex: 1 }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography fontWeight={700} fontSize={14}>{secao.letra} — {secao.nome}</Typography>
+                <Chip label={`${secaoAtual + 1}/${total}`} size="small"
+                  sx={{ bgcolor: secao.cor, color: "#fff", fontWeight: 700, fontSize: 10 }} />
+              </Stack>
+              <Typography fontSize={11} color="text.secondary">{secao.referencia}</Typography>
+            </Box>
+            <Box textAlign="right">
+              <Typography fontSize={11} fontWeight={700} sx={{ color: pctSecao === 100 ? "#2e7d32" : secao.cor }}>
+                {pctSecao}%
+              </Typography>
+              <LinearProgress variant="determinate" value={pctSecao}
+                sx={{ width: 60, height: 5, borderRadius: 3,
+                  "& .MuiLinearProgress-bar": { bgcolor: pctSecao === 100 ? "#2e7d32" : secao.cor } }} />
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* Itens da seção */}
+      <Stack spacing={1.5} sx={{ mb: 3 }}>
+        {itensDaSecao.map(item => {
+          const resp = respostas[item.id];
+          const borderColor = resp === "conforme" ? "#2e7d32"
+            : resp === "nao_conforme" ? "#c62828"
+            : resp === "nao_aplicavel" ? "#9e9e9e"
+            : "transparent";
+
+          return (
+            <Card key={item.id} sx={{ border: `1.5px solid ${borderColor}`, transition: "border-color .15s" }}>
+              <CardContent sx={{ py: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1.2 }}>
+                  <Chip label={item.class} size="small" sx={{
+                    fontSize: 9, fontWeight: 700, flexShrink: 0,
+                    bgcolor: item.class === "CRÍTICO" ? "#c6282815" : item.class === "MAIOR" ? "#e6510015" : "#9e9e9e15",
+                    color: item.class === "CRÍTICO" ? "#c62828" : item.class === "MAIOR" ? "#e65100" : "#757575",
+                  }} />
+                  <Typography fontSize={12} sx={{ flex: 1, lineHeight: 1.5 }}>{item.desc}</Typography>
+                </Stack>
+                {item.ref && (
+                  <Typography fontSize={10} color="text.secondary" sx={{ mb: 1.5, ml: 4.5 }}>
+                    Ref.: {item.ref}
+                  </Typography>
+                )}
+                <RadioGroup row value={resp ?? ""} onChange={e => setRespostas(prev => ({ ...prev, [item.id]: e.target.value }))}
+                  sx={{ ml: 4.5, gap: 1 }}>
+                  {[
+                    { v: "conforme",       label: "✅ Conforme",      color: "#2e7d32" },
+                    { v: "nao_conforme",   label: "❌ Não Conforme",   color: "#c62828" },
+                    { v: "nao_aplicavel",  label: "N/A",              color: "#757575" },
+                  ].map(opt => (
+                    <FormControlLabel key={opt.v} value={opt.v}
+                      control={<Radio size="small" sx={{ color: opt.color, "&.Mui-checked": { color: opt.color }, p: 0.5 }} />}
+                      label={<Typography fontSize={11} sx={{ color: resp === opt.v ? opt.color : "text.secondary" }}>
+                        {opt.label}
+                      </Typography>}
+                    />
+                  ))}
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Stack>
+
+      {/* Navegação */}
+      <Stack direction="row" justifyContent="space-between">
+        <Button startIcon={<NavigateBefore />}
+          onClick={() => secaoAtual === 0 ? onVoltar() : setSecaoAtual(s => s - 1)}
+          sx={{ borderRadius: 2 }}>
+          {secaoAtual === 0 ? "Voltar ao Setup" : "Seção Anterior"}
+        </Button>
+        <Button variant="contained" endIcon={secaoAtual < total - 1 ? <NavigateNext /> : <CheckCircle />}
+          onClick={() => secaoAtual < total - 1 ? setSecaoAtual(s => s + 1) : onConcluir()}
+          sx={{ borderRadius: 2, fontWeight: 700,
+            bgcolor: secaoAtual < total - 1 ? "primary.main" : "#2e7d32" }}>
+          {secaoAtual < total - 1 ? "Próxima Seção" : "Concluir Trilha"}
+        </Button>
+      </Stack>
     </Box>
   );
 }

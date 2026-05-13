@@ -35,16 +35,13 @@ import { getAreaById } from "../data/rtTypes";
 const DRAWER_WIDTH = 220;
 
 const MENU_ITEMS = [
-  { label: "Dashboard",      icon: <DashboardIcon />,          path: "/dashboard",       recurso: "dashboard" },
-  { label: "Central RT",     icon: <BusinessCenterIcon />,     path: "/central-rt",     recurso: null },
-  { label: "Nova Auditoria", icon: <AddCircleOutlineIcon />,   path: "/auditorias/nova",recurso: "novaAuditoria" },
-  { label: "Rotina Diária",  icon: <CalendarMonthIcon />,      path: "/rotina",         recurso: null },
-  { label: "Relatórios CRMV",icon: <AccountBalanceIcon />,     path: "/relatorios-crmv",recurso: "documentos" },
-  { label: "Laudos Técnicos", icon: <FactCheckIcon />,          path: "/laudos",         recurso: null },
-  { label: "Documentos",     icon: <FolderIcon />,             path: "/documentos",     recurso: null },
-  { label: "Planilhas",      icon: <TableViewIcon />,          path: "/planilhas",      recurso: null },
-  { label: "SIPEAGRO / GTA", icon: <ScienceIcon />,            path: "/controlados",    recurso: null },
-  { label: "Meu Perfil RT",  icon: <BusinessIcon />,           path: "/perfil",         recurso: null },
+  { label: "Cockpit",        icon: <DashboardIcon />,          path: "/dashboard",       recurso: "dashboard" },
+  { label: "Estabelecimentos",icon: <BusinessCenterIcon />,     path: "/central-rt",     recurso: null },
+  { label: "Auditar",        icon: <AssignmentIcon />,         path: "/auditorias",      recurso: "novaAuditoria", badge: "PRINCIPAL" },
+  { label: "Rotina",         icon: <CalendarMonthIcon />,      path: "/rotina",         recurso: null },
+  { label: "Documentação",   icon: <FolderIcon />,             path: "/documentacao",    recurso: null },
+  { label: "SIPEAGRO",       icon: <ScienceIcon />,            path: "/controlados",    recurso: null },
+  { label: "Perfil",         icon: <BusinessIcon />,           path: "/perfil",         recurso: null },
 ];
 
 export default function Layout() {
@@ -263,7 +260,14 @@ export default function Layout() {
                     {item.icon}
                   </ListItemIcon>
                   <ListItemText
-                    primary={item.label}
+                    primary={
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        {item.label}
+                        {item.badge && (
+                          <Chip label={item.badge} size="small" sx={{ height: 16, fontSize: 8, fontWeight: 900, bgcolor: "#1b4332", color: "#fff" }} />
+                        )}
+                      </Box>
+                    }
                     primaryTypographyProps={{
                       fontSize: 13,
                       fontWeight: isActive ? 700 : 500,
