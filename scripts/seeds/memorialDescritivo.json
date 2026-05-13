@@ -1,0 +1,97 @@
+{
+  "memorial_descritivo_fabricacao": {
+    "titulo": "Memorial Descritivo de Fabricação",
+    "estabelecimento": "[Nome da Empresa]",
+    "registro": {
+      "tipo": "[SIF / SIE / SIM]",
+      "numero": "[Número]"
+    },
+    "data_emissao": "[Data]",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "Identificação do Produto",
+        "produto": {
+          "nome_de_venda": "[Ex: Queijo Prato / Carne Bovina Moída Congelada]",
+          "marca_comercial": "[Nome da Marca]",
+          "classificacao_categoria": "[Conforme RIISPOA ou RTIQ específico]",
+          "tipo_inspecao": "[Federal / Estadual / Municipal]"
+        }
+      },
+      {
+        "numero": 2,
+        "titulo": "Composição e Formulação",
+        "descricao": "Listar todos os ingredientes por ordem decrescente de quantidade.",
+        "ingredientes": [
+          { "ingrediente_aditivo": "[Matéria-prima principal]", "funcao": "Base", "percentagem": "[X]" },
+          { "ingrediente_aditivo": "[Ingrediente secundário]", "funcao": "Sabor/Textura", "percentagem": "[X]" },
+          { "ingrediente_aditivo": "[Aditivo/Conservante]", "funcao": "Conservação", "percentagem": "[X]" },
+          { "ingrediente_aditivo": "TOTAL", "funcao": "-", "percentagem": "100" }
+        ]
+      },
+      {
+        "numero": 3,
+        "titulo": "Descrição do Processo de Fabrico",
+        "descricao": "Descrever detalhadamente cada etapa tecnológica citada no fluxograma.",
+        "etapas": [
+          { "ordem": 1, "nome": "Receção", "descricao": "Verificação de temperatura, aspetos sensoriais e documentação sanitária." },
+          { "ordem": 2, "nome": "Preparação/Corte", "descricao": "[Descrever a manipulação inicial]." },
+          { "ordem": 3, "nome": "Processamento", "descricao": "[Descrever cozedura, salga, fermentação ou mistura, especificando tempos e temperaturas].", "parametros": { "temperatura_celsius": "[Valor]", "tempo_minutos": "[Valor]" } },
+          { "ordem": 4, "nome": "Enchimento/Acondicionamento", "descricao": "[Descrever como o produto é colocado na embalagem]." },
+          { "ordem": 5, "nome": "Tratamento Térmico Final", "descricao": "[Se aplicável: Pasteurização, Esterilização, etc].", "aplicavel": null, "parametros": { "tipo": "[Pasteurização / Esterilização]", "temperatura_celsius": "[Valor]", "tempo_segundos": "[Valor]" } },
+          { "ordem": 6, "nome": "Arrefecimento", "descricao": "[Descrever a curva de temperatura].", "curva_temperatura": { "temperatura_inicial_celsius": "[Valor]", "temperatura_final_celsius": "[Valor]", "tempo_total_minutos": "[Valor]" } }
+        ]
+      },
+      {
+        "numero": 4,
+        "titulo": "Acondicionamento e Embalagem",
+        "embalagem": {
+          "primaria": { "descricao": "Material em contacto direto com o produto.", "tipo": "[Saco de vácuo / Tripa natural / Pote plástico]" },
+          "secundaria": { "descricao": "Embalagem externa de agrupamento.", "tipo": "[Caixa de cartão / Saco de ráfia]" },
+          "unidade_de_venda": "[Ex: Peças de 500g / Caixas com 10kg]"
+        }
+      },
+      {
+        "numero": 5,
+        "titulo": "Armazenamento e Conservação",
+        "conservacao": {
+          "temperatura": { "descricao": "[Ex: Resfriado entre 0ºC a 4ºC / Congelado a -18ºC]", "minima_celsius": "[Valor]", "maxima_celsius": "[Valor]" },
+          "prazo_validade": { "quantidade": "[X]", "unidade": "[dias / meses]", "referencia": "após a data de fabrico" }
+        }
+      },
+      {
+        "numero": 6,
+        "titulo": "Rotulagem e Critérios Sensoriais",
+        "criterios_sensoriais": {
+          "aspeto": "[Descrever cor, brilho, forma]",
+          "textura": "[Consistência: firme, macia, granulosa]",
+          "odor": "[Características esperadas para o produto]",
+          "sabor": "[Características esperadas para o produto]"
+        },
+        "informacao_nutricional": {
+          "descricao": "Tabela nutricional conforme legislação vigente.",
+          "referencia": "[Anexo com a tabela nutricional]"
+        }
+      },
+      {
+        "numero": 7,
+        "titulo": "Controlos de Qualidade Laboratorial",
+        "analises": {
+          "microbiologicas": { "descricao": "Parâmetros microbiológicos de controlo.", "parametros": [ "Salmonella spp.", "Listeria monocytogenes", "Coliformes Totais", "Coliformes Termotolerantes" ] },
+          "fisico_quimicas": { "descricao": "Parâmetros físico-químicos de controlo.", "parametros": [ "Humidade", "Proteína", "Gordura", "pH" ] }
+        }
+      },
+      {
+        "numero": 8,
+        "titulo": "Aprovação do Responsável Técnico",
+        "declaracao": "Este memorial descreve fielmente o processo produtivo e a composição do produto citado, comprometendo-se o estabelecimento a não realizar alterações sem prévia autorização do serviço de inspeção.",
+        "assinatura": {
+          "nome": "[Nome do Médico Veterinário]",
+          "cargo": "Responsável Técnico",
+          "crmv": "[Nº]",
+          "carimbo": true
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "templates": [
+    {
+      "_meta": {
+        "nome": "Manual PAC — Programas de Autocontrole",
+        "categoria": "INDUSTRIA POA",
+        "subcategoria": "PAC / PPHO",
+        "origem": "template",
+        "area": "industria_poa",
+        "versao": "1.0",
+        "ref": "RIISPOA / IN MAPA / Circular DIPOA 175/2005"
+      },
+      "source": {
+        "manual_pac": {
+          "titulo": "Modelo de Manual de Programas de Autocontrole (PAC)",
+          "estabelecimento": "[Nome da Empresa/Frigorífico/Laticínio]",
+          "registro": {
+            "tipo": "S.I.P / S.I.F / S.I.E",
+            "numero": "[Número do Registro]"
+          },
+          "responsavel_tecnico": {
+            "nome": "[Nome do Médico Veterinário]",
+            "crmv": "[Nº]"
+          },
+          "secoes": [
+            {
+              "numero": 1,
+              "titulo": "Introdução e Objetivo",
+              "conteudo": "Este manual descreve os procedimentos de autocontrole implementados no estabelecimento para garantir a inocuidade, identidade e qualidade dos produtos de origem animal, em conformidade com as normas federais e estaduais vigentes."
+            },
+            {
+              "numero": 2,
+              "titulo": "Identificação da Unidade",
+              "dados": {
+                "razao_social": "[Nome completo]",
+                "endereco": "[Logradouro, Cidade, Estado]",
+                "atividade_principal": "[Ex: Abate de Bovinos / Processamento de Leite]"
+              }
+            },
+            {
+              "numero": 3,
+              "titulo": "Estrutura Padrão de cada PAC",
+              "descricao": "Para cada um dos programas listados abaixo, o RT deve preencher os seguintes tópicos:",
+              "topicos": [
+                { "campo": "objetivo",               "descricao": "O que o programa pretende garantir." },
+                { "campo": "escopo",                  "descricao": "Quais áreas ou processos estão abrangidos." },
+                { "campo": "responsabilidade",         "descricao": "Quem executa e quem fiscaliza." },
+                { "campo": "descricao_procedimento",   "descricao": "O 'passo a passo' da operação." },
+                { "campo": "monitoramento",            "descricao": "Como a conformidade é verificada (O que, como, frequência e quem)." },
+                { "campo": "acoes_corretivas",         "descricao": "O que fazer quando algo sai do padrão." },
+                { "campo": "verificacao",              "descricao": "Como o RT garante que o monitoramento está sendo feito corretamente." },
+                { "campo": "registros",                "descricao": "Quais planilhas/formulários documentam este programa." }
+              ]
+            },
+            {
+              "numero": 4,
+              "titulo": "Lista dos Programas de Autocontrole",
+              "programas": [
+                { "pac": "PAC 01", "nome": "Manutenção das Instalações e Equipamentos",              "descricao": "Manutenção preventiva de máquinas e estrutura física (pisos, tetos, paredes)." },
+                { "pac": "PAC 02", "nome": "Vestuários, Higiene e Hábitos Higiênicos",               "descricao": "Controle de uniformes, exames médicos dos funcionários e conduta sanitária." },
+                { "pac": "PAC 03", "nome": "Iluminação",                                              "descricao": "Proteção das lâmpadas contra quedas e intensidade luminosa adequada." },
+                { "pac": "PAC 04", "nome": "Ventilação",                                              "descricao": "Controle de condensação e renovação de ar nas áreas de manipulação." },
+                { "pac": "PAC 05", "nome": "Águas Residuárias",                                       "descricao": "Sistema de esgoto e tratamento de efluentes." },
+                { "pac": "PAC 06", "nome": "Calibração de Equipamentos e Instrumentos",              "descricao": "Plano de calibração de balanças, termômetros e manômetros." },
+                { "pac": "PAC 07", "nome": "PPHO — Procedimento Padrão de Higiene Operacional",     "descricao": "Detalhamento da limpeza pré-operacional e operacional." },
+                { "pac": "PAC 08", "nome": "Abastecimento de Água (Potabilidade)",                   "descricao": "Cloração, limpeza de reservatórios e análises laboratoriais." },
+                { "pac": "PAC 09", "nome": "Controle Integrado de Pragas",                           "descricao": "Barreiras físicas e controle químico (iscas e mapas)." },
+                { "pac": "PAC 10", "nome": "Controle de Matéria-Prima, Ingredientes e Embalagens",   "descricao": "Critérios de recepção, fornecedores qualificados e armazenamento." },
+                { "pac": "PAC 11", "nome": "Temperaturas",                                            "descricao": "Monitoramento de câmaras frias, túneis, expedição e temperatura interna do produto." },
+                { "pac": "PAC 12", "nome": "Bem-Estar Animal",                                        "descricao": "Manejo pré-abate, insensibilização e sangria. (Se aplicável)" },
+                { "pac": "PAC 13", "nome": "Rastreabilidade e Recolhimento (Recall)",                 "descricao": "Identificação de lotes e plano de ação para retirada de produtos do mercado." }
+              ]
+            },
+            {
+              "numero": 5,
+              "titulo": "Registro de Monitoramento — Planilha Modelo",
+              "colunas": ["data", "pac_numero", "descricao_desvio_encontrado", "acao_corretiva_realizada", "responsavel", "visto_rt"],
+              "registros_exemplo": [
+                {
+                  "data": "__/__",
+                  "pac_numero": "11",
+                  "descricao_desvio_encontrado": "Câmera 02 com temp. acima de 4ºC",
+                  "acao_corretiva_realizada": "Ajuste no compressor e degelo",
+                  "responsavel": "João Silva",
+                  "visto_rt": "[Assinatura]"
+                }
+              ]
+            },
+            {
+              "numero": 6,
+              "titulo": "Aprovação",
+              "conteudo": "Este documento entra em vigor em [Data] e será revisado anualmente ou sempre que houver alteração nos processos tecnológicos da unidade."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

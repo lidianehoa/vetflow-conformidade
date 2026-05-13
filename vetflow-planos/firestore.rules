@@ -1,0 +1,106 @@
+// firestore.rules
+// ================================================================
+// Regras de segurança do Firestore — controle por plano no backend.
+// Deploy: firebase deploy --only firestore:rules
+//
+// IMPORTANTE: Essas regras protegem os dados mesmo se alguém
+// tentar burlar o frontend. São a camada de segurança real.
+// ================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ─────────────────────────────────────────────────
+
+    // Retorna o plano atual do usuário autenticado
+    function planoAtual() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.plan;
+    }
+
+    // Checa se o usuário tem um plano pago (rtSolo ou clinicaPro)
+    function isAssinante() {
+      return planoAtual() in ["rtSolo", "clinicaPro"];
+    }
+
+    // Checa se é Clínica Pro
+    function isClinicaPro() {
+      return planoAtual() == "clinicaPro";
+    }
+
+    // Checa se tem qualquer plano ativo (inclusive freemium)
+    function isAtivo() {
+      return planoAtual() in ["freemium", "rtSolo", "clinicaPro"];
+    }
+
+    // Checa se o documento pertence ao usuário logado
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── users/{uid} ─────────────────────────────────────────────
+    match /users/{uid} {
+      // Usuário lê/edita apenas seu próprio documento
+      allow read: if isOwner(uid);
+
+      // Escrita permitida, EXCETO o campo "plan"
+      // (plan só é alterado pelo backend/webhook do PagSeguro)
+      allow update: if isOwner(uid)
+        && !("plan" in request.resource.data.diff(resource.data).affectedKeys());
+
+      // Criação permitida apenas para o próprio usuário
+      allow create: if isOwner(uid);
+    }
+
+    // ── unidades/{uid} ──────────────────────────────────────────
+    match /unidades/{uid} {
+      allow read, write: if isOwner(uid) && isAtivo();
+    }
+
+    // ── auditorias/{auditId} ────────────────────────────────────
+    match /auditorias/{auditId} {
+      // Freemium pode criar até 3 auditorias (verificação no frontend)
+      // Backend: qualquer plano ativo pode ler/criar/editar as suas
+      allow read, write: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && isAtivo();
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && isAtivo();
+    }
+
+    // ── documentos/{docId} ──────────────────────────────────────
+    // Apenas assinantes (rtSolo ou clinicaPro) podem acessar documentos
+    match /documentos/{docId} {
+      allow read, write: if request.auth != null
+        && isAssinante()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+        && isAssinante()
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    // ── pops/{popId} ────────────────────────────────────────────
+    // POPs básicos: qualquer usuário autenticado pode ler (freemium incluso)
+    // Apenas admins podem escrever (gerenciado pelo painel admin)
+    match /pops/{popId} {
+      allow read: if request.auth != null && isAtivo();
+      allow write: if false; // somente via Console Firebase / Cloud Functions
+    }
+
+    // ── relatorios/{relId} ──────────────────────────────────────
+    // Apenas Clínica Pro pode acessar relatórios PDF
+    match /relatorios/{relId} {
+      allow read, write: if request.auth != null
+        && isClinicaPro()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Bloqueia tudo que não foi explicitamente permitido ───────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

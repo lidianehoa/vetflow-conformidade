@@ -1,0 +1,90 @@
+{
+  "ppho": {
+    "titulo": "Modelo de Procedimento Padrão de Higiene Operacional (PPHO)",
+    "estabelecimento": "[Nome da Empresa]",
+    "registro": {
+      "tipos": ["S.I.F", "S.I.E", "S.I.M"],
+      "numero": "[Número]"
+    },
+    "area_setor": "[Ex: Sala de Cortes / Recepção de Leite]",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "Objetivo",
+        "conteudo": "Estabelecer os procedimentos de limpeza e sanitização das instalações, equipamentos e utensílios, de forma a evitar a contaminação cruzada e garantir a higiene dos produtos manipulados."
+      },
+      {
+        "numero": 2,
+        "titulo": "Responsabilidade",
+        "responsaveis": [
+          { "funcao": "Execução",     "responsavel": "Equipe de Higienização (Própria ou Terceirizada)" },
+          { "funcao": "Monitorização","responsavel": "Auxiliar de Controle de Qualidade / Monitor de PAC" },
+          { "funcao": "Verificação",  "responsavel": "Responsável Técnico (RT) / Gestor da Qualidade" }
+        ]
+      },
+      {
+        "numero": 3,
+        "titulo": "Procedimentos Pré-Operacionais",
+        "observacao": "Realizados após o turno de produção anterior ou antes do início de um novo ciclo.",
+        "subsecoes": [
+          {
+            "numero": "3.1",
+            "titulo": "Etapas da Higienização de Equipamentos e Superfícies",
+            "etapas": [
+              { "ordem": 1, "nome": "Remoção de Resíduos Grosseiros",  "descricao": "Retirada manual de restos de matéria-prima, gorduras e detritos." },
+              { "ordem": 2, "nome": "Pré-enxaguamento",                "descricao": "Utilização de água (temp. ambiente ou aquecida) para remoção de sujidades remanescentes." },
+              { "ordem": 3, "nome": "Lavagem com Detergente",          "descricao": "Aplicação de detergente na concentração indicada pelo tempo especificado.", "parametros": { "tipo_detergente": "[Alcalino/Ácido]", "concentracao_percentual": "[X]", "tempo_minutos": "[X]" } },
+              { "ordem": 4, "nome": "Enxaguamento",                    "descricao": "Remoção total do detergente com água potável corrente." },
+              { "ordem": 5, "nome": "Sanitização",                     "descricao": "Aplicação de agente sanitizante conforme orientações do fabricante.", "parametros": { "agente_sanitizante": "[Quaternário de Amônia / Cloro / Ácido Peracético]", "requer_enxaguamento": false } }
+            ]
+          }
+        ]
+      },
+      {
+        "numero": 4,
+        "titulo": "Procedimentos Operacionais (Durante as atividades)",
+        "procedimentos": [
+          { "item": "Higienização de Utensílios", "descricao": "Facas, ganchos e bandejas lavados e sanitizados sempre que tocarem superfícies não higienizadas." },
+          { "item": "Recolha de Resíduos",        "descricao": "Retirada contínua de subprodutos e resíduos das áreas de passagem." },
+          { "item": "Higiene das Mãos",           "descricao": "Lavagem obrigatória ao entrar na sala, trocar atividade ou após uso de sanitários." }
+        ]
+      },
+      {
+        "numero": 5,
+        "titulo": "Monitorização e Frequência",
+        "itens": [
+          { "item": "Pisos e Paredes",   "verificar": "Ausência de resíduos e bolores", "frequencia": "Diário (Pré-Op)", "metodo": "Visual" },
+          { "item": "Equipamentos",      "verificar": "Ausência de gordura e odores",   "frequencia": "Diário (Pré-Op)", "metodo": "Visual e Olfativo" },
+          { "item": "Drenos/Ralos",      "verificar": "Fluxo de escoamento e limpeza",  "frequencia": "Semanal",         "metodo": "Visual" },
+          { "item": "Eficácia Química",  "verificar": "Resíduo de sanitizante / ATP",   "frequencia": "Mensal",          "metodo": "Swab / Teste Químico" }
+        ]
+      },
+      {
+        "numero": 6,
+        "titulo": "Ações Corretivas",
+        "acoes": [
+          { "ordem": 1, "acao": "Identificar o equipamento com placa de 'BLOQUEADO'." },
+          { "ordem": 2, "acao": "Repetir todo o processo de limpeza (Etapas 1 a 5)." },
+          { "ordem": 3, "acao": "Treinar novamente o colaborador responsável pela falha." },
+          { "ordem": 4, "acao": "Registrar o desvio no relatório de monitorização." }
+        ]
+      },
+      {
+        "numero": 7,
+        "titulo": "Registros Relacionados",
+        "registros": [
+          { "codigo": "Planilha 01", "descricao": "Monitorização Pré-Operacional de Higiene" },
+          { "codigo": "Planilha 02", "descricao": "Registro de Ações Corretivas" },
+          { "codigo": "Planilha 03", "descricao": "Controle de Concentração de Soluções Químicas" }
+        ]
+      },
+      {
+        "numero": 8,
+        "titulo": "Aprovação e Revisão",
+        "historico": [
+          { "versao": "01", "data": "__/__/__", "alteracao": "Emissão Inicial", "elaborado_por": "[Nome]", "aprovado_por": "[Assinatura/CRMV] — RT" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,923 @@
+{
+  "sistema": {
+    "nome": "Sistema de Planilhas do Responsável Técnico Veterinário",
+    "versao": "1.0.0",
+    "descricao": "Estrutura de dados para geração automática de planilhas obrigatórias e sugeridas por área de atuação do RT Médico Veterinário.",
+    "orgaos_referencia": ["CRMV", "MAPA", "ANVISA", "RIISPOA", "CONCEA"],
+    "tipos_rt": [
+      {
+        "id": "principal",
+        "nome": "RT Principal / Titular",
+        "descricao": "Responsável direto e primário pela Anotação de Responsabilidade Técnica (ART)."
+      },
+      {
+        "id": "suplencia",
+        "nome": "RT de Suplência",
+        "descricao": "Profissional que substitui o titular por tempo determinado, exigindo vigência da ART do substituído."
+      }
+    ]
+  },
+  "areas": [
+    {
+      "id": "pequenos_animais",
+      "nome": "Estabelecimentos de Pequenos Animais",
+      "descricao": "Hospitais, clínicas, consultórios, pet shops, banho e tosa, hotéis, creches e alojamentos.",
+      "icone": "paw",
+      "planilhas": [
+        {
+          "id": "PA_OBR_01",
+          "tipo": "obrigatoria",
+          "nome": "Prontuário e Ficha de Atendimento Clínico",
+          "descricao": "Registro individual de cada atendimento veterinário realizado.",
+          "legislacao": "Resolução CFMV nº 1138/2016",
+          "frequencia": "A cada atendimento",
+          "responsavel": "Médico Veterinário RT",
+          "colunas": [
+            { "campo": "data_atendimento", "label": "Data do Atendimento", "tipo": "date", "obrigatorio": true },
+            { "campo": "numero_prontuario", "label": "Nº do Prontuário", "tipo": "text", "obrigatorio": true },
+            { "campo": "nome_animal", "label": "Nome do Animal", "tipo": "text", "obrigatorio": true },
+            { "campo": "especie", "label": "Espécie", "tipo": "select", "opcoes": ["Cão", "Gato", "Ave", "Réptil", "Roedor", "Outro"], "obrigatorio": true },
+            { "campo": "raca", "label": "Raça", "tipo": "text", "obrigatorio": false },
+            { "campo": "idade", "label": "Idade", "tipo": "text", "obrigatorio": false },
+            { "campo": "peso_kg", "label": "Peso (kg)", "tipo": "number", "obrigatorio": true },
+            { "campo": "tutor_nome", "label": "Nome do Tutor", "tipo": "text", "obrigatorio": true },
+            { "campo": "tutor_contato", "label": "Contato do Tutor", "tipo": "text", "obrigatorio": true },
+            { "campo": "queixa_principal", "label": "Queixa Principal / Motivo da Consulta", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "diagnostico", "label": "Diagnóstico / Suspeita Clínica", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "tratamento_prescrito", "label": "Tratamento Prescrito", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "medico_veterinario", "label": "Médico Veterinário Responsável", "tipo": "text", "obrigatorio": true },
+            { "campo": "crmv", "label": "CRMV", "tipo": "text", "obrigatorio": true },
+            { "campo": "assinatura", "label": "Assinatura / Visto RT", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PA_OBR_02",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Estoque e Receituário de Medicamentos",
+          "descricao": "Registro de entrada, saída e dispensação de medicamentos veterinários.",
+          "legislacao": "Portaria SVS/MS nº 344/1998; IN MAPA nº 16/2018",
+          "frequencia": "A cada movimentação",
+          "responsavel": "RT / Farmacêutico responsável",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "medicamento", "label": "Nome do Medicamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "principio_ativo", "label": "Princípio Ativo", "tipo": "text", "obrigatorio": true },
+            { "campo": "registro_mapa_anvisa", "label": "Registro MAPA/ANVISA", "tipo": "text", "obrigatorio": true },
+            { "campo": "lote", "label": "Nº do Lote", "tipo": "text", "obrigatorio": true },
+            { "campo": "validade", "label": "Validade", "tipo": "date", "obrigatorio": true },
+            { "campo": "quantidade_entrada", "label": "Qtd. Entrada", "tipo": "number", "obrigatorio": false },
+            { "campo": "quantidade_saida", "label": "Qtd. Saída", "tipo": "number", "obrigatorio": false },
+            { "campo": "saldo", "label": "Saldo em Estoque", "tipo": "number", "obrigatorio": true },
+            { "campo": "nome_animal_tutor", "label": "Animal / Tutor (saída)", "tipo": "text", "obrigatorio": false },
+            { "campo": "numero_receita", "label": "Nº da Receita Vinculada", "tipo": "text", "obrigatorio": false },
+            { "campo": "responsavel_lancamento", "label": "Responsável pelo Lançamento", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PA_OBR_03",
+          "tipo": "obrigatoria",
+          "nome": "Livro de Registro de Entorpecentes e Psicotrópicos",
+          "descricao": "Controle específico de substâncias sujeitas a controle especial (ex: ketamina, midazolam).",
+          "legislacao": "Portaria SVS/MS nº 344/1998; RDC ANVISA nº 204/2017",
+          "frequencia": "A cada uso ou movimentação",
+          "responsavel": "RT",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "substancia", "label": "Substância / Medicamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "lista_anvisa", "label": "Lista ANVISA", "tipo": "select", "opcoes": ["Lista A1", "Lista A2", "Lista A3", "Lista B1", "Lista B2", "Lista C1"], "obrigatorio": true },
+            { "campo": "lote", "label": "Lote", "tipo": "text", "obrigatorio": true },
+            { "campo": "quantidade_usada", "label": "Quantidade Usada (mL/mg)", "tipo": "number", "obrigatorio": true },
+            { "campo": "saldo_restante", "label": "Saldo Restante", "tipo": "number", "obrigatorio": true },
+            { "campo": "animal_paciente", "label": "Animal / Paciente", "tipo": "text", "obrigatorio": true },
+            { "campo": "medico_responsavel", "label": "MV Responsável + CRMV", "tipo": "text", "obrigatorio": true },
+            { "campo": "assinatura", "label": "Assinatura", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PA_OBR_04",
+          "tipo": "obrigatoria",
+          "nome": "Registro de Internações e Altas",
+          "descricao": "Controle de entrada e saída de animais em internamento hospitalar.",
+          "legislacao": "Resolução CFMV nº 1138/2016",
+          "frequencia": "A cada internação/alta",
+          "responsavel": "RT / Enfermeiro veterinário",
+          "colunas": [
+            { "campo": "data_internacao", "label": "Data de Internação", "tipo": "date", "obrigatorio": true },
+            { "campo": "data_alta", "label": "Data de Alta", "tipo": "date", "obrigatorio": false },
+            { "campo": "numero_prontuario", "label": "Nº Prontuário", "tipo": "text", "obrigatorio": true },
+            { "campo": "nome_animal", "label": "Nome do Animal", "tipo": "text", "obrigatorio": true },
+            { "campo": "especie_raca", "label": "Espécie / Raça", "tipo": "text", "obrigatorio": true },
+            { "campo": "tutor", "label": "Tutor", "tipo": "text", "obrigatorio": true },
+            { "campo": "diagnostico", "label": "Diagnóstico", "tipo": "text", "obrigatorio": true },
+            { "campo": "box_alojamento", "label": "Box / Alojamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "condicao_alta", "label": "Condição na Alta", "tipo": "select", "opcoes": ["Curado", "Melhora clínica", "Transferido", "Óbito", "Retorno"], "obrigatorio": false },
+            { "campo": "mv_responsavel", "label": "MV Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PA_OBR_05",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Resíduos de Saúde – PGRSS",
+          "descricao": "Registro de geração, armazenamento e descarte de resíduos biológicos, químicos e perfurocortantes.",
+          "legislacao": "RDC ANVISA nº 222/2018",
+          "frequencia": "Diário / Semanal",
+          "responsavel": "RT / Responsável ambiental",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "tipo_residuo", "label": "Tipo de Resíduo", "tipo": "select", "opcoes": ["Grupo A – Biológico", "Grupo B – Químico", "Grupo D – Comum", "Grupo E – Perfurocortante"], "obrigatorio": true },
+            { "campo": "quantidade_kg", "label": "Quantidade (kg)", "tipo": "number", "obrigatorio": true },
+            { "campo": "acondicionamento", "label": "Acondicionamento", "tipo": "select", "opcoes": ["Saco branco leitoso", "Coletor rígido", "Caixa de papelão", "Recipiente específico"], "obrigatorio": true },
+            { "campo": "destino_final", "label": "Destino Final / Empresa Coletora", "tipo": "text", "obrigatorio": true },
+            { "campo": "manifesto_numero", "label": "Nº Manifesto / MTR", "tipo": "text", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável pelo Registro", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PA_OBR_06",
+          "tipo": "obrigatoria",
+          "nome": "Registro de Esterilização de Materiais Cirúrgicos",
+          "descricao": "Controle dos ciclos de autoclave e validade da esterilização.",
+          "legislacao": "Resolução CFMV nº 1138/2016; boas práticas hospitalares",
+          "frequencia": "A cada ciclo de autoclave",
+          "responsavel": "RT / Técnico de enfermagem veterinária",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora_inicio", "label": "Hora de Início", "tipo": "time", "obrigatorio": true },
+            { "campo": "hora_fim", "label": "Hora de Término", "tipo": "time", "obrigatorio": true },
+            { "campo": "temperatura_ciclo", "label": "Temperatura do Ciclo (ºC)", "tipo": "number", "obrigatorio": true },
+            { "campo": "pressao_ciclo", "label": "Pressão (kPa/bar)", "tipo": "number", "obrigatorio": true },
+            { "campo": "tempo_ciclo_min", "label": "Tempo do Ciclo (min)", "tipo": "number", "obrigatorio": true },
+            { "campo": "materiais_esterilizados", "label": "Materiais / Pacotes Esterilizados", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "indicador_quimico", "label": "Indicador Químico (aprovado/reprovado)", "tipo": "select", "opcoes": ["Aprovado", "Reprovado"], "obrigatorio": true },
+            { "campo": "validade_esterilizacao", "label": "Validade da Esterilização", "tipo": "date", "obrigatorio": true },
+            { "campo": "operador", "label": "Operador Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PA_SUG_01",
+          "tipo": "sugerida",
+          "nome": "Controle de Temperatura de Medicamentos e Vacinas",
+          "descricao": "Monitoramento diário da temperatura dos refrigeradores e câmaras de conservação.",
+          "frequencia": "2x ao dia (manhã e tarde)",
+          "responsavel": "Auxiliar / Técnico designado",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "equipamento", "label": "Equipamento / Refrigerador", "tipo": "text", "obrigatorio": true },
+            { "campo": "temperatura_registrada", "label": "Temperatura Registrada (ºC)", "tipo": "number", "obrigatorio": true },
+            { "campo": "limite_minimo", "label": "Limite Mínimo (ºC)", "tipo": "number", "obrigatorio": true, "valor_padrao": 2 },
+            { "campo": "limite_maximo", "label": "Limite Máximo (ºC)", "tipo": "number", "obrigatorio": true, "valor_padrao": 8 },
+            { "campo": "conformidade", "label": "Conforme?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva (se não conforme)", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PA_SUG_02",
+          "tipo": "sugerida",
+          "nome": "Checklist de Limpeza e Desinfecção das Instalações",
+          "descricao": "Verificação diária das condições de higiene das áreas do estabelecimento.",
+          "frequencia": "Diário",
+          "responsavel": "Equipe de higienização / Monitor",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "periodo", "label": "Período", "tipo": "select", "opcoes": ["Pré-operacional", "Operacional", "Pós-operacional"], "obrigatorio": true },
+            { "campo": "area_setor", "label": "Área / Setor", "tipo": "select", "opcoes": ["Recepção", "Consultório 1", "Consultório 2", "Centro Cirúrgico", "Internamento", "Banho e Tosa", "Canil", "Gatil", "Banheiros", "Área externa"], "obrigatorio": true },
+            { "campo": "piso_paredes", "label": "Piso e Paredes (OK/NOK)", "tipo": "select", "opcoes": ["OK", "NOK"], "obrigatorio": true },
+            { "campo": "mesas_superficies", "label": "Mesas e Superfícies (OK/NOK)", "tipo": "select", "opcoes": ["OK", "NOK"], "obrigatorio": true },
+            { "campo": "equipamentos", "label": "Equipamentos (OK/NOK)", "tipo": "select", "opcoes": ["OK", "NOK"], "obrigatorio": true },
+            { "campo": "lixeiras", "label": "Lixeiras Esvaziadas (OK/NOK)", "tipo": "select", "opcoes": ["OK", "NOK"], "obrigatorio": true },
+            { "campo": "produto_utilizado", "label": "Produto Desinfetante Utilizado", "tipo": "text", "obrigatorio": true },
+            { "campo": "concentracao", "label": "Concentração (%)", "tipo": "number", "obrigatorio": false },
+            { "campo": "observacoes", "label": "Observações / Desvios", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true },
+            { "campo": "visto_rt", "label": "Visto RT", "tipo": "text", "obrigatorio": false }
+          ]
+        },
+        {
+          "id": "PA_SUG_03",
+          "tipo": "sugerida",
+          "nome": "Controle de Ocupação – Hotel / Creche",
+          "descricao": "Registro de entrada e saída de animais hospedados.",
+          "frequencia": "A cada check-in / check-out",
+          "responsavel": "Recepcionista / Auxiliar",
+          "colunas": [
+            { "campo": "data_checkin", "label": "Data Check-in", "tipo": "date", "obrigatorio": true },
+            { "campo": "data_checkout", "label": "Data Check-out Previsto", "tipo": "date", "obrigatorio": true },
+            { "campo": "data_checkout_real", "label": "Data Check-out Realizado", "tipo": "date", "obrigatorio": false },
+            { "campo": "nome_animal", "label": "Nome do Animal", "tipo": "text", "obrigatorio": true },
+            { "campo": "especie_raca", "label": "Espécie / Raça", "tipo": "text", "obrigatorio": true },
+            { "campo": "tutor", "label": "Tutor / Responsável", "tipo": "text", "obrigatorio": true },
+            { "campo": "contato_emergencia", "label": "Contato de Emergência", "tipo": "text", "obrigatorio": true },
+            { "campo": "box_numero", "label": "Box / Vaga Nº", "tipo": "text", "obrigatorio": true },
+            { "campo": "dieta_especial", "label": "Dieta Especial / Medicação", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "vacinas_em_dia", "label": "Vacinas em Dia?", "tipo": "select", "opcoes": ["Sim", "Não", "Não verificado"], "obrigatorio": true },
+            { "campo": "condicao_entrada", "label": "Condição na Entrada", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "condicao_saida", "label": "Condição na Saída", "tipo": "textarea", "obrigatorio": false }
+          ]
+        },
+        {
+          "id": "CH_PL_01",
+          "nome": "Controle de Vacinação dos Pets Hospedados",
+          "descricao": "Registro de vacinação verificada na admissão: Raiva, V8/V10 e Bordetella para cada animal hospedado.",
+          "tipo": "obrigatoria",
+          "subtipo": "creche_hotel",
+          "legislacao": "Res. CFMV 1275/2019; Vigilância Sanitária Municipal",
+          "arquivo_excel": {
+            "nome_aba": "Controle de Vacinação",
+            "cor_cabecalho": "1b4332",
+            "cor_fonte_cabecalho": "FFFFFF",
+            "largura_colunas": [14, 22, 24, 16, 16, 20, 18, 20, 24],
+            "colunas": [
+              { "letra": "A", "cabecalho": "Data de Entrada",          "tipo": "data"            },
+              { "letra": "B", "cabecalho": "Nome do Pet",              "tipo": "texto"           },
+              { "letra": "C", "cabecalho": "Tutor / Responsável",      "tipo": "texto"           },
+              { "letra": "D", "cabecalho": "Raiva — Validade",         "tipo": "data"            },
+              { "letra": "E", "cabecalho": "V8/V10 — Validade",        "tipo": "data"            },
+              { "letra": "F", "cabecalho": "Bordetella/Gripe — Val.",  "tipo": "data"            },
+              { "letra": "G", "cabecalho": "Status Geral Vacinação",   "tipo": "status_calculado",
+                "formula_excel": "=SE(E(D{linha}>HOJE(),E{linha}>HOJE(),F{linha}>HOJE()),\"✅ APTO\",\"❌ PENDÊNCIA\")",
+                "cores": { "APTO": "C6EFCE", "PENDÊNCIA": "FFC7CE" }
+              },
+              { "letra": "H", "cabecalho": "Data de Saída",            "tipo": "data"            },
+              { "letra": "I", "cabecalho": "Observações / Pendências", "tipo": "texto_longo"     }
+            ],
+            "linhas_exemplo": [
+              ["15/06/2025", "Rex",    "Maria Silva",  "10/03/2026", "05/09/2025", "20/12/2025", "✅ APTO",       "17/06/2025", ""],
+              ["15/06/2025", "Luna",   "João Costa",   "01/01/2025", "15/11/2025", "08/06/2025", "❌ PENDÊNCIA",  "18/06/2025", "Raiva vencida — não admitida"],
+              ["16/06/2025", "Bolinha","Ana Souza",    "22/08/2025", "30/10/2025", "14/07/2025", "✅ APTO",       "",           "Estadia semanal"]
+            ],
+            "rodape": {
+              "texto_assinatura": "Responsável Técnico: ____________________ CRMV: __________  Data: ____/____/______",
+              "referencia_legal": "Ref.: Res. CFMV 1275/2019 | Gerado por VERTOS OS"
+            }
+          }
+        },
+        {
+          "id": "CH_PL_02",
+          "nome": "Controle de Vermifugação e Antiparasitários",
+          "descricao": "Registro de vermifugação e controle de ectoparasitas (antipulgas/carrapatos) verificados na admissão.",
+          "tipo": "obrigatoria",
+          "subtipo": "creche_hotel",
+          "legislacao": "Res. CFMV 1275/2019; Boas práticas — controle de zoonoses",
+          "arquivo_excel": {
+            "nome_aba": "Controle Antiparasitário",
+            "cor_cabecalho": "0d47a1",
+            "cor_fonte_cabecalho": "FFFFFF",
+            "largura_colunas": [14, 22, 24, 16, 26, 26, 22, 24, 22],
+            "colunas": [
+              { "letra": "A", "cabecalho": "Data de Entrada",              "tipo": "data"   },
+              { "letra": "B", "cabecalho": "Nome do Pet",                  "tipo": "texto"  },
+              { "letra": "C", "cabecalho": "Tutor / Responsável",          "tipo": "texto"  },
+              { "letra": "D", "cabecalho": "Espécie / Raça",               "tipo": "texto"  },
+              { "letra": "E", "cabecalho": "Vermifugação — Produto e Data","tipo": "texto"  },
+              { "letra": "F", "cabecalho": "Vermifugação — Status",        "tipo": "status_manual",
+                "opcoes": ["✅ OK (≤6 meses)", "⚠ ATENÇÃO (4-6 meses)", "❌ VENCIDA (>6 meses)", "❌ SEM COMPROVANTE"],
+                "cores": { "OK": "C6EFCE", "ATENÇÃO": "FFEB9C", "VENCIDA": "FFC7CE", "SEM COMPROVANTE": "FFC7CE" }
+              },
+              { "letra": "G", "cabecalho": "Ectoparasita — Produto e Data","tipo": "texto"  },
+              { "letra": "H", "cabecalho": "Inspeção Visual Entrada",      "tipo": "status_manual",
+                "opcoes": ["✅ Sem ectoparasitas", "⚠ 1-2 parasitas (retido p/ banho)", "❌ Infestação — recusado"],
+                "cores": { "Sem ectoparasitas": "C6EFCE", "1-2 parasitas": "FFEB9C", "Infestação": "FFC7CE" }
+              },
+              { "letra": "I", "cabecalho": "Responsável Verificação",      "tipo": "texto"  }
+            ],
+            "aba_instrucoes": {
+              "nome": "Instruções",
+              "conteudo": [
+                "CONTROLE DE VERMIFUGAÇÃO E ANTIPARASITÁRIOS",
+                "Ref.: Res. CFMV 1275/2019 | Boas práticas — controle de zoonoses",
+                "",
+                "VERMIFUGAÇÃO:",
+                "• Aceito: comprovação de até 6 meses antes da data de admissão",
+                "• Documentos aceitos: receituário veterinário, NF ou declaração do tutor",
+                "• Produtos comuns: Drontal, Endal, Vermifur, Canex",
+                "",
+                "ECTOPARASITAS:",
+                "• Verificar cartela, receita ou embalagem do produto aplicado",
+                "• Inspeção visual: orelhas, pescoço, axilas e virilhas",
+                "• Produtos comuns: Bravecto, NexGard, Simparica, Frontline, Scalibor",
+                "",
+                "CONDUTA:",
+                "• 1-2 parasitas visíveis → banho medicamentoso antes da admissão",
+                "• Infestação → recusar admissão e orientar tutor",
+                "",
+                "ARQUIVAMENTO: Imprimir mensalmente, assinar (RT) e arquivar por mínimo 1 ano."
+              ]
+            },
+            "linhas_exemplo": [
+              ["15/06/2025","Rex","Maria Silva","Cão/Labrador","Drontal Plus — 15/01/2025","✅ OK (≤6 meses)","Bravecto — 01/05/2025","✅ Sem ectoparasitas","Juliana M."],
+              ["15/06/2025","Luna","João Costa","Cão/Poodle","Sem comprovante","❌ SEM COMPROVANTE","Frontline — 10/04/2025","✅ Sem ectoparasitas","Carlos S."],
+              ["16/06/2025","Bolinha","Ana Souza","Cão/SRD","Canex — 05/03/2025","✅ OK (≤6 meses)","NexGard — 20/05/2025","⚠ 1-2 parasitas (retido p/ banho)","Juliana M."]
+            ],
+            "rodape": {
+              "texto_assinatura": "Responsável Técnico: ____________________ CRMV: __________  Data: ____/____/______",
+              "referencia_legal": "Ref.: Res. CFMV 1275/2019 | Gerado por VERTOS OS"
+            }
+          }
+        },
+        {
+          "id": "CH_PL_03",
+          "nome": "Controle de Higienização Diária",
+          "descricao": "Checklist diário de higienização de baias, áreas coletivas e bebedouros — comprovação do POP de limpeza.",
+          "tipo": "obrigatoria",
+          "subtipo": "creche_hotel",
+          "legislacao": "RDC ANVISA 216/2004; POP-HIG-01 do estabelecimento",
+          "arquivo_excel": {
+            "nome_aba": "Higienização Diária",
+            "cor_cabecalho": "6a1b9a",
+            "cor_fonte_cabecalho": "FFFFFF",
+            "largura_colunas": [14, 12, 18, 18, 18, 18, 22, 28],
+            "colunas": [
+              { "letra": "A", "cabecalho": "Data",                  "tipo": "data"   },
+              { "letra": "B", "cabecalho": "Turno",                 "tipo": "status_manual",
+                "opcoes": ["Abertura", "Encerramento"] },
+              { "letra": "C", "cabecalho": "Baias / Canis",         "tipo": "status_manual",
+                "opcoes": ["✅ OK", "❌ NC"] },
+              { "letra": "D", "cabecalho": "Área Coletiva",         "tipo": "status_manual",
+                "opcoes": ["✅ OK", "❌ NC"] },
+              { "letra": "E", "cabecalho": "Bebedouros",            "tipo": "status_manual",
+                "opcoes": ["✅ OK", "❌ NC"] },
+              { "letra": "F", "cabecalho": "Área de Soltura",       "tipo": "status_manual",
+                "opcoes": ["✅ OK", "❌ NC", "N/A"] },
+              { "letra": "G", "cabecalho": "Desinfetante Usado",    "tipo": "texto"  },
+              { "letra": "H", "cabecalho": "Responsável + Visto RT","tipo": "texto"  }
+            ],
+            "rodape": {
+              "texto_assinatura": "Responsável Técnico: ____________________ CRMV: __________  Mês/Ano: ____/______",
+              "referencia_legal": "Ref.: RDC ANVISA 216/2004 | POP-HIG-01 | Gerado por VERTOS OS"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "producao_origem_animal",
+      "nome": "Indústria e Produção de Produtos de Origem Animal",
+      "descricao": "Frigoríficos, matadouros, fábricas de laticínios, pescados e mel (SIF/SIE/SIM).",
+      "icone": "factory",
+      "planilhas": [
+        {
+          "id": "POA_OBR_01",
+          "tipo": "obrigatoria",
+          "nome": "Monitorização Pré-Operacional de Higiene (PPHO)",
+          "descricao": "Verificação das condições de higiene antes do início das atividades de produção.",
+          "legislacao": "IN MAPA nº 161/2022 – PAC 07",
+          "frequencia": "Diário (antes de cada turno)",
+          "responsavel": "Monitor de PAC / Auxiliar de Qualidade",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora_inicio_verificacao", "label": "Hora da Verificação", "tipo": "time", "obrigatorio": true },
+            { "campo": "area_setor", "label": "Área / Setor", "tipo": "text", "obrigatorio": true },
+            { "campo": "pisos_paredes", "label": "Pisos e Paredes", "tipo": "select", "opcoes": ["Conforme", "Não Conforme"], "obrigatorio": true },
+            { "campo": "equipamentos_utensilios", "label": "Equipamentos e Utensílios", "tipo": "select", "opcoes": ["Conforme", "Não Conforme"], "obrigatorio": true },
+            { "campo": "drenos_ralos", "label": "Drenos e Ralos", "tipo": "select", "opcoes": ["Conforme", "Não Conforme"], "obrigatorio": true },
+            { "campo": "ausencia_odores", "label": "Ausência de Odores", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "descricao_desvio", "label": "Descrição do Desvio (se houver)", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva Aplicada", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "liberacao_producao", "label": "Liberação para Produção?", "tipo": "select", "opcoes": ["Liberado", "Bloqueado"], "obrigatorio": true },
+            { "campo": "monitor", "label": "Monitor Responsável", "tipo": "text", "obrigatorio": true },
+            { "campo": "visto_rt", "label": "Visto RT", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "POA_OBR_02",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Temperatura – Câmaras, Túneis e Expedição",
+          "descricao": "Monitoramento das temperaturas de armazenamento e expedição de produtos.",
+          "legislacao": "IN MAPA nº 161/2022 – PAC 11",
+          "frequencia": "A cada 2 horas / Contínuo",
+          "responsavel": "Operador / Monitor de PAC",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "equipamento", "label": "Câmara / Equipamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "temperatura_registrada", "label": "Temperatura Registrada (ºC)", "tipo": "number", "obrigatorio": true },
+            { "campo": "limite_critico", "label": "Limite Crítico (ºC)", "tipo": "number", "obrigatorio": true },
+            { "campo": "conformidade", "label": "Conforme?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true },
+            { "campo": "visto_rt", "label": "Visto RT", "tipo": "text", "obrigatorio": false }
+          ]
+        },
+        {
+          "id": "POA_OBR_03",
+          "tipo": "obrigatoria",
+          "nome": "Calibração de Equipamentos e Instrumentos",
+          "descricao": "Registro do plano de calibração de balanças, termômetros e manômetros.",
+          "legislacao": "IN MAPA nº 161/2022 – PAC 06",
+          "frequencia": "Conforme plano de calibração (mensal/semestral/anual)",
+          "responsavel": "RT / Laboratório acreditado",
+          "colunas": [
+            { "campo": "data_calibracao", "label": "Data da Calibração", "tipo": "date", "obrigatorio": true },
+            { "campo": "equipamento", "label": "Equipamento / Instrumento", "tipo": "text", "obrigatorio": true },
+            { "campo": "codigo_patrimonio", "label": "Código / Patrimônio", "tipo": "text", "obrigatorio": true },
+            { "campo": "tipo_calibracao", "label": "Tipo de Calibração", "tipo": "select", "opcoes": ["Interna", "Externa (laboratório acreditado)"], "obrigatorio": true },
+            { "campo": "resultado", "label": "Resultado", "tipo": "select", "opcoes": ["Aprovado", "Reprovado – aguardando manutenção", "Reprovado – descartado"], "obrigatorio": true },
+            { "campo": "proximo_calibracao", "label": "Próxima Calibração Prevista", "tipo": "date", "obrigatorio": true },
+            { "campo": "certificado_numero", "label": "Nº do Certificado (se externo)", "tipo": "text", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "POA_OBR_04",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Potabilidade da Água",
+          "descricao": "Registro de cloração, pH e análises laboratoriais da água de abastecimento.",
+          "legislacao": "IN MAPA nº 161/2022 – PAC 08; Portaria MS nº 888/2021",
+          "frequencia": "Diário (cloro) / Semestral (análise completa)",
+          "responsavel": "Operador / Laboratório",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "ponto_coleta", "label": "Ponto de Coleta", "tipo": "text", "obrigatorio": true },
+            { "campo": "cloro_residual_livre", "label": "Cloro Residual Livre (mg/L)", "tipo": "number", "obrigatorio": true },
+            { "campo": "ph", "label": "pH", "tipo": "number", "obrigatorio": true },
+            { "campo": "turbidez", "label": "Turbidez (NTU)", "tipo": "number", "obrigatorio": false },
+            { "campo": "conformidade", "label": "Conforme? (Cloro 0,2–2 mg/L; pH 6–9,5)", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "POA_OBR_05",
+          "tipo": "obrigatoria",
+          "nome": "Monitorização de PCC – Plano APPCC",
+          "descricao": "Registro de monitorização dos Pontos Críticos de Controle conforme Plano APPCC.",
+          "legislacao": "IN MAPA nº 161/2022; Codex Alimentarius",
+          "frequencia": "Conforme definido no Plano APPCC por PCC",
+          "responsavel": "Operador de PCC / Monitor",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "pcc_id", "label": "PCC Nº", "tipo": "text", "obrigatorio": true },
+            { "campo": "etapa_processo", "label": "Etapa do Processo", "tipo": "text", "obrigatorio": true },
+            { "campo": "perigo_controlado", "label": "Perigo Controlado", "tipo": "text", "obrigatorio": true },
+            { "campo": "limite_critico", "label": "Limite Crítico", "tipo": "text", "obrigatorio": true },
+            { "campo": "valor_monitorado", "label": "Valor Monitorado", "tipo": "number", "obrigatorio": true },
+            { "campo": "conformidade", "label": "Dentro do Limite Crítico?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva (se desvio)", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "monitor", "label": "Monitor", "tipo": "text", "obrigatorio": true },
+            { "campo": "visto_rt", "label": "Visto RT", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "POA_OBR_06",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Pragas – Mapa de Iscas e Visitas",
+          "descricao": "Registro das visitas da empresa de controle de pragas e verificação das iscas.",
+          "legislacao": "IN MAPA nº 161/2022 – PAC 09",
+          "frequencia": "A cada visita / Mensal",
+          "responsavel": "Empresa terceirizada / Monitor de PAC",
+          "colunas": [
+            { "campo": "data_visita", "label": "Data da Visita", "tipo": "date", "obrigatorio": true },
+            { "campo": "empresa_responsavel", "label": "Empresa de Controle de Pragas", "tipo": "text", "obrigatorio": true },
+            { "campo": "tecnico_responsavel", "label": "Técnico Responsável", "tipo": "text", "obrigatorio": true },
+            { "campo": "isca_numero", "label": "Nº da Isca / Ponto", "tipo": "text", "obrigatorio": true },
+            { "campo": "localizacao_isca", "label": "Localização da Isca", "tipo": "text", "obrigatorio": true },
+            { "campo": "consumo_isca", "label": "Consumo da Isca", "tipo": "select", "opcoes": ["Nenhum", "Parcial", "Total"], "obrigatorio": true },
+            { "campo": "presenca_praga", "label": "Presença de Praga?", "tipo": "select", "opcoes": ["Não", "Sim – Inseto", "Sim – Roedor", "Sim – Outro"], "obrigatorio": true },
+            { "campo": "acao_realizada", "label": "Ação Realizada", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "proxima_visita", "label": "Próxima Visita Prevista", "tipo": "date", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "POA_OBR_07",
+          "tipo": "obrigatoria",
+          "nome": "Rastreabilidade de Lotes e Recall",
+          "descricao": "Identificação de lotes e registro de acionamento de plano de recall.",
+          "legislacao": "IN MAPA nº 161/2022 – PAC 13",
+          "frequencia": "A cada lote produzido / Em caso de recall",
+          "responsavel": "RT / Gestor de Qualidade",
+          "colunas": [
+            { "campo": "data_producao", "label": "Data de Produção", "tipo": "date", "obrigatorio": true },
+            { "campo": "numero_lote", "label": "Nº do Lote", "tipo": "text", "obrigatorio": true },
+            { "campo": "produto", "label": "Produto", "tipo": "text", "obrigatorio": true },
+            { "campo": "quantidade_produzida", "label": "Quantidade Produzida (kg/un)", "tipo": "number", "obrigatorio": true },
+            { "campo": "materia_prima_lote", "label": "Lote da Matéria-Prima", "tipo": "text", "obrigatorio": true },
+            { "campo": "fornecedor", "label": "Fornecedor", "tipo": "text", "obrigatorio": true },
+            { "campo": "destino_distribuicao", "label": "Destino / Distribuição", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "data_validade", "label": "Data de Validade", "tipo": "date", "obrigatorio": true },
+            { "campo": "status_recall", "label": "Status Recall", "tipo": "select", "opcoes": ["Normal", "Recall iniciado", "Recall concluído"], "obrigatorio": true },
+            { "campo": "motivo_recall", "label": "Motivo do Recall (se aplicável)", "tipo": "textarea", "obrigatorio": false }
+          ]
+        },
+        {
+          "id": "POA_SUG_01",
+          "tipo": "sugerida",
+          "nome": "Controle de Concentração de Soluções Químicas",
+          "descricao": "Verificação da concentração dos sanitizantes e detergentes utilizados.",
+          "frequencia": "Diário / A cada preparo",
+          "responsavel": "Operador de higienização",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "produto", "label": "Produto Químico", "tipo": "text", "obrigatorio": true },
+            { "campo": "area_uso", "label": "Área de Uso", "tipo": "text", "obrigatorio": true },
+            { "campo": "concentracao_recomendada", "label": "Concentração Recomendada (%)", "tipo": "number", "obrigatorio": true },
+            { "campo": "concentracao_medida", "label": "Concentração Medida (%)", "tipo": "number", "obrigatorio": true },
+            { "campo": "metodo_medicao", "label": "Método de Medição", "tipo": "select", "opcoes": ["Fita teste", "Titulação", "Refratômetro"], "obrigatorio": true },
+            { "campo": "conformidade", "label": "Conforme?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "POA_SUG_02",
+          "tipo": "sugerida",
+          "nome": "Registro de Treinamentos da Equipe",
+          "descricao": "Controle de capacitações, treinamentos e reciclagens dos colaboradores.",
+          "frequencia": "A cada treinamento realizado",
+          "responsavel": "RT / RH",
+          "colunas": [
+            { "campo": "data", "label": "Data do Treinamento", "tipo": "date", "obrigatorio": true },
+            { "campo": "tema", "label": "Tema / Conteúdo", "tipo": "text", "obrigatorio": true },
+            { "campo": "carga_horaria", "label": "Carga Horária (h)", "tipo": "number", "obrigatorio": true },
+            { "campo": "instrutor", "label": "Instrutor / Facilitador", "tipo": "text", "obrigatorio": true },
+            { "campo": "participantes", "label": "Participantes (nomes)", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "setor_abrangido", "label": "Setor Abrangido", "tipo": "text", "obrigatorio": true },
+            { "campo": "avaliacao_realizada", "label": "Avaliação Realizada?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": false },
+            { "campo": "resultado_avaliacao", "label": "Resultado da Avaliação", "tipo": "text", "obrigatorio": false },
+            { "campo": "lista_presenca_anexa", "label": "Lista de Presença Anexa?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "visto_rt", "label": "Visto RT", "tipo": "text", "obrigatorio": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "industria_alimentos",
+      "nome": "Indústria de Produtos Alimentícios",
+      "descricao": "Locais que produzem, fatiam, fracionam, embalam ou rotulam alimentos.",
+      "icone": "chef-hat",
+      "planilhas": [
+        {
+          "id": "IA_OBR_01",
+          "tipo": "obrigatoria",
+          "nome": "Checklist de Boas Práticas de Fabricação (BPF)",
+          "descricao": "Verificação periódica das condições de BPF nas áreas de produção.",
+          "legislacao": "RDC ANVISA nº 275/2002; RDC ANVISA nº 216/2004",
+          "frequencia": "Diário / Semanal",
+          "responsavel": "RT / Supervisor de Qualidade",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "area_avaliada", "label": "Área Avaliada", "tipo": "text", "obrigatorio": true },
+            { "campo": "item_verificado", "label": "Item Verificado", "tipo": "text", "obrigatorio": true },
+            { "campo": "resultado", "label": "Resultado", "tipo": "select", "opcoes": ["Conforme", "Não Conforme", "Não Aplicável"], "obrigatorio": true },
+            { "campo": "descricao_nc", "label": "Descrição da Não Conformidade", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva Proposta", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "prazo_correcao", "label": "Prazo para Correção", "tipo": "date", "obrigatorio": false },
+            { "campo": "responsavel_correcao", "label": "Responsável pela Correção", "tipo": "text", "obrigatorio": false },
+            { "campo": "avaliador", "label": "Avaliador", "tipo": "text", "obrigatorio": true },
+            { "campo": "visto_rt", "label": "Visto RT", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "IA_OBR_02",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Recebimento de Matérias-Primas",
+          "descricao": "Registro de inspeção e aprovação/rejeição de matérias-primas na recepção.",
+          "legislacao": "RDC ANVISA nº 275/2002; BPF",
+          "frequencia": "A cada entrega recebida",
+          "responsavel": "Recepcionista de MP / Qualidade",
+          "colunas": [
+            { "campo": "data_recebimento", "label": "Data de Recebimento", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "fornecedor", "label": "Fornecedor", "tipo": "text", "obrigatorio": true },
+            { "campo": "nota_fiscal", "label": "Nº da Nota Fiscal", "tipo": "text", "obrigatorio": true },
+            { "campo": "produto_ingrediente", "label": "Produto / Ingrediente", "tipo": "text", "obrigatorio": true },
+            { "campo": "lote", "label": "Lote", "tipo": "text", "obrigatorio": true },
+            { "campo": "validade", "label": "Validade", "tipo": "date", "obrigatorio": true },
+            { "campo": "quantidade", "label": "Quantidade (kg/L/un)", "tipo": "number", "obrigatorio": true },
+            { "campo": "temperatura_chegada", "label": "Temperatura na Chegada (ºC)", "tipo": "number", "obrigatorio": false },
+            { "campo": "condicoes_embalagem", "label": "Condições da Embalagem", "tipo": "select", "opcoes": ["Íntegra", "Avariada"], "obrigatorio": true },
+            { "campo": "laudo_fornecedor_ok", "label": "Laudo / COA do Fornecedor OK?", "tipo": "select", "opcoes": ["Sim", "Não", "Não exigido"], "obrigatorio": true },
+            { "campo": "decisao", "label": "Decisão", "tipo": "select", "opcoes": ["Aprovado", "Rejeitado", "Aprovado com ressalva"], "obrigatorio": true },
+            { "campo": "motivo_rejeicao", "label": "Motivo da Rejeição (se aplicável)", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "IA_OBR_03",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Saúde e Higiene dos Manipuladores",
+          "descricao": "Registro de atestados de saúde, treinamentos e ocorrências de saúde dos manipuladores.",
+          "legislacao": "RDC ANVISA nº 216/2004",
+          "frequencia": "Anual (atestados) / Diário (checklist de acesso)",
+          "responsavel": "RT / RH",
+          "colunas": [
+            { "campo": "nome_colaborador", "label": "Nome do Colaborador", "tipo": "text", "obrigatorio": true },
+            { "campo": "funcao", "label": "Função", "tipo": "text", "obrigatorio": true },
+            { "campo": "data_admissao", "label": "Data de Admissão", "tipo": "date", "obrigatorio": true },
+            { "campo": "data_aso", "label": "Data do ASO (Atestado de Saúde Ocupacional)", "tipo": "date", "obrigatorio": true },
+            { "campo": "validade_aso", "label": "Validade do ASO", "tipo": "date", "obrigatorio": true },
+            { "campo": "treinamento_bpf_data", "label": "Data do Último Treinamento BPF", "tipo": "date", "obrigatorio": true },
+            { "campo": "restricao_saude", "label": "Restrição de Saúde Vigente?", "tipo": "select", "opcoes": ["Não", "Sim – afastado da manipulação"], "obrigatorio": true },
+            { "campo": "observacoes", "label": "Observações", "tipo": "textarea", "obrigatorio": false }
+          ]
+        },
+        {
+          "id": "IA_SUG_01",
+          "tipo": "sugerida",
+          "nome": "Controle de Validade e Giro de Estoque (FEFO)",
+          "descricao": "Gestão de vencimentos de matérias-primas e produtos acabados pelo critério First Expired First Out.",
+          "frequencia": "Semanal",
+          "responsavel": "Almoxarifado / Qualidade",
+          "colunas": [
+            { "campo": "data_verificacao", "label": "Data da Verificação", "tipo": "date", "obrigatorio": true },
+            { "campo": "produto", "label": "Produto / Ingrediente", "tipo": "text", "obrigatorio": true },
+            { "campo": "lote", "label": "Lote", "tipo": "text", "obrigatorio": true },
+            { "campo": "data_validade", "label": "Data de Validade", "tipo": "date", "obrigatorio": true },
+            { "campo": "dias_para_vencer", "label": "Dias para Vencer", "tipo": "number", "obrigatorio": true },
+            { "campo": "quantidade_estoque", "label": "Quantidade em Estoque", "tipo": "number", "obrigatorio": true },
+            { "campo": "status", "label": "Status", "tipo": "select", "opcoes": ["Normal", "Atenção (< 30 dias)", "Crítico (< 7 dias)", "Vencido"], "obrigatorio": true },
+            { "campo": "acao", "label": "Ação Tomada", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "comercio_agronegocio",
+      "nome": "Comércio e Agronegócio",
+      "descricao": "Fábricas de ração, casas agropecuárias, lojas de medicamentos veterinários.",
+      "icone": "shopping-cart",
+      "planilhas": [
+        {
+          "id": "CA_OBR_01",
+          "tipo": "obrigatoria",
+          "nome": "Livro de Receituário Veterinário",
+          "descricao": "Registro obrigatório de prescrições e dispensação de medicamentos veterinários sujeitos a controle.",
+          "legislacao": "IN MAPA nº 16/2018; Decreto Federal nº 9.013/2017",
+          "frequencia": "A cada prescrição / venda",
+          "responsavel": "RT",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "numero_receita", "label": "Nº da Receita", "tipo": "text", "obrigatorio": true },
+            { "campo": "medicamento", "label": "Medicamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "principio_ativo", "label": "Princípio Ativo", "tipo": "text", "obrigatorio": true },
+            { "campo": "lote", "label": "Lote", "tipo": "text", "obrigatorio": true },
+            { "campo": "quantidade_dispensada", "label": "Quantidade Dispensada", "tipo": "number", "obrigatorio": true },
+            { "campo": "proprietario", "label": "Proprietário / Comprador", "tipo": "text", "obrigatorio": true },
+            { "campo": "cpf_cnpj", "label": "CPF / CNPJ", "tipo": "text", "obrigatorio": true },
+            { "campo": "especie_animal", "label": "Espécie do Animal", "tipo": "text", "obrigatorio": true },
+            { "campo": "prescrito_por", "label": "Prescrito por (MV + CRMV)", "tipo": "text", "obrigatorio": true },
+            { "campo": "assinatura_rt", "label": "Assinatura RT", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "CA_OBR_02",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Estoque de Medicamentos e Validade",
+          "descricao": "Rastreabilidade de lotes e datas de validade dos produtos em comercialização.",
+          "legislacao": "IN MAPA nº 16/2018",
+          "frequencia": "Semanal / A cada movimentação",
+          "responsavel": "RT / Estoquista",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "produto", "label": "Produto", "tipo": "text", "obrigatorio": true },
+            { "campo": "registro_mapa", "label": "Registro MAPA", "tipo": "text", "obrigatorio": true },
+            { "campo": "lote", "label": "Lote", "tipo": "text", "obrigatorio": true },
+            { "campo": "validade", "label": "Validade", "tipo": "date", "obrigatorio": true },
+            { "campo": "quantidade_entrada", "label": "Entrada", "tipo": "number", "obrigatorio": false },
+            { "campo": "quantidade_saida", "label": "Saída", "tipo": "number", "obrigatorio": false },
+            { "campo": "saldo", "label": "Saldo", "tipo": "number", "obrigatorio": true },
+            { "campo": "status_validade", "label": "Status", "tipo": "select", "opcoes": ["Normal", "Atenção", "Vencido – bloqueado"], "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "CA_SUG_01",
+          "tipo": "sugerida",
+          "nome": "Qualificação de Fornecedores",
+          "descricao": "Avaliação e aprovação de fornecedores de rações, medicamentos e insumos.",
+          "frequencia": "Anual / A cada novo fornecedor",
+          "responsavel": "RT / Gestor de Compras",
+          "colunas": [
+            { "campo": "data_avaliacao", "label": "Data de Avaliação", "tipo": "date", "obrigatorio": true },
+            { "campo": "fornecedor", "label": "Fornecedor", "tipo": "text", "obrigatorio": true },
+            { "campo": "produto_fornecido", "label": "Produto Fornecido", "tipo": "text", "obrigatorio": true },
+            { "campo": "registro_orgao", "label": "Registro no Órgão Competente", "tipo": "text", "obrigatorio": true },
+            { "campo": "laudo_analise", "label": "Laudo de Análise Disponível?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "pontuacao", "label": "Pontuação (0–10)", "tipo": "number", "obrigatorio": true },
+            { "campo": "status", "label": "Status", "tipo": "select", "opcoes": ["Aprovado", "Aprovado com restrição", "Reprovado"], "obrigatorio": true },
+            { "campo": "proxima_avaliacao", "label": "Próxima Avaliação", "tipo": "date", "obrigatorio": true },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "producao_rural",
+      "nome": "Produção e Manejo Rural",
+      "descricao": "Propriedades rurais de produção animal (bovinocultura, suinocultura, avicultura, etc.).",
+      "icone": "tractor",
+      "planilhas": [
+        {
+          "id": "PR_OBR_01",
+          "tipo": "obrigatoria",
+          "nome": "Controle de GTA – Guia de Trânsito Animal",
+          "descricao": "Arquivo e registro das GTAs emitidas e recebidas para movimentação de animais.",
+          "legislacao": "IN MAPA nº 18/2006 e atualizações estaduais",
+          "frequencia": "A cada movimentação de animais",
+          "responsavel": "RT / Produtor",
+          "colunas": [
+            { "campo": "data_emissao", "label": "Data de Emissão", "tipo": "date", "obrigatorio": true },
+            { "campo": "numero_gta", "label": "Nº da GTA", "tipo": "text", "obrigatorio": true },
+            { "campo": "tipo_operacao", "label": "Tipo de Operação", "tipo": "select", "opcoes": ["Saída", "Entrada", "Trânsito"], "obrigatorio": true },
+            { "campo": "especie", "label": "Espécie", "tipo": "text", "obrigatorio": true },
+            { "campo": "quantidade_animais", "label": "Quantidade de Animais", "tipo": "number", "obrigatorio": true },
+            { "campo": "categoria", "label": "Categoria", "tipo": "text", "obrigatorio": true },
+            { "campo": "origem_destino", "label": "Origem / Destino", "tipo": "text", "obrigatorio": true },
+            { "campo": "finalidade", "label": "Finalidade", "tipo": "select", "opcoes": ["Abate", "Reprodução", "Recria", "Engorda", "Exposição", "Outro"], "obrigatorio": true },
+            { "campo": "mv_emissor", "label": "MV Emissor + CRMV", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PR_OBR_02",
+          "tipo": "obrigatoria",
+          "nome": "Registro de Vacinação Obrigatória do Rebanho",
+          "descricao": "Controle de vacinações obrigatórias (febre aftosa, brucelose, raiva) por espécie e categoria.",
+          "legislacao": "IN MAPA nº 44/2007 (aftosa); IN MAPA nº 10/2017 (brucelose/tuberculose)",
+          "frequencia": "A cada campanha / vacinação",
+          "responsavel": "RT / Produtor",
+          "colunas": [
+            { "campo": "data_vacinacao", "label": "Data de Vacinação", "tipo": "date", "obrigatorio": true },
+            { "campo": "doenca_controlada", "label": "Doença / Vacina", "tipo": "select", "opcoes": ["Febre Aftosa", "Brucelose", "Raiva", "Clostridiose", "Leptospirose", "Outro"], "obrigatorio": true },
+            { "campo": "especie", "label": "Espécie", "tipo": "text", "obrigatorio": true },
+            { "campo": "categoria_animal", "label": "Categoria", "tipo": "text", "obrigatorio": true },
+            { "campo": "quantidade_animais", "label": "Nº de Animais Vacinados", "tipo": "number", "obrigatorio": true },
+            { "campo": "vacina_fabricante", "label": "Vacina / Fabricante", "tipo": "text", "obrigatorio": true },
+            { "campo": "lote_vacina", "label": "Lote da Vacina", "tipo": "text", "obrigatorio": true },
+            { "campo": "validade_vacina", "label": "Validade da Vacina", "tipo": "date", "obrigatorio": true },
+            { "campo": "revacinacao_prevista", "label": "Revacinação Prevista", "tipo": "date", "obrigatorio": false },
+            { "campo": "mv_responsavel", "label": "MV Responsável + CRMV", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PR_OBR_03",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Medicamentos e Período de Carência",
+          "descricao": "Registro de uso de medicamentos veterinários e respeito ao período de carência antes do abate ou ordenha.",
+          "legislacao": "IN MAPA nº 16/2018; Regulamento de Inspeção",
+          "frequencia": "A cada tratamento",
+          "responsavel": "RT / Produtor",
+          "colunas": [
+            { "campo": "data_inicio_tratamento", "label": "Data de Início do Tratamento", "tipo": "date", "obrigatorio": true },
+            { "campo": "identificacao_animal", "label": "Identificação do Animal (brinco/número)", "tipo": "text", "obrigatorio": true },
+            { "campo": "diagnostico", "label": "Diagnóstico / Motivo", "tipo": "text", "obrigatorio": true },
+            { "campo": "medicamento", "label": "Medicamento Utilizado", "tipo": "text", "obrigatorio": true },
+            { "campo": "dose", "label": "Dose e Via de Administração", "tipo": "text", "obrigatorio": true },
+            { "campo": "duracao_tratamento_dias", "label": "Duração do Tratamento (dias)", "tipo": "number", "obrigatorio": true },
+            { "campo": "periodo_carencia_dias", "label": "Período de Carência (dias)", "tipo": "number", "obrigatorio": true },
+            { "campo": "data_liberacao", "label": "Data de Liberação para Abate/Ordenha", "tipo": "date", "obrigatorio": true },
+            { "campo": "mv_responsavel", "label": "MV Responsável + CRMV", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "PR_SUG_01",
+          "tipo": "sugerida",
+          "nome": "Controle Zootécnico do Rebanho",
+          "descricao": "Acompanhamento produtivo e reprodutivo dos animais da propriedade.",
+          "frequencia": "Mensal / Eventos reprodutivos",
+          "responsavel": "RT / Técnico agropecuário",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "identificacao_animal", "label": "Identificação (brinco/número)", "tipo": "text", "obrigatorio": true },
+            { "campo": "categoria", "label": "Categoria", "tipo": "select", "opcoes": ["Vaca em lactação", "Vaca seca", "Novilha", "Bezerro", "Touro", "Macho em recria"], "obrigatorio": true },
+            { "campo": "peso_kg", "label": "Peso (kg)", "tipo": "number", "obrigatorio": false },
+            { "campo": "producao_leite_dia", "label": "Produção de Leite (L/dia)", "tipo": "number", "obrigatorio": false },
+            { "campo": "evento_reprodutivo", "label": "Evento Reprodutivo", "tipo": "select", "opcoes": ["Nenhum", "Cio observado", "Inseminação", "Confirmação de gestação", "Parto", "Descarte"], "obrigatorio": false },
+            { "campo": "data_evento", "label": "Data do Evento Reprodutivo", "tipo": "date", "obrigatorio": false },
+            { "campo": "observacoes", "label": "Observações", "tipo": "textarea", "obrigatorio": false }
+          ]
+        },
+        {
+          "id": "PR_SUG_02",
+          "tipo": "sugerida",
+          "nome": "Registro de Mortalidade do Rebanho",
+          "descricao": "Controle de mortes, causas e destinação dos animais que vieram a óbito.",
+          "frequencia": "A cada ocorrência",
+          "responsavel": "RT / Produtor",
+          "colunas": [
+            { "campo": "data_obito", "label": "Data do Óbito", "tipo": "date", "obrigatorio": true },
+            { "campo": "identificacao_animal", "label": "Identificação do Animal", "tipo": "text", "obrigatorio": true },
+            { "campo": "especie_categoria", "label": "Espécie / Categoria", "tipo": "text", "obrigatorio": true },
+            { "campo": "causa_mortis", "label": "Causa Mortis (suspeita ou confirmada)", "tipo": "text", "obrigatorio": true },
+            { "campo": "necropsia_realizada", "label": "Necropsia Realizada?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": false },
+            { "campo": "destinacao_carcaca", "label": "Destinação da Carcaça", "tipo": "select", "opcoes": ["Compostagem", "Biodigestor", "Graxaria/Farinheira", "Enterro", "Outro"], "obrigatorio": true },
+            { "campo": "notificacao_defesa", "label": "Notificação à Defesa Sanitária?", "tipo": "select", "opcoes": ["Sim", "Não", "Não necessário"], "obrigatorio": true },
+            { "campo": "mv_responsavel", "label": "MV Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "areas_especiais",
+      "nome": "Áreas Especiais",
+      "descricao": "Laboratórios de diagnóstico, controle de pragas, centros de pesquisa, ensino e quarentenários.",
+      "icone": "flask",
+      "planilhas": [
+        {
+          "id": "AE_OBR_01",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Resíduos Biológicos e Químicos",
+          "descricao": "Registro de geração e descarte de resíduos em laboratórios e centros de pesquisa.",
+          "legislacao": "RDC ANVISA nº 222/2018; CONAMA nº 358/2005",
+          "frequencia": "Diário / A cada geração",
+          "responsavel": "RT / Responsável ambiental",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "tipo_residuo", "label": "Tipo de Resíduo", "tipo": "select", "opcoes": ["Biológico (Grupo A)", "Químico (Grupo B)", "Radioativo (Grupo C)", "Comum (Grupo D)", "Perfurocortante (Grupo E)"], "obrigatorio": true },
+            { "campo": "descricao_residuo", "label": "Descrição do Resíduo", "tipo": "text", "obrigatorio": true },
+            { "campo": "quantidade_kg_l", "label": "Quantidade (kg/L)", "tipo": "number", "obrigatorio": true },
+            { "campo": "acondicionamento", "label": "Acondicionamento Utilizado", "tipo": "text", "obrigatorio": true },
+            { "campo": "local_armazenamento", "label": "Local de Armazenamento Temporário", "tipo": "text", "obrigatorio": true },
+            { "campo": "empresa_coletora", "label": "Empresa Coletora", "tipo": "text", "obrigatorio": true },
+            { "campo": "data_coleta", "label": "Data da Coleta", "tipo": "date", "obrigatorio": true },
+            { "campo": "numero_mtr", "label": "Nº MTR / Manifesto", "tipo": "text", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável pelo Registro", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "AE_OBR_02",
+          "tipo": "obrigatoria",
+          "nome": "Registro de Uso de Animais de Laboratório",
+          "descricao": "Controle de protocolos de uso de animais em pesquisa conforme CONCEA.",
+          "legislacao": "Lei Federal nº 11.794/2008 (Lei Arouca); Resoluções CONCEA",
+          "frequencia": "A cada protocolo / experimento",
+          "responsavel": "RT / Responsável pelo CEUA",
+          "colunas": [
+            { "campo": "data_inicio", "label": "Data de Início do Protocolo", "tipo": "date", "obrigatorio": true },
+            { "campo": "numero_protocolo_ceua", "label": "Nº do Protocolo CEUA", "tipo": "text", "obrigatorio": true },
+            { "campo": "titulo_projeto", "label": "Título do Projeto", "tipo": "text", "obrigatorio": true },
+            { "campo": "pesquisador_responsavel", "label": "Pesquisador Responsável", "tipo": "text", "obrigatorio": true },
+            { "campo": "especie_utilizada", "label": "Espécie Utilizada", "tipo": "text", "obrigatorio": true },
+            { "campo": "quantidade_animais", "label": "Quantidade de Animais", "tipo": "number", "obrigatorio": true },
+            { "campo": "procedimento_realizado", "label": "Procedimento Realizado", "tipo": "textarea", "obrigatorio": true },
+            { "campo": "analgesia_anestesia", "label": "Analgesia / Anestesia Utilizada", "tipo": "text", "obrigatorio": true },
+            { "campo": "destino_animais", "label": "Destino dos Animais ao Final", "tipo": "select", "opcoes": ["Eutanásia", "Recuperação e reuso", "Doação", "Outro"], "obrigatorio": true },
+            { "campo": "mv_responsavel", "label": "MV Responsável + CRMV", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "AE_OBR_03",
+          "tipo": "obrigatoria",
+          "nome": "Controle de Calibração de Equipamentos de Laboratório",
+          "descricao": "Registro de calibração de pipetas, balanças, centrífugas e equipamentos de medição.",
+          "legislacao": "Boas Práticas de Laboratório (BPL) – ANVISA; ISO/IEC 17025",
+          "frequencia": "Conforme plano (mensal/semestral/anual)",
+          "responsavel": "RT / Responsável técnico do laboratório",
+          "colunas": [
+            { "campo": "data_calibracao", "label": "Data da Calibração", "tipo": "date", "obrigatorio": true },
+            { "campo": "equipamento", "label": "Equipamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "numero_serie", "label": "Nº de Série / Patrimônio", "tipo": "text", "obrigatorio": true },
+            { "campo": "tipo_calibracao", "label": "Tipo", "tipo": "select", "opcoes": ["Interna", "Externa – laboratório acreditado INMETRO"], "obrigatorio": true },
+            { "campo": "resultado", "label": "Resultado", "tipo": "select", "opcoes": ["Aprovado", "Aprovado com restrição", "Reprovado"], "obrigatorio": true },
+            { "campo": "incerteza_medicao", "label": "Incerteza de Medição", "tipo": "text", "obrigatorio": false },
+            { "campo": "numero_certificado", "label": "Nº do Certificado", "tipo": "text", "obrigatorio": false },
+            { "campo": "proxima_calibracao", "label": "Próxima Calibração", "tipo": "date", "obrigatorio": true },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "AE_SUG_01",
+          "tipo": "sugerida",
+          "nome": "Controle de Temperatura de Equipamentos Críticos",
+          "descricao": "Monitorização de incubadoras, freezers, câmaras frias e autoclaves de laboratório.",
+          "frequencia": "Diário (2x ao dia)",
+          "responsavel": "Técnico de laboratório designado",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "equipamento", "label": "Equipamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "temperatura_registrada", "label": "Temperatura (ºC)", "tipo": "number", "obrigatorio": true },
+            { "campo": "limite_minimo", "label": "Limite Mínimo (ºC)", "tipo": "number", "obrigatorio": true },
+            { "campo": "limite_maximo", "label": "Limite Máximo (ºC)", "tipo": "number", "obrigatorio": true },
+            { "campo": "conformidade", "label": "Conforme?", "tipo": "select", "opcoes": ["Sim", "Não"], "obrigatorio": true },
+            { "campo": "acao_corretiva", "label": "Ação Corretiva", "tipo": "textarea", "obrigatorio": false },
+            { "campo": "responsavel", "label": "Responsável", "tipo": "text", "obrigatorio": true }
+          ]
+        },
+        {
+          "id": "AE_SUG_02",
+          "tipo": "sugerida",
+          "nome": "Registro de Controle de Acesso e Movimentação de Amostras",
+          "descricao": "Rastreabilidade de entrada, saída e armazenamento de amostras biológicas.",
+          "frequencia": "A cada recebimento / envio de amostra",
+          "responsavel": "Técnico de laboratório / RT",
+          "colunas": [
+            { "campo": "data", "label": "Data", "tipo": "date", "obrigatorio": true },
+            { "campo": "hora", "label": "Hora", "tipo": "time", "obrigatorio": true },
+            { "campo": "numero_amostra", "label": "Nº / Código da Amostra", "tipo": "text", "obrigatorio": true },
+            { "campo": "tipo_amostra", "label": "Tipo de Amostra", "tipo": "text", "obrigatorio": true },
+            { "campo": "origem", "label": "Origem (propriedade/estabelecimento)", "tipo": "text", "obrigatorio": true },
+            { "campo": "analise_solicitada", "label": "Análise Solicitada", "tipo": "text", "obrigatorio": true },
+            { "campo": "condicao_chegada", "label": "Condição na Chegada", "tipo": "select", "opcoes": ["Adequada", "Inadequada – temperatura", "Inadequada – embalagem", "Rejeitada"], "obrigatorio": true },
+            { "campo": "local_armazenamento", "label": "Local de Armazenamento", "tipo": "text", "obrigatorio": true },
+            { "campo": "data_resultado_previsto", "label": "Data de Resultado Previsto", "tipo": "date", "obrigatorio": false },
+            { "campo": "responsavel_recepcao", "label": "Responsável pelo Recebimento", "tipo": "text", "obrigatorio": true }
+          ]
+        }
+      ]
+    }
+  ]
+}

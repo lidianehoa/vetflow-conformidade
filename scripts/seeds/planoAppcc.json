@@ -1,0 +1,128 @@
+{
+  "plano_appcc": {
+    "titulo": "Modelo de Plano APPCC (Análise de Perigos e Pontos Críticos de Controle)",
+    "estabelecimento": "[Nome da Empresa]",
+    "servico_inspecao": {
+      "tipo": "[SIF / SIE / SIM]",
+      "numero": "[Número]"
+    },
+    "produto_linha": "[Ex: Carne Bovina In Natura / Leite Pasteurizado]",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "Equipe APPCC",
+        "descricao": "Relação dos profissionais multidisciplinares responsáveis pelo plano.",
+        "membros": [
+          { "nome": "[Nome]", "cargo": "Responsável Técnico", "funcao_no_plano": "Coordenador do Plano" },
+          { "nome": "[Nome]", "cargo": "Gerente de Produção", "funcao_no_plano": "Implementação Operacional" },
+          { "nome": "[Nome]", "cargo": "Qualidade",           "funcao_no_plano": "Monitorização e Verificação" }
+        ]
+      },
+      {
+        "numero": 2,
+        "titulo": "Descrição do Produto e Uso Esperado",
+        "produto": {
+          "nome": "[Ex: Carne de Sol]",
+          "caracteristicas_fisico_quimicas": {
+            "descricao": "[Ex: pH, Atividade de água (Aw), Teor de Sal]",
+            "parametros": {
+              "pH": "[Valor]",
+              "atividade_de_agua_aw": "[Valor]",
+              "teor_de_sal": "[Valor]"
+            }
+          },
+          "tipo_embalagem": "[Ex: Vácuo / Atmosfera Modificada]",
+          "vida_util": {
+            "dias": "[X]",
+            "temperatura_celsius": "[X]"
+          },
+          "uso_esperado": "[Ex: Consumo após cocção / Pronto para consumo]",
+          "publico_alvo": "[Ex: Público em geral / Grupos de risco]"
+        }
+      },
+      {
+        "numero": 3,
+        "titulo": "Fluxograma do Processo",
+        "descricao": "Descrever as etapas sequenciais (deve ser validado 'in loco').",
+        "etapas": [
+          { "ordem": 1, "nome": "Receção de Matéria-Prima" },
+          { "ordem": 2, "nome": "Armazenagem Fria" },
+          { "ordem": 3, "nome": "Corte/Manipulação" },
+          { "ordem": 4, "nome": "Salga (se houver)" },
+          { "ordem": 5, "nome": "Embalagem" },
+          { "ordem": 6, "nome": "Estocagem Final" },
+          { "ordem": 7, "nome": "Expedição" }
+        ]
+      },
+      {
+        "numero": 4,
+        "titulo": "Análise de Perigos e Medidas Preventivas",
+        "descricao": "Identificar perigos Biológicos (B), Químicos (Q) e Físicos (F) em cada etapa.",
+        "legenda_tipos": { "B": "Biológico", "Q": "Químico", "F": "Físico" },
+        "analise": [
+          {
+            "etapa": "Receção", "perigo_identificado": "Salmonella spp.", "tipo": "B", "severidade": "Alta", "probabilidade": "Média",
+            "medida_preventiva": "Controle de Tº e Laudo de Fornecedor", "e_pcc": true, "pcc_referencia": "PCC 1"
+          },
+          {
+            "etapa": "Corte", "perigo_identificado": "Fragmentos de Metal", "tipo": "F", "severidade": "Média", "probabilidade": "Baixa",
+            "medida_preventiva": "Manutenção de facas e Detector de Metais", "e_pcc": false, "pcc_referencia": "PAC"
+          },
+          {
+            "etapa": "Expedição", "perigo_identificado": "Multiplicação Bacteriana", "tipo": "B", "severidade": "Alta", "probabilidade": "Alta",
+            "medida_preventiva": "Controle rigoroso da Tº do furgão", "e_pcc": true, "pcc_referencia": "PCC 2"
+          }
+        ]
+      },
+      {
+        "numero": 5,
+        "titulo": "Resumo do Plano APPCC (Controle de PCCs)",
+        "pontos_criticos_de_controle": [
+          {
+            "id": "PCC 1", "etapa": "Receção", "descricao": "Temperatura da Matéria-Prima",
+            "limite_critico": { "descricao": "Temperatura máxima de 7ºC para carnes resfriadas.", "temperatura_maxima_celsius": 7 },
+            "monitorização": { "o_que": "Temperatura interna da carcaça/corte.", "como": "Termómetro de imersão calibrado.", "frequencia": "100% dos lotes recebidos.", "quem": "Recepcionista de matéria-prima." },
+            "acao_corretiva": "Rejeição do lote se Tº > [X]ºC ou devolução para reprocessamento imediato se tecnicamente viável.",
+            "verificacao": "Revisão das planilhas pelo RT semanalmente."
+          },
+          {
+            "id": "PCC 2", "etapa": "Pasteurização / Cozimento", "descricao": "Se aplicável",
+            "limite_critico": { "descricao": "72ºC por 15 segundos.", "temperatura_celsius": 72, "tempo_segundos": 15 },
+            "monitorização": { "o_que": "Binómio Tempo x Temperatura.", "como": "Sensores automáticos e registo em termógrafo.", "frequencia": "Contínua.", "quem": "Operador de painel." },
+            "acao_corretiva": "Desvio do fluxo para re-pasteurização automática e travamento da linha.",
+            "verificacao": ""
+          }
+        ]
+      },
+      {
+        "numero": 6,
+        "titulo": "Procedimentos de Verificação",
+        "procedimentos": [
+          { "item": "Calibração", "descricao": "Certificar que todos os instrumentos de monitorização estão calibrados." },
+          { "item": "Análises Laboratoriais", "descricao": "Realização de swabs de superfície e análises microbiológicas do produto acabado." },
+          { "item": "Auditoria Interna", "descricao": "Verificação semestral de todo o sistema APPCC." }
+        ]
+      },
+      {
+        "numero": 7,
+        "titulo": "Sistema de Registos e Documentação",
+        "documentos": [
+          "Planilhas de monitorização de PCC",
+          "Relatórios de ações corretivas",
+          "Atas de validação do fluxograma"
+        ]
+      },
+      {
+        "numero": 8,
+        "titulo": "Aprovação",
+        "conteudo": "Este Plano APPCC foi validado em [Data] e sua eficácia é garantida pela assinatura abaixo.",
+        "assinatura": {
+          "cargo": "Médico Veterinário",
+          "crmv": "[Nº]",
+          "data_validacao": "[Data]",
+          "nome": "[Assinatura do Responsável Técnico]"
+        }
+      }
+    ]
+  }
+}
