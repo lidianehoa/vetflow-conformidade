@@ -113,7 +113,7 @@ export default function Termos() {
               {[
                 { key: "NOME_ANIMAL", label: "Nome do Animal *" },
                 { key: "ESPECIE_RACA_IDADE", label: "Espécie / Raça / Idade *" },
-                { key: "RESPONSAVEL", label: "Tutor Responsável *" },
+                { key: "RESPONSAVEL", label: "Responsável pelo Animal *" },
                 { key: "CPF_RESPONSAVEL", label: "CPF ou RG *" },
               ].map(({ key, label }) => (
                 <TextField

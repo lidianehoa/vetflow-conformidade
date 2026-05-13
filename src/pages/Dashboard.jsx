@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Grid, Paper, Button, Chip, Card, CardContent,
-  LinearProgress, Divider, Alert,
+  LinearProgress, Divider, Alert, Stack,
 } from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -14,6 +14,11 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -23,6 +28,7 @@ import BloqueioRecurso from "../components/BloqueioRecurso";
 import ReactApexChart from "react-apexcharts";
 import { getAreaById } from "../data/rtTypes";
 import { getNivel } from "../data/gamificacao";
+import { generateFlightPlan } from "../data/flightPlan";
 
 const SETORES_LABELS = ["Recepção (A)", "Clínica (B)", "CC (C)", "Higienização (D)", "Medicamentos (E)"];
 
@@ -151,48 +157,10 @@ export default function Dashboard() {
 
   const riscos = scores.filter((s) => s < 70).length;
 
-  const planningData = [
-    {
-      week: "Semana 1: Controle e Farmacovigilância",
-      focus: "SIPEAGRO & Insumos",
-      tasks: [
-        { id: 1, text: "Inventário de Psicotrópicos (Estoque Físico vs. SIPEAGRO)", urgent: true, source: "MAPA" },
-        { id: 2, text: "Lançamento de relatórios mensais no sistema SIPEAGRO", urgent: true, source: "MAPA" },
-        { id: 3, text: "Verificação de validades: Saneantes e Farmácia de Emergência", urgent: false, source: "ANVISA" },
-        { id: 4, text: "Auditoria de registros de temperatura (Frigoríficos e Estufas)", urgent: false, source: "CFMV 1374" }
-      ]
-    },
-    {
-      week: "Semana 2: Biossegurança e Esterilização",
-      focus: "Controle de Infecção",
-      tasks: [
-        { id: 5, text: "Monitoramento biológico da Autoclave (Teste de 24h/48h)", urgent: true, source: "ANVISA" },
-        { id: 6, text: "Revisão do PGRSS: Fluxo de descarte e acondicionamento", urgent: false, source: "ANVISA RDC 222" },
-        { id: 7, text: "Inspeção de barreiras sanitárias e limpeza terminal do CC", urgent: false, source: "CFMV" },
-        { id: 8, text: "Verificação de EPIs e treinamento de descarte de perfurocortantes", urgent: false, source: "NR-32" }
-      ]
-    },
-    {
-      week: "Semana 3: Auditoria Clínica e Laboratorial",
-      focus: "Documentação",
-      tasks: [
-        { id: 9, text: "Auditoria de Prontuários: Assinaturas e Termos de Consentimento", urgent: false, source: "CFMV 1321" },
-        { id: 10, text: "Validação de Requisições de Exames (Prazo de 30 dias)", urgent: true, source: "CFMV 1374" },
-        { id: 11, text: "Conferência de Laudos: Metodologia e Identificação do RT", urgent: false, source: "CFMV 1374" },
-        { id: 12, text: "Rastreabilidade de lotes de insumos utilizados no setor", urgent: false, source: "Qualidade" }
-      ]
-    },
-    {
-      week: "Semana 4: Gestão Administrativa e Pessoal",
-      focus: "Renovações",
-      tasks: [
-        { id: 13, text: "Verificar vencimentos: Alvará, ART, VRE e Laudos de Pragas", urgent: true, source: "Fiscalização" },
-        { id: 14, text: "Treinamento de Equipe em novos POPs (Procedimentos Operacionais)", urgent: false, source: "CFMV" },
-        { id: 15, text: "Revisão do arquivo de segurança (Guarda por 5 anos)", urgent: false, source: "CFMV 1374" },
-        { id: 16, text: "Planejamento de melhorias estruturais para o próximo mês", urgent: false, source: "Estratégico" }
-      ]
-    }
-  ];
+  // Gerador dinâmico do Plano de Voo baseado na Área e Especialidades
+  const planningData = React.useMemo(() => {
+    return generateFlightPlan(unidade?.areaAtuacao, userData?.especialidades || []);
+  }, [unidade?.areaAtuacao, userData?.especialidades]);
 
   const [activeWeek, setActiveWeek] = useState(0);
 
@@ -669,6 +637,87 @@ export default function Dashboard() {
               </Grid>
             </Box>
           </Paper>
+        </Grid>
+
+        {/* ─── BLINDAGEM 360°: BASE DE CONHECIMENTO & OUVIDORIA ─── */}
+        <Grid item xs={12} container spacing={3} sx={{ mt: 1 }}>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ borderRadius: 4, bgcolor: "#1b4332", color: "#fff", height: '100%', position: 'relative', overflow: 'hidden' }}>
+              <Box sx={{ position: 'absolute', right: -20, top: -20, opacity: 0.1 }}>
+                <PsychologyIcon sx={{ fontSize: 150 }} />
+              </Box>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <HelpOutlineIcon /> Base de Conhecimento
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8, mb: 3 }}>
+                  Acesse POPs, Manuais e a 1ª Edição das Diretrizes de Atuação do RT (2023).
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  fullWidth 
+                  onClick={() => navigate("/ajuda")}
+                  sx={{ bgcolor: "#fff", color: "#1b4332", fontWeight: 800, "&:hover": { bgcolor: "#f0fdf4" } }}
+                >
+                  Explorar Biblioteca
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card sx={{ borderRadius: 4, border: "1.5px solid #e8f5e9", height: '100%' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight={900} color="#1b4332" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <SupportAgentIcon /> Ouvidoria & Jurídico
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Canal direto para dúvidas sobre fiscalização, contratos e Blindagem Jurídica.
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  fullWidth 
+                  onClick={() => navigate("/suporte")}
+                  sx={{ borderColor: "#1b4332", color: "#1b4332", fontWeight: 800 }}
+                >
+                  Falar com Consultor
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card sx={{ borderRadius: 4, border: "1.5px solid #fff3e0", bgcolor: "#fff8f1", height: '100%' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight={900} color="#e65100" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <WarningAmberIcon /> Matriz de Estresse
+                </Typography>
+                <Stack spacing={2}>
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="caption" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <VolumeUpIcon sx={{ fontSize: 14 }} /> Nível Sonoro (dB)
+                      </Typography>
+                      <Typography variant="caption" fontWeight={700}>Baixo</Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={30} sx={{ height: 6, borderRadius: 3, bgcolor: "#ffe0b2", "& .MuiLinearProgress-bar": { bgcolor: "#fb8c00" } }} />
+                  </Box>
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="caption" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <VisibilityIcon sx={{ fontSize: 14 }} /> Poluição Visual
+                      </Typography>
+                      <Typography variant="caption" fontWeight={700}>Controlado</Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={15} sx={{ height: 6, borderRadius: 3, bgcolor: "#ffe0b2", "& .MuiLinearProgress-bar": { bgcolor: "#fb8c00" } }} />
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic', mt: 1 }}>
+                    Fatores ambientais monitorados conforme CFMV 1000/2012.
+                  </Typography>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
       </Grid>
     </Box>

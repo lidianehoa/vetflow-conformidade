@@ -106,7 +106,7 @@ export default function Auditorias() {
         }}
       >
         <Tab icon={<HistoryIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Histórico de Auditorias" />
-        <Tab icon={<AssignmentIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Regularização (SESAU)" />
+        <Tab icon={<AssignmentIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Regularização (Vigilância Sanitária)" />
       </Tabs>
 
       {tab === 1 ? (

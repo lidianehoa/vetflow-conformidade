@@ -2,59 +2,38 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Função para verificar se o usuário é dono do documento
+    // Função básica de dono
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // Função para verificar se o usuário logado é Admin
-    function isAdmin() {
-      return request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
-    }
-
-    // Regras para Coleção de Usuários
+    // Regras para Usuários
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId) || isAdmin();
+      allow read, write: if isOwner(userId);
     }
 
-    // Regras para Auditorias, Laudos e Controlados
+    // Regras para Clínicas
+    match /clinicas/{docId} {
+      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+    }
+
+    // Regras para Auditorias e Laudos
     match /auditorias/{docId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isOwner(request.resource.data.userId) || isAdmin();
-      allow delete: if false;
-      allow update: if isAdmin(); // Admin pode editar em caso de erro técnico
+      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
     }
 
     match /laudos/{docId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isOwner(request.resource.data.userId) || isAdmin();
-      allow delete: if false;
-      allow update: if isAdmin() || (isOwner(resource.data.userId) && resource.data.status == "rascunho");
+      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
     }
 
-    match /controlados/{userId}/movimentacoes/{docId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-      allow delete: if false;
-    }
-
-    match /controlados/{userId}/estoque/{docId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-      allow delete: if false;
-    }
-
-    match /clinicas/{docId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isOwner(request.resource.data.userId) || isAdmin();
-      allow update: if isOwner(resource.data.userId) || isAdmin();
-      allow delete: if false;
+    // Regras para Controlados
+    match /controlados/{userId}/{document=**} {
+      allow read, write: if isOwner(userId);
     }
 
     // Regras para Templates Globais
     match /template/{docId} {
       allow read: if request.auth != null;
-      allow write: if isAdmin(); // Apenas admins editam templates globais
     }
   }
 }

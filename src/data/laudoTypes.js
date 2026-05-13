@@ -24,7 +24,7 @@ export const TIPOS_LAUDO = [
       { campo: "especie", label: "Espécie", tipo: "select", opcoes: ["Cão", "Gato", "Ave", "Réptil", "Roedor", "Outro"], obrigatorio: true },
       { campo: "raca", label: "Raça", tipo: "text", obrigatorio: false },
       { campo: "peso_kg", label: "Peso (kg)", tipo: "number", obrigatorio: true },
-      { campo: "tutor_nome", label: "Nome do Tutor", tipo: "text", obrigatorio: true },
+      { campo: "tutor_nome", label: "Nome do Responsável pelo Animal", tipo: "text", obrigatorio: true },
       { campo: "queixa_principal", label: "Queixa Principal", tipo: "textarea", obrigatorio: true },
       { campo: "exame_fisico", label: "Exame Físico", tipo: "textarea", obrigatorio: true },
       { campo: "hipotese_diagnostica", label: "Hipótese Diagnóstica", tipo: "textarea", obrigatorio: true },
@@ -91,6 +91,23 @@ export const TIPOS_LAUDO = [
       { campo: "lotes_afetados", label: "Lotes", tipo: "textarea", obrigatorio: true },
       { campo: "quantidade_total", label: "Qtd. Total (kg/un)", tipo: "number", obrigatorio: true },
       { campo: "resultado_recall", label: "Resultado", tipo: "select", opcoes: ["Sucesso", "Parcial", "Em andamento"], obrigatorio: true },
+    ]
+  },
+  {
+    id: "LAU_CONSOLIDADO_BVO",
+    prefixo: "BVO",
+    nome: "Relatório Consolidado de Conformidade",
+    descricao: "Relatório técnico gerado após a interpretação de BVO/Notificações da Vigilância Sanitária, consolidando o diagnóstico e cronograma de adequação.",
+    area_atuacao: ["pequenos_animais", "banho_e_tosa", "comercio_produtos"],
+    legislacao: "Diretrizes de Atuação do RT (CFMV 2023) e Código de Defesa do Consumidor",
+    campos_conteudo: [
+      { campo: "numero_notificacao", label: "Nº da Notificação/BVO", tipo: "text", obrigatorio: true },
+      { campo: "data_vistoria", label: "Data da Vistoria Sanitária", tipo: "date", obrigatorio: true },
+      { campo: "resumo_executivo", label: "Resumo Executivo da IA", tipo: "textarea", obrigatorio: true },
+      { campo: "fase1_infra", label: "Fase 1 (Infraestrutura)", tipo: "textarea", obrigatorio: true },
+      { campo: "fase2_logistica", label: "Fase 2 (Logística)", tipo: "textarea", obrigatorio: true },
+      { campo: "fase3_burocracia", label: "Fase 3 (Burocracia)", tipo: "textarea", obrigatorio: true },
+      { campo: "prazo_adequacao", label: "Prazo para Adequação (dias)", tipo: "number", obrigatorio: true },
     ]
   }
 ];

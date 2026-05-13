@@ -4,7 +4,7 @@ import {
   CircularProgress, Alert, Divider, Stepper, Step, StepLabel,
   Dialog, DialogTitle, DialogContent, DialogActions, Stack
 } from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useUserData } from "../components/ProtectedRoute";
@@ -14,15 +14,15 @@ import SaveIcon from "@mui/icons-material/Save";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import PrintIcon from "@mui/icons-material/Print";
 import { useReactToPrint } from "react-to-print";
-import { gerarSmartId } from "../data/checklistsRT";
-import { gerarHash } from "../data/tcleModels";
 import { useWebPKI } from "../hooks/useWebPKI";
+import { gerarHashSHA256, gerarSmartID } from "../utils/security";
 
 const COR = "#1b4332";
 
 export default function GerarLaudo() {
   const { tipoId, id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const userData = useUserData();
   const printRef = useRef();
 
@@ -51,6 +51,9 @@ export default function GerarLaudo() {
           }
         } else if (tipoId) {
           setTipo(getLaudoById(tipoId));
+          if (location.state?.preFill) {
+            setForm(location.state.preFill);
+          }
         }
       } catch (e) {
         console.error(e);
@@ -59,7 +62,7 @@ export default function GerarLaudo() {
       }
     };
     load();
-  }, [tipoId, id]);
+  }, [tipoId, id, location.state]);
 
   const handleSave = async (novoStatus = "rascunho") => {
     if (!userData?.uid) return;
@@ -107,15 +110,14 @@ export default function GerarLaudo() {
     
     try {
       const cert = certificates.find(c => c.thumbprint === selectedCert);
-      const smartId = gerarSmartId(userData.uid);
-      const hashParaAssinar = gerarHash(JSON.stringify(form) + smartId);
+      const smartId = gerarSmartID("LAUDO");
+      const hashParaAssinar = await gerarHashSHA256(JSON.stringify(form) + smartId);
       
-      // Chamada real para o Token/A1 via Web PKI
       const signature = await signHash(selectedCert, hashParaAssinar);
       
       const ok = await handleSave("assinado");
       if (ok) {
-        await updateDoc(doc(db, "laudos", id || laudo.id), {
+        const payload = {
           status: "assinado",
           smartId,
           hashAutenticidade: hashParaAssinar,
@@ -128,7 +130,9 @@ export default function GerarLaudo() {
             timestamp: new Date().toISOString()
           },
           assinadoEm: serverTimestamp(),
-        });
+        };
+        await updateDoc(doc(db, "laudos", id || laudo.id), payload);
+        setLaudo(prev => ({ ...prev, ...payload }));
         setStatusAssinatura("concluido");
       }
     } catch (err) {
@@ -250,6 +254,40 @@ export default function GerarLaudo() {
               <VerifiedUserIcon sx={{ fontSize: 60, color: "#2e7d32" }} />
               <Typography variant="body2" fontWeight={700}>Documento assinado com sucesso.</Typography>
               <Typography variant="caption">Hash: {laudo?.hashAutenticidade?.substring(0, 20)}...</Typography>
+              
+              <Divider sx={{ my: 2, width: '100%' }} />
+              <Typography variant="overline" fontWeight={800} color="primary">Recibo de Entrega Digital</Typography>
+              <Typography variant="caption" sx={{ mb: 2 }}>Colha o ciente do Responsável pelo Animal abaixo:</Typography>
+              <TextField 
+                fullWidth size="small" 
+                label="Nome do Responsável pelo Animal"
+                value={form.tutor_nome || ""}
+                disabled
+              />
+              <Button 
+                fullWidth 
+                variant="outlined" 
+                sx={{ mt: 1, textTransform: 'none', fontWeight: 700 }}
+                onClick={() => {
+                  const win = window.open("", "_blank");
+                  win.document.write(`
+                    <html>
+                    <body style="font-family: sans-serif; padding: 40px; line-height: 1.6;">
+                      <h2 style="text-align: center;">RECIBO DE ENTREGA DE DOCUMENTO DIGITAL</h2>
+                      <p>Protocolo: <strong>${laudo.smartId}</strong></p>
+                      <p>Eu, <strong>${form.tutor_nome}</strong>, confirmo o recebimento do documento <strong>${tipo.nome}</strong> nesta data.</p>
+                      <p>Responsável Técnico: ${userData.rtNome} (CRMV: ${userData.crmv})</p>
+                      <p style="margin-top: 40px;">Data: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString()}</p>
+                      <div style="margin-top: 60px; border-top: 1px solid #000; width: 300px;">Assinatura do Responsável</div>
+                      <p style="font-size: 8px; color: #888; margin-top: 100px;">Hash de Autenticidade: ${laudo.hashAutenticidade}</p>
+                    </body>
+                    </html>
+                  `);
+                  win.print();
+                }}
+              >
+                Gerar Recibo de Entrega
+              </Button>
             </Stack>
           )}
         </DialogContent>

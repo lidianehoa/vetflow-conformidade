@@ -18,6 +18,7 @@ import { collection, addDoc, query, where, orderBy, limit, getDocs, serverTimest
 import { db } from "../firebase";
 import { useUserData } from "../components/ProtectedRoute";
 import { TIPO_PARA_AREA } from "../data/checklistsRT";
+import { gerarHashSHA256, gerarSmartID } from "../utils/security";
 
 const COR = "#1b4332";
 const ACENTO = "#52b788";
@@ -59,6 +60,12 @@ export default function RotinaDiaria() {
     // Laboratório
     controleQualidade: false,
     calibracaoDiaria: false,
+    // Blindagem 360°
+    checkEpiDigital: false,
+    vazaoPressaoAgua: false,
+    rodizioSaudeMental: false,
+    hashIntegridade: "",
+    smartId: "",
   });
 
   useEffect(() => {
@@ -109,6 +116,9 @@ export default function RotinaDiaria() {
     if (!userData?.selectedClinicaId) return;
     setSalvando(true);
     try {
+      const dataStr = JSON.stringify(form) + userData.uid + new Date().toISOString();
+      const hash = await gerarHashSHA256(dataStr);
+
       await addDoc(collection(db, "rotinas_diarias"), {
         ...form,
         userId: userData.uid,
@@ -117,6 +127,8 @@ export default function RotinaDiaria() {
         areaAtuacao: unidade?.areaAtuacao || "N/A",
         criadoEm: serverTimestamp(),
         dataRef: new Date().toLocaleDateString("pt-BR"),
+        hashIntegridade: hash,
+        smartId: gerarSmartID("DAILY"),
       });
       setSucesso(true);
       setForm({
@@ -141,6 +153,9 @@ export default function RotinaDiaria() {
         monitoramentoPCC: false,
         controleQualidade: false,
         calibracaoDiaria: false,
+        checkEpiDigital: false,
+        vazaoPressaoAgua: false,
+        rodizioSaudeMental: false,
       });
       fetchHistorico();
       setTimeout(() => setSucesso(false), 3000);
@@ -380,6 +395,20 @@ export default function RotinaDiaria() {
                   <FormControlLabel
                     control={<Checkbox checked={form.checkEquipamentos} onChange={(e) => setForm({ ...form, checkEquipamentos: e.target.checked })} />}
                     label={<Typography variant="body2">Verificação de equipamentos (Autoclave/Monitores)</Typography>}
+                  />
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="overline" color="primary" fontWeight={800}>🛡️ Blindagem 360°</Typography>
+                  <FormControlLabel
+                    control={<Checkbox checked={form.checkEpiDigital} onChange={(e) => setForm({ ...form, checkEpiDigital: e.target.checked })} />}
+                    label={<Typography variant="body2" fontWeight={600}>Confirmação de Uso/Entrega de EPIs (Log Digital)</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={form.vazaoPressaoAgua} onChange={(e) => setForm({ ...form, vazaoPressaoAgua: e.target.checked })} />}
+                    label={<Typography variant="body2">Monitoramento de vazão/pressão da água (Higienização)</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={form.rodizioSaudeMental} onChange={(e) => setForm({ ...form, rodizioSaudeMental: e.target.checked })} />}
+                    label={<Typography variant="body2">Validação de Escala de Rodízio (Saúde Mental)</Typography>}
                   />
                 </Stack>
               </Box>

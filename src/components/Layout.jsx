@@ -4,7 +4,7 @@ import {
   Box, Drawer, List, ListItem, ListItemButton, ListItemIcon,
   ListItemText, Typography, Divider, Avatar, Chip, Tooltip,
   Select, MenuItem, FormControl, Button, AppBar, Toolbar, IconButton,
-  Badge, Menu,
+  Badge, Menu, Grid,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import WarningIcon from "@mui/icons-material/Warning";
@@ -431,8 +431,49 @@ export default function Layout() {
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ p: 0 }}>
+        <Box sx={{ p: 0, minHeight: "calc(100vh - 64px)" }}>
           <Outlet />
+        </Box>
+
+        {/* Footer Jurídico & Blindagem 360° */}
+        <Box 
+          component="footer" 
+          sx={{ 
+            p: 3, 
+            bgcolor: "#fff", 
+            borderTop: "1px solid #e8f5e9", 
+            textAlign: "center" 
+          }}
+        >
+          <Grid container spacing={2} justifyContent="center" alignItems="center">
+            <Grid item xs={12} md={4}>
+              <Typography variant="caption" color="text.secondary">
+                © {new Date().getFullYear()} VERTOS RT OS — Blindagem 360° (v2023.1)
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4} sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+              <Button 
+                size="small" 
+                href="https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm" 
+                target="_blank"
+                sx={{ fontSize: 10, color: "#1b4332", fontWeight: 700, textTransform: "none" }}
+              >
+                Código de Defesa do Consumidor (CDC)
+              </Button>
+              <Button 
+                size="small" 
+                onClick={() => navigate("/suporte")}
+                sx={{ fontSize: 10, color: "#1b4332", fontWeight: 700, textTransform: "none" }}
+              >
+                Ouvidoria RT
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="caption" sx={{ color: "#52b788", fontWeight: 800 }}>
+                🛡️ Sistema em conformidade com as novas diretrizes CFMV/MAPA 2023.
+              </Typography>
+            </Grid>
+          </Grid>
         </Box>
       </Box>
     </Box>

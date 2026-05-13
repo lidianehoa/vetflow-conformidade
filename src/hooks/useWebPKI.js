@@ -14,7 +14,7 @@ export const useWebPKI = () => {
   useEffect(() => {
     // Inicialização da biblioteca Web PKI
     if (LacunaWebPKI) {
-      const instance = new LacunaWebPKI(""); // String vazia para localhost (modo dev)
+      const instance = new LacunaWebPKI(import.meta.env.VITE_WEB_PKI_LICENSE || ""); 
       setPki(instance);
       
       instance.init({

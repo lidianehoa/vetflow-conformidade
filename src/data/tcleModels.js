@@ -24,11 +24,11 @@ Clínica: {{NOME_CLINICA}} | CNPJ: {{CNPJ}}
 IDENTIFICAÇÃO DO PACIENTE:
 Animal: {{NOME_ANIMAL}}
 Espécie / Raça / Idade: {{ESPECIE_RACA_IDADE}}
-Tutor Responsável: {{RESPONSAVEL}} | CPF/RG: {{CPF_RESPONSAVEL}}
+Responsável pelo Animal: {{RESPONSAVEL}} | CPF/RG: {{CPF_RESPONSAVEL}}
 
 DECLARAÇÃO DE CONSENTIMENTO:
 
-Eu, {{RESPONSAVEL}}, na condição de tutor(a) e responsável legal pelo animal acima identificado, declaro ter sido informado(a) de forma clara, objetiva e em linguagem acessível sobre as seguintes condições do procedimento proposto:
+Eu, {{RESPONSAVEL}}, na condição de Responsável pelo Animal acima identificado, declaro ter sido informado(a) de forma clara, objetiva e em linguagem acessível sobre as seguintes condições do procedimento proposto:
 
 1. PROCEDIMENTO: A equipe médico-veterinária propôs a realização de procedimento cirúrgico eletivo, cujas indicações clínicas, benefícios esperados, técnica empregada e tempo estimado de recuperação foram devidamente explicados.
 
@@ -48,7 +48,7 @@ Local e Data: {{NOME_CLINICA}}, {{DATA_ATUAL}}
 
 _______________________________________________
 {{RESPONSAVEL}}
-Tutor(a) Responsável — CPF/RG: {{CPF_RESPONSAVEL}}
+Responsável pelo Animal — CPF/RG: {{CPF_RESPONSAVEL}}
 
 _______________________________________________
 {{RT_NOME}} | CRMV: {{RT_CRMV}}
@@ -71,7 +71,7 @@ Clínica: {{NOME_CLINICA}} | CNPJ: {{CNPJ}}
 IDENTIFICAÇÃO DO PACIENTE:
 Animal: {{NOME_ANIMAL}}
 Espécie / Raça / Idade: {{ESPECIE_RACA_IDADE}}
-Tutor Responsável: {{RESPONSAVEL}} | CPF/RG: {{CPF_RESPONSAVEL}}
+Responsável pelo Animal: {{RESPONSAVEL}} | CPF/RG: {{CPF_RESPONSAVEL}}
 
 DECLARAÇÃO DE CONSENTIMENTO ANESTÉSICO:
 
@@ -93,7 +93,7 @@ Local e Data: {{NOME_CLINICA}}, {{DATA_ATUAL}}
 
 _______________________________________________
 {{RESPONSAVEL}} — CPF/RG: {{CPF_RESPONSAVEL}}
-Tutor(a) Responsável
+Responsável pelo Animal
 
 _______________________________________________
 {{RT_NOME}} | CRMV: {{RT_CRMV}}
@@ -114,7 +114,7 @@ Clínica: {{NOME_CLINICA}} | CNPJ: {{CNPJ}}
 IDENTIFICAÇÃO DO PACIENTE:
 Animal: {{NOME_ANIMAL}}
 Espécie / Raça / Idade: {{ESPECIE_RACA_IDADE}}
-Tutor Responsável: {{RESPONSAVEL}} | Contato: {{CPF_RESPONSAVEL}}
+Responsável pelo Animal: {{RESPONSAVEL}} | Contato: {{CPF_RESPONSAVEL}}
 
 AUTORIZO a internação hospitalar do animal acima identificado nas dependências de {{NOME_CLINICA}}, declaro estar ciente de que:
 
@@ -136,7 +136,7 @@ Local e Data: {{NOME_CLINICA}}, {{DATA_ATUAL}}
 
 _______________________________________________
 {{RESPONSAVEL}} — CPF/RG: {{CPF_RESPONSAVEL}}
-Tutor(a) Responsável
+Responsável pelo Animal
 
 _______________________________________________
 {{RT_NOME}} | CRMV: {{RT_CRMV}}
@@ -157,7 +157,7 @@ Clínica: {{NOME_CLINICA}} | CNPJ: {{CNPJ}}
 IDENTIFICAÇÃO DO PACIENTE:
 Animal: {{NOME_ANIMAL}}
 Espécie / Raça / Idade: {{ESPECIE_RACA_IDADE}}
-Tutor Responsável: {{RESPONSAVEL}} | CPF/RG: {{CPF_RESPONSAVEL}}
+Responsável pelo Animal: {{RESPONSAVEL}} | CPF/RG: {{CPF_RESPONSAVEL}}
 
 DECLARAÇÃO:
 
@@ -175,7 +175,7 @@ Local e Data: {{NOME_CLINICA}}, {{DATA_ATUAL}}
 
 _______________________________________________
 {{RESPONSAVEL}} — CPF/RG: {{CPF_RESPONSAVEL}}
-Tutor(a) Responsável
+Responsável pelo Animal
 
 _______________________________________________
 {{RT_NOME}} | CRMV: {{RT_CRMV}}
@@ -193,7 +193,7 @@ RESPONSÁVEL LEGAL: {{RESPONSAVEL}}
 ENDEREÇO: {{ENDERECO_UNIDADE}}
 
 1. INTRODUÇÃO
-Este documento estabelece as normas de higiene, segurança e operação da {{NOME_CLINICA}}, visando garantir o bem-estar animal, a saúde dos colaboradores e o cumprimento das normas sanitárias vigentes (Lei Complementar 148/2009 e Resolução SESAU 584/2021).
+Este documento estabelece as normas de higiene, segurança e operação da {{NOME_CLINICA}}, visando garantir o bem-estar animal, a saúde dos colaboradores e o cumprimento das normas sanitárias federais, estaduais e municipais vigentes.
 
 2. DIRETRIZES GERAIS
 - Higiene Pessoal: Colaboradores devem manter unhas limpas, uso de uniformes higienizados e utilização obrigatória de EPIs conforme a atividade.
@@ -283,7 +283,7 @@ PROCEDIMENTO:
 1. ISOLAMENTO: Separar imediatamente os animais envolvidos.
 2. PRIMEIROS SOCORROS: Limpeza do local ferido com soro fisiológico ou água corrente.
 3. CONTENÇÃO: Se houver sangramento, aplicar compressão leve com gaze limpa.
-4. COMUNICAÇÃO: Informar imediatamente o tutor e o médico veterinário responsável/parceiro.
+4. COMUNICAÇÃO: Informar imediatamente o Responsável pelo Animal e o médico veterinário responsável/parceiro.
 5. REGISTRO: Anotar o ocorrido na ficha do animal para controle interno.
 
 Visto do RT: {{RT_NOME}}`
@@ -320,7 +320,7 @@ CNPJ: {{CNPJ}}
 Atividade Principal: Higiene, embelezamento e alojamento de animais domésticos.
 
 2. OBJETIVOS
-Estabelecer os procedimentos para o manejo seguro de resíduos gerados nas atividades de creche, hotel e banho e tosa, visando a proteção dos colaboradores, a preservação da saúde pública e do meio ambiente, conforme a Resolução RDC nº 222/2018 da ANVISA e normas da SESAU.
+Estabelecer os procedimentos para o manejo seguro de resíduos gerados nas atividades de creche, hotel e banho e tosa, visando a proteção dos colaboradores, a preservação da saúde pública e do meio ambiente, conforme a Resolução RDC nº 222/2018 da ANVISA e normas da Vigilância Sanitária local.
 
 3. CLASSIFICAÇÃO DOS RESÍDUOS GERADOS
 Grupo A (Resíduos Biológicos)
@@ -360,4 +360,73 @@ Assinatura do Responsável: _________________________________________________
 {{RESPONSAVEL}} (Responsável Legal)
 RT pela Elaboração: {{RT_NOME}} | CRMV: {{RT_CRMV}}`
   },
+  {
+    id: "retirada_sem_alta",
+    titulo: "Termo de Retirada sem Alta Médica",
+    categoria: "Internação",
+    conteudo: `TERMO DE RETIRADA SEM ALTA MÉDICA (EVASÃO/INSISTÊNCIA)
+
+Smart ID: {{SMART_ID}}
+Data: {{DATA_ATUAL}} | {{HORA_ATUAL}}
+
+Eu, {{RESPONSAVEL}}, Responsável pelo Animal {{NOME_ANIMAL}}, declaro que estou retirando o referido animal das dependências de {{NOME_CLINICA}} contra a recomendação expressa do Médico(a) Veterinário(a).
+
+DECLARO estar ciente de que:
+1. O animal ainda necessita de cuidados profissionais e monitoração.
+2. A interrupção do tratamento neste momento pode agravar o quadro clínico, levar a sequelas ou ao óbito.
+3. Assumo total responsabilidade civil e criminal por quaisquer danos que venham a ocorrer ao animal após sua saída.
+4. Fui orientado(a) sobre os riscos de transporte e continuidade do tratamento em domicílio.
+
+Assinatura: _______________________________________________
+{{RESPONSAVEL}} (Responsável pelo Animal)
+
+Visto do RT: {{RT_NOME}} | CRMV: {{RT_CRMV}}
+HASH: {{HASH}} | Ref.: Res. CFMV 1321/20`
+  },
+  {
+    id: "doacao_corpo",
+    titulo: "Termo de Doação de Corpo (Ensino/Pesquisa)",
+    categoria: "Ética",
+    conteudo: `TERMO DE DOAÇÃO DE CORPO PARA ENSINO E PESQUISA
+
+Smart ID: {{SMART_ID}}
+Data: {{DATA_ATUAL}}
+
+Eu, {{RESPONSAVEL}}, na qualidade de Responsável pelo Animal {{NOME_ANIMAL}}, após a constatação do óbito, autorizo livremente a doação do corpo do referido animal para a instituição {{NOME_CLINICA}} com a finalidade exclusiva de Ensino e Pesquisa Científica.
+
+DECLARO que:
+1. Fui informado(a) sobre a importância da doação para o avanço da medicina veterinária.
+2. Não recebi qualquer compensação financeira por este ato.
+3. Tenho ciência de que o corpo não me será devolvido após os estudos.
+
+Assinatura: _______________________________________________
+{{RESPONSAVEL}} (Responsável pelo Animal)
+
+RT: {{RT_NOME}} | CRMV: {{RT_CRMV}}
+HASH: {{HASH}} | Ref.: Lei 11.794/2008`
+  },
+  {
+    id: "procedimento_risco",
+    titulo: "TCLE — Procedimento de Alto Risco / Complexidade",
+    categoria: "Risco",
+    conteudo: `TCLE — PROCEDIMENTO DE ALTO RISCO OU COMPLEXIDADE TÉCNICA
+
+Smart ID: {{SMART_ID}}
+Data: {{DATA_ATUAL}}
+
+Eu, {{RESPONSAVEL}}, Responsável pelo Animal {{NOME_ANIMAL}}, declaro ter sido exaustivamente informado(a) sobre a natureza complexa do procedimento {{NOME_PROCEDIMENTO}}.
+
+CIÊNCIA DOS RISCOS ESPECÍFICOS:
+1. Entendo que este procedimento possui uma taxa de complicação superior aos métodos convencionais.
+2. Fui alertado(a) sobre a possibilidade de [DESCREVER RISCO ESPECÍFICO].
+3. Compreendo que os resultados dependem da resposta biológica individual do paciente.
+
+AUTORIZO a equipe técnica a proceder conforme o plano terapêutico apresentado.
+
+Assinatura: _______________________________________________
+{{RESPONSAVEL}} (Responsável pelo Animal)
+
+Médico(a) Veterinário(a): {{RT_NOME}} | CRMV: {{RT_CRMV}}
+HASH: {{HASH}} | Ref.: Res. CFMV 1653/2025`
+  }
 ];

@@ -606,7 +606,7 @@ const SECOES_TRILHA_PET = [
   { id: "C", letra: "C", nome: "Procedimentos Clínicos e Cirúrgicos", descricao: "Centro cirúrgico, anestesia, TCLE e Prontuários", icon: "FactCheck", cor: "#c62828", corBg: "#ffebee", pontos: 20, referencia: "Resolução CFMV 1374/2020", itens: [
       { id:"T_PET_C_01", class:"CRÍTICO", peso:10, desc:"Centro cirúrgico independente, sem trânsito livre, com paramentação obrigatória?", ref:"Res. CFMV 1275" },
       { id:"T_PET_C_02", class:"CRÍTICO", peso:10, desc:"Anestesia monitorada e acompanhada ininterruptamente pelo profissional?", ref:"Res. CFMV 1374" },
-      { id:"T_PET_C_03", class:"CRÍTICO", peso:10, desc:"Termos de Consentimento (TCLE) assinados pelo tutor em todos os procedimentos?", ref:"Código de Ética / Res. 1374" },
+      { id:"T_PET_C_03", class:"CRÍTICO", peso:10, desc:"Termos de Consentimento (TCLE) assinados pelo Responsável pelo Animal em todos os procedimentos?", ref:"Código de Ética / Res. 1374" },
       { id:"T_PET_C_04", class:"CRÍTICO", peso:10, desc:"Prontuários com identificação, evolução e arquivados por no mínimo 5 anos?", ref:"Res. CFMV 1374" },
   ]},
   { id: "D", letra: "D", nome: "Fármacos e Psicotrópicos", descricao: "SIPEAGRO, Portaria 344/98 e Validades", icon: "LocalPharmacy", cor: "#e65100", corBg: "#fff3e0", pontos: 20, referencia: "Portaria 344/98 MS e IN 35 MAPA", itens: [

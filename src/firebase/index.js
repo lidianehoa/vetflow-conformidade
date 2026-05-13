@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,3 +17,9 @@ const app  = initializeApp(firebaseConfig);
 export const auth    = getAuth(app);
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
+
+// Inicializa o serviço conforme solicitado (Gemini Developer API)
+const ai = getAI(app, { backend: new GoogleAIBackend() });
+
+// Instancia o modelo para o VERTOS OS (Gemini 1.5 Flash)
+export const modelIA = getGenerativeModel(ai, { model: "gemini-1.5-flash" });

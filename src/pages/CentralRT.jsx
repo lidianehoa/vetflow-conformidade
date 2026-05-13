@@ -13,8 +13,9 @@ import CheckCircleIcon      from "@mui/icons-material/CheckCircle";
 import PictureAsPdfIcon    from "@mui/icons-material/PictureAsPdf";
 import HistoryIcon         from "@mui/icons-material/History";
 import AssignmentIcon      from "@mui/icons-material/Assignment";
+import PsychologyIcon      from "@mui/icons-material/Psychology";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
-import { useNavigate }  from "react-router-dom";
+import { useNavigate, useLocation }  from "react-router-dom";
 import { db }     from "../firebase";
 import { useUserData } from "../components/ProtectedRoute";
 import { LABEL_TIPO, VENCIMENTOS_POR_TIPO } from "../data/checklistsRT";
@@ -120,12 +121,31 @@ function CardClinica({ clinica, auditorias, navigate }) {
         </Stack>
       )}
 
-      {/* Última auditoria */}
-      <Typography sx={{ fontSize: "0.7rem", color: "#aaa" }}>
-        {ultimaAudit
-          ? `Última auditoria: ${ultimaAudit.data}`
-          : "Nenhuma auditoria realizada"}
-      </Typography>
+      {/* Última auditoria e Atalho IA */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography sx={{ fontSize: "0.7rem", color: "#aaa" }}>
+          {ultimaAudit
+            ? `Última auditoria: ${ultimaAudit.data}`
+            : "Nenhuma auditoria realizada"}
+        </Typography>
+        
+        <Tooltip title="Intérprete BVO (IA)">
+          <IconButton 
+            size="small" 
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/clinicas/${clinica.id}`, { state: { openBVO: true } });
+            }}
+            sx={{ 
+              bgcolor: COR + "08", 
+              color: COR, 
+              "&:hover": { bgcolor: COR, color: "#fff" } 
+            }}
+          >
+            <PsychologyIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Tooltip>
+      </Stack>
     </Paper>
   );
 }

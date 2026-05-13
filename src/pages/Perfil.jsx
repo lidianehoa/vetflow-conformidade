@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Box, Typography, Paper, Button, TextField, Grid, Avatar,
   FormControlLabel, Checkbox, Divider, Alert, CircularProgress,
@@ -14,10 +14,13 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { updatePassword } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../firebase";
+import { db, storage, auth } from "../firebase";
 import { useUserData } from "../components/ProtectedRoute";
 import { usePlano } from "../hooks/usePlano";
 import { AREAS_ATUACAO, TIPOS_FORMALIZACAO, getAreaById } from "../data/rtTypes";
+import { gerarHashSHA256, gerarSmartID } from "../utils/security";
+import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
+import AddModeratorIcon from '@mui/icons-material/AddModerator';
 
 const CAMPOS_VENCIMENTO = [
   { key: "vencSipeagro",  label: "SIPEAGRO (MAPA)" },
@@ -54,6 +57,12 @@ export default function Perfil() {
     vencArtPessoal: "",
     vencCertificadoPessoal: "",
     vencCarteiraCrmv: "",
+    // Logs de Saúde Ocupacional
+    vencAntirrabica: "",
+    vencAntitetanica: "",
+    vencSorologia: "",
+    hashSaude: "",
+    smartIdSaude: "",
   });
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -101,10 +110,18 @@ export default function Perfil() {
     setErro("");
     setSucesso(false);
     try {
-      await setDoc(doc(db, "users", userData.uid), {
+      // Gera Hash de integridade para os dados de saúde
+      const dadosSaudeStr = `${form.vencAntirrabica}-${form.vencAntitetanica}-${form.vencSorologia}`;
+      const hash = await gerarHashSHA256(dadosSaudeStr);
+      
+      const payload = {
         ...form,
+        hashSaude: hash,
+        smartIdSaude: form.smartIdSaude || gerarSmartID("RT-HEALTH"),
         atualizadoEm: new Date(),
-      }, { merge: true });
+      };
+
+      await setDoc(doc(db, "users", userData.uid), payload, { merge: true });
       setSucesso(true);
       setTimeout(() => setSucesso(false), 3000);
     } catch {
@@ -204,48 +221,50 @@ export default function Perfil() {
           </Paper>
         </Grid>
 
-        {/* 2. Documentação Legal do RT (Conforme Res. 1562/2023) */}
+        {/* 2. Documentação Legal & Saúde Ocupacional (Blindagem 360°) */}
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ border: "1.5px solid #e8f5e9", borderRadius: 4, p: 3 }}>
             <Typography variant="subtitle1" fontWeight={700} color="#1b4332" mb={3} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <VerifiedUserIcon color="primary" /> 2. Documentação Legal do RT (Res. CFMV 1562/23)
+              <VerifiedUserIcon color="primary" /> 2. Documentação Legal & Saúde (Res. CFMV 1562/23)
+            </Typography>
+            
+            <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ mb: 2, display: "block" }}>Documentos Profissionais</Typography>
+            <Grid container spacing={2} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={4}>
+                <TextField label="Vencimento A.R.T. (Anual)" type="date" fullWidth value={form.vencArtPessoal || ""} onChange={(e) => setField("vencArtPessoal", e.target.value)} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField label="Vencimento Cert. Regularidade" type="date" fullWidth value={form.vencCertificadoPessoal || ""} onChange={(e) => setField("vencCertificadoPessoal", e.target.value)} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField label="Vencimento Cédula Profissional" type="date" fullWidth value={form.vencCarteiraCrmv || ""} onChange={(e) => setField("vencCarteiraCrmv", e.target.value)} InputLabelProps={{ shrink: true }} />
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ mb: 3 }} />
+
+            <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ mb: 2, display: "block" }}>
+              <HealthAndSafetyIcon sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'middle' }} /> Saúde e Segurança Ocupacional
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={4}>
-                <TextField
-                  label="Vencimento A.R.T. (Pessoal/Geral)"
-                  type="date"
-                  fullWidth
-                  value={form.vencArtPessoal || ""}
-                  onChange={(e) => setField("vencArtPessoal", e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+                <TextField label="Validade Antirrábica" type="date" fullWidth value={form.vencAntirrabica || ""} onChange={(e) => setField("vencAntirrabica", e.target.value)} InputLabelProps={{ shrink: true }} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField
-                  label="Vencimento Cert. de Regularidade"
-                  type="date"
-                  fullWidth
-                  value={form.vencCertificadoPessoal || ""}
-                  onChange={(e) => setField("vencCertificadoPessoal", e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+                <TextField label="Validade Antitetânica" type="date" fullWidth value={form.vencAntitetanica || ""} onChange={(e) => setField("vencAntitetanica", e.target.value)} InputLabelProps={{ shrink: true }} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField
-                  label="Vencimento Cédula Profissional"
-                  type="date"
-                  fullWidth
-                  value={form.vencCarteiraCrmv || ""}
-                  onChange={(e) => setField("vencCarteiraCrmv", e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+                <TextField label="Próxima Sorologia" type="date" fullWidth value={form.vencSorologia || ""} onChange={(e) => setField("vencSorologia", e.target.value)} InputLabelProps={{ shrink: true }} />
               </Grid>
             </Grid>
-            <Box sx={{ mt: 2, p: 2, bgcolor: "#f1f8f6", borderRadius: 2 }}>
+
+            <Box sx={{ mt: 3, p: 2, bgcolor: "#f1f8f6", borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="caption" color="#1b4332" fontWeight={600}>
-                ℹ️ Nota: A Resolução 1562/2023 exige a renovação anual da ART. O sistema emitirá alertas 30 dias antes do vencimento destas datas.
+                🛡️ Os logs de saúde geram rastreabilidade jurídica com Hash SHA-256 e Smart ID.
               </Typography>
+              {form.smartIdSaude && (
+                <Chip label={form.smartIdSaude} size="small" sx={{ fontWeight: 800, fontSize: '0.65rem', bgcolor: '#fff', border: '1px solid #1b4332' }} />
+              )}
             </Box>
           </Paper>
         </Grid>

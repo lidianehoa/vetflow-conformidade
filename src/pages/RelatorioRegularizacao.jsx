@@ -22,8 +22,8 @@ export default function RelatorioRegularizacao() {
   const [sucesso, setSucesso] = useState(false);
 
   const [form, setForm] = useState({
-    referencia: "Boletins de Vistoria SESAU",
-    introducao: "Este relatório detalha o status de regularização do estabelecimento frente às exigências da Secretaria Municipal de Saúde Pública (SESAU).",
+    referencia: "Boletins de Vistoria da Vigilância Sanitária",
+    introducao: "Este relatório detalha o status de regularização do estabelecimento frente às exigências da Vigilância Sanitária local.",
     
     licenciamento: [
       { item: "1.a", desc: "Requerimento de Licença Sanitária", status: "pendente", obs: "Preencher formulário oficial da CAC." },
@@ -105,7 +105,7 @@ export default function RelatorioRegularizacao() {
   return (
     <Box sx={{ pb: 10 }}>
       <Typography variant="h6" fontWeight={800} color={COR} mb={3}>
-        Emissão de Relatório de Regularização (SESAU)
+        Emissão de Relatório de Regularização (Vigilância Sanitária)
       </Typography>
 
       {sucesso && <Alert severity="success" sx={{ mb: 3, borderRadius: 3 }}>Relatório salvo com sucesso! ✅</Alert>}

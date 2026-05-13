@@ -74,7 +74,7 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
   const emptyForm = {
     tipo: "saida", substancia: "", concentracao: "",
     quantidade: "", unidade: "mL", numeroLote: "",
-    nomeAnimal: "", especie: "", tutorResponsavel: "",
+    nomeAnimal: "", especie: "", responsavelAnimal: "",
     procedimento: "", medicoResponsavel: unidade?.rtNome || "",
     crmvMedico: unidade?.crmv || "", receitaNumero: "",
     dataHora: new Date().toISOString().slice(0, 16), observacoes: "",
@@ -150,7 +150,7 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
         <td>${m.quantidade} ${m.unidade}</td>
         <td>${m.numeroLote || "—"}</td>
         <td>${m.nomeAnimal} (${m.especie})</td>
-        <td>${m.tutorResponsavel}</td>
+        <td>${m.responsavelAnimal}</td>
         <td>${m.procedimento}</td>
         <td>${m.medicoResponsavel} — ${m.crmvMedico}</td>
         <td>${m.receitaNumero || "—"}</td>
@@ -180,7 +180,7 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
 <table>
 <thead><tr>
   <th>#</th><th>Data</th><th>Tipo</th><th>Substância</th><th>Qtd</th>
-  <th>Lote</th><th>Animal/Espécie</th><th>Tutor</th><th>Procedimento</th>
+  <th>Lote</th><th>Animal/Espécie</th><th>Responsável</th><th>Procedimento</th>
   <th>Médico/CRMV</th><th>Receita</th>
 </tr></thead>
 <tbody>${linhas}</tbody>
@@ -294,7 +294,7 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
                       {m.nomeAnimal}
                     </Typography>
                     <Typography sx={{ fontSize: "0.68rem", color: "#888" }}>
-                      {m.especie} · {m.tutorResponsavel}
+                      {m.especie} · {m.responsavelAnimal}
                     </Typography>
                   </TableCell>
                   <TableCell sx={{ fontSize: "0.75rem" }}>{m.procedimento}</TableCell>
@@ -376,9 +376,9 @@ function AbaMovimentacoes({ uid, unidade, userData }) {
               <TextField size="small" label="Espécie" sx={{ flex: 1 }}
                 value={form.especie}
                 onChange={e => setForm({ ...form, especie: e.target.value })} />
-              <TextField size="small" label="Tutor responsável" sx={{ flex: 2 }}
-                value={form.tutorResponsavel}
-                onChange={e => setForm({ ...form, tutorResponsavel: e.target.value })} />
+              <TextField size="small" label="Responsável pelo animal" sx={{ flex: 2 }}
+                value={form.responsavelAnimal}
+                onChange={e => setForm({ ...form, responsavelAnimal: e.target.value })} />
             </Stack>
 
             {/* Procedimento */}
@@ -747,7 +747,7 @@ function AbaGTA({ uid }) {
     municipioOrigem: "", ufOrigem: "", municipioDestino: "",
     ufDestino: "", nomeAnimal: "", especie: "", raca: "",
     sexo: "M", idade: "", identificacao: "",
-    tutorResponsavel: "",
+    responsavelAnimal: "",
     finalidade: "Atendimento veterinário",
     observacoes: "",
   };
@@ -829,7 +829,7 @@ function AbaGTA({ uid }) {
           <Table size="small">
             <TableHead sx={{ bgcolor: "#f5f5f5" }}>
               <TableRow>
-                {["Nº GTA","Validade","Animal","Origem","Destino","Tutor","Status"].map(h => (
+                {["Nº GTA","Validade","Animal","Origem","Destino","Responsável","Status"].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.75rem", color: COR }}>
                     {h}
                   </TableCell>
@@ -861,7 +861,7 @@ function AbaGTA({ uid }) {
                     <TableCell sx={{ fontSize: "0.75rem" }}>
                       {g.municipioDestino}/{g.ufDestino}
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.75rem" }}>{g.tutorResponsavel}</TableCell>
+                    <TableCell sx={{ fontSize: "0.75rem" }}>{g.responsavelAnimal}</TableCell>
                     <TableCell>
                       <Chip label={st.label} color={st.cor} size="small"
                         sx={{ fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
@@ -942,9 +942,9 @@ function AbaGTA({ uid }) {
               <TextField size="small" label="Identificação (chip/brinco/tatuagem)"
                 sx={{ flex: 2 }} value={form.identificacao}
                 onChange={e => setForm({ ...form, identificacao: e.target.value })} />
-              <TextField size="small" label="Tutor" sx={{ flex: 2 }}
-                value={form.tutorResponsavel}
-                onChange={e => setForm({ ...form, tutorResponsavel: e.target.value })} />
+              <TextField size="small" label="Responsável pelo Animal" sx={{ flex: 2 }}
+                value={form.responsavelAnimal}
+                onChange={e => setForm({ ...form, responsavelAnimal: e.target.value })} />
             </Stack>
 
             <TextField size="small" label="Finalidade do trânsito" fullWidth
