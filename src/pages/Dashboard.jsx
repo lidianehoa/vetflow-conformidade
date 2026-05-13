@@ -22,6 +22,7 @@ import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
 import ReactApexChart from "react-apexcharts";
 import { getAreaById } from "../data/rtTypes";
+import { getNivel } from "../data/gamificacao";
 
 const SETORES_LABELS = ["Recepção (A)", "Clínica (B)", "CC (C)", "Higienização (D)", "Medicamentos (E)"];
 
@@ -409,6 +410,29 @@ export default function Dashboard() {
           </Grid>
         ))}
       </Grid>
+
+      <Card sx={{ mb: 2, border: "0.5px solid", borderColor: "divider",
+        background: "linear-gradient(135deg, #1565c008, #e6510008)",
+        borderRadius: 3, p: 2 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Box>
+            <Typography fontWeight={700} fontSize={14}>
+              🎯 Trilha de Auditoria — Diretrizes CFMV/CRMVs 2023
+            </Typography>
+            <Typography fontSize={12} color="text.secondary">
+              {userData?.gamificacao
+                ? `${getNivel(userData.gamificacao?.historico_scores?.[0] ?? 0).emoji} ${getNivel(userData.gamificacao?.historico_scores?.[0] ?? 0).nome} · ${userData.gamificacao?.xp?.toLocaleString("pt-BR") ?? 0} XP`
+                : "Avalie seu compliance com base nas Diretrizes CFMV 2023"
+              }
+            </Typography>
+          </Box>
+          <Button variant="contained" size="small"
+            onClick={() => navigate("/trilha-auditoria")}
+            sx={{ borderRadius: 2, fontWeight: 700, whiteSpace: "nowrap" }}>
+            Auditar Agora
+          </Button>
+        </Stack>
+      </Card>
 
       <Grid container spacing={3}>
         {/* Radar de conformidade */}

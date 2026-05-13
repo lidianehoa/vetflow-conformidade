@@ -23,6 +23,8 @@ import Laudos        from "./pages/Laudos";
 import NovaLaudoSelecao from "./pages/NovaLaudoSelecao";
 import GerarLaudo    from "./pages/GerarLaudo";
 import RotinaDiaria  from "./pages/RotinaDiaria";
+import TrilhaAuditoria from "./pages/TrilhaAuditoria";
+import Conquistas from "./pages/Conquistas";
 
 // Layout & guards
 import Layout         from "./components/Layout";
@@ -106,6 +108,8 @@ export default function App() {
             <Route path="/clinicas/nova"   element={<NovaClinica />} />
             <Route path="/clinicas/:clinicaId" element={<DetalheClinica />} />
             <Route path="/dashboard"       element={<Dashboard />} />
+            <Route path="/trilha-auditoria" element={<TrilhaAuditoria />} />
+            <Route path="/conquistas"       element={<Conquistas />} />
             <Route path="/auditorias/nova" element={<NovaAuditoria />} />
             <Route path="/relatorios-crmv" element={<RelatoriosCRMV />} />
             <Route path="/relatorios-crmv/gerar/:id" element={<GeradorRelatorioCRMV />} />

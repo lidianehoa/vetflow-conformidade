@@ -103,7 +103,7 @@ export const TIPO_PARA_AREA = {
 // ── Mapa tipo → IDs dos checklists disponíveis ───────────────
 export const CHECKLISTS_POR_TIPO = {
   clinica:              ["PA_CK_01", "PA_CK_02", "PA_CK_03", "PA_CK_04"],
-  acougue:              ["POA_CK_01", "POA_CK_02", "POA_CK_03", "POA_CK_04"],
+  acougue:              ["POA_CK_01", "POA_CK_02", "POA_CK_03", "POA_CK_04", "POA_CK_07"],
   industria_alimentos:  ["IA_CK_01", "IA_CK_02"],
   comercio_agronegocio: ["CA_CK_01"],
   producao_rural:       ["PR_CK_01", "PR_CK_02"],
@@ -456,6 +456,12 @@ export const CHECKLISTS = {
       { id:"POA_CK_04_11", categoria:"PACs", desc:"PAC 11 – Temperaturas: registros de câmaras e expedição completos", criterio:"Nenhum dia de produção sem registro de temperatura",                class:"CRÍTICO", peso:10 },
       { id:"POA_CK_04_12", categoria:"PACs", desc:"PAC 12 – Bem-Estar Animal: registros de abate/insensibilização",    criterio:"Checklists de bem-estar pré-abate preenchidos e arquivados",        class:"MAIOR",   peso:5 },
       { id:"POA_CK_04_13", categoria:"PACs", desc:"PAC 13 – Rastreabilidade: lotes identificados e recall atualizado", criterio:"Planilhas de lote completas e simulação de recall registrada",      class:"CRÍTICO", peso:10 },
+      { id:"POA_CK04_14", categoria:"PACs", desc:"Registro diário de calibração de balanças e termômetros atualizado?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK04_15", categoria:"PACs", desc:"Manutenção preventiva de câmaras frias em dia (sem acúmulo de gelo/condensação)?", class:"MAIOR", peso:5 },
+      { id:"POA_CK04_16", categoria:"Autocobranca", desc:"Livro de Ocorrências do RT atualizado digitalmente e exportável (Art. 74)?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK04_17", categoria:"Autocobranca", desc:"Certificados de treinamento de manipuladores (incluindo BEA se aplicável) vigentes?", class:"MAIOR", peso:5 },
+      { id:"POA_CK04_18", categoria:"Fiscalizacao", desc:"Acesso ao sistema de registros digitais garantido para fiscalização do SIF in loco?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK04_19", categoria:"Fraude", desc:"Aditivos controlados (nitrito/nitrato) com estoque e pesagem conferindo com produção?", class:"CRÍTICO", peso:10 }
     ],
     acoesCorretivas: [
       "Identificar PAC com não conformidade e aplicar ação corretiva imediata",
@@ -463,6 +469,34 @@ export const CHECKLISTS = {
       "Registrar desvios no relatório mensal do RT",
       "Planejar treinamento para equipes com desvios recorrentes",
     ],
+  },
+
+  POA_CK_07: {
+    id: "POA_CK_07",
+    area: "producao_origem_animal",
+    nome: "Bem-Estar Animal — Transporte e Abate",
+    objetivo: "Verificar condições de transporte de animais vivos e abate humanitário.",
+    frequencia: "diario",
+    turno: ["recepção"],
+    responsavelPreenchimento: "Responsável BEA / RT",
+    legislacao: "Res. CFMV 1.236/2018; Portaria SDA 736/2022",
+    cabecalho: [
+      { campo: "data",        label: "Data",                  tipo: "date", obrigatorio: true },
+      { campo: "monitor",     label: "Monitor BEA",           tipo: "text", obrigatorio: true },
+      { campo: "visto_rt",    label: "Visto RT",              tipo: "text", obrigatorio: true },
+    ],
+    itens: [
+      { id:"POA_CK07_10", categoria:"Transporte (REBEM)", desc:"Densidade de carga dos caminhões adequada (sem animais amontoados ou caídos)?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK07_11", categoria:"Transporte (REBEM)", desc:"Tempo de viagem e espera no abatedouro dentro dos limites legais?", class:"CRÍTICO", peso:10 },
+      { id:"POA_CK07_12", categoria:"Transporte (REBEM)", desc:"Condições do veículo (ventilação, piso antiderrapante, proteção contra sol) adequadas?", class:"MAIOR", peso:5 },
+      { id:"POA_CK07_13", categoria:"Manejo", desc:"Ausência total de agressão, choques elétricos excessivos ou içamento de animais vivos?", class:"CRÍTICO", peso:10 }
+    ],
+    acoesCorretivas: [
+      "Interromper o descarregamento em caso de maus-tratos ou infrações de BEA",
+      "Registrar Termo de Constatação de Crueldade se necessário",
+      "Isolar animais feridos e acionar abate de emergência",
+      "Notificar fornecedor/transportador sobre as não conformidades"
+    ]
   },
 
   // ════════════════════════════════════════════════════════════

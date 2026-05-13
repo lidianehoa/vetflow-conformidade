@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "descricao": "Templates para resolução dos 20 gaps das Diretrizes CFMV/POA 2023",
+    "versao": "1.0.0",
+    "collection_firestore": "template",
+    "execucao": "node scripts/seeds/seedTemplatesGapsPOA.js",
+    "total_templates": 11,
+    "gaps_resolvidos": "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
+    "referencia": "Diretrizes de Atuação de RT em Estabelecimentos de POA — CFMV/CRMVs 1ª Ed. Dez/2023"
+  },
+  "templates": [
+    {
+      "id": "POA_DOC_APPCC_01",
+      "titulo": "Plano APPCC — Análise de Perigos e Pontos Críticos de Controle",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "Portaria MAPA 46/1998; Codex Alimentarius CAC/RCP 1-1969; RIISPOA Art. 74",
+      "gap": "5 — CRÍTICO",
+      "resolve": "Template completo de elaboração do plano APPCC com 11 etapas e árvore decisória"
+    },
+    {
+      "id": "POA_DOC_CERT_EXPORT_01",
+      "titulo": "Declaração de Respaldo para Certificação Sanitária — Exportação",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "RIISPOA Art. 74; Acordos bilaterais MAPA",
+      "gap": "7 — CRÍTICO",
+      "resolve": "Declaração do RT para respaldo de certificação sanitária ao mercado externo"
+    },
+    {
+      "id": "POA_DOC_POP_ROTULAGEM_01",
+      "titulo": "POP — Registro e Controle de Rotulagem (RTIQs)",
+      "categoria": "POP / Manual",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "RIISPOA Art. 427–434; RDC ANVISA 429/2020; RDC ANVISA 727/2022",
+      "gap": "2 — CRÍTICO",
+      "resolve": "POP com tabela de elementos de rótulo, controles de RTIQs e maltodextrina"
+    },
+    {
+      "id": "POA_DOC_OFICIO_SIF_01",
+      "titulo": "Ofício de Comunicação ao SIF — Paralisação ou Reinício de Atividades",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "RIISPOA Art. 74; Portaria MAPA 393/2021",
+      "gap": "3 — CRÍTICO",
+      "resolve": "Template de ofício formal ao SIF com 72h de antecedência obrigatória"
+    },
+    {
+      "id": "POA_DOC_POP_FORMULACAO_01",
+      "titulo": "POP — Controle de Formulação Centesimal e Combate à Fraude",
+      "categoria": "POP / Manual",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "RIISPOA; RTIQs MAPA; RDC ANVISA 778/2023; Ofício DIPOA 131/2020",
+      "gap": "6+19 — CRÍTICO+MENOR",
+      "resolve": "POP com validação de formulação, controle de aditivos, nitratos/nitritos e maltodextrina"
+    },
+    {
+      "id": "POA_DOC_CHECK_MDES_01",
+      "titulo": "Checklist de Validação Prévia de Plantas e MDES antes do Envio ao SIF",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "RIISPOA Art. 44; Portaria MAPA 393/2021",
+      "gap": "8 — MAIOR",
+      "resolve": "Checklist de 3 seções com verificação in loco antes do protocolo no SIF"
+    },
+    {
+      "id": "POA_DOC_PGRS_FRIGORIFICO_01",
+      "titulo": "PGRS — Gerenciamento de Resíduos e Efluentes — Abatedouro/Frigorífico",
+      "categoria": "Biossegurança e Resíduos",
+      "subtipo": "frigorifico",
+      "legislacao": "Lei 12.305/2010; CONAMA 430/2011; RIISPOA",
+      "gap": "15 — MAIOR",
+      "resolve": "PGRS com segregação explícita linha vermelha vs verde e parâmetros CONAMA 430/2011"
+    },
+    {
+      "id": "POA_DOC_RECALL_RDC655_01",
+      "titulo": "Plano de Recolhimento — Recall (RDC ANVISA 655/2022 — 9 Elementos)",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "RDC ANVISA 655/2022; IN MAPA 161/2022 — PAC 13",
+      "gap": "18 — MENOR",
+      "resolve": "Plano de recall com os 9 elementos obrigatórios da RDC 655/2022 incluindo comunicação à ANVISA"
+    },
+    {
+      "id": "POA_DOC_TERMO_CRUELDADE_01",
+      "titulo": "Termo de Registro de Constatação de Crueldade ou Maus-Tratos a Animais",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "Res. CFMV 1.236/2018; Lei 9.605/1998 Art. 32; Portaria MAPA 365/2021",
+      "gap": "20 — MENOR",
+      "resolve": "Termo de registro formal com notificação aos órgãos competentes"
+    },
+    {
+      "id": "POA_DOC_LIVRO_RT_01",
+      "titulo": "POP — Livro de Registro e Ocorrências do RT (Sistema Digital Auditável)",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "Res. CFMV — ART; RIISPOA Art. 74 §1",
+      "gap": "9+16 — MAIOR",
+      "resolve": "POP com requisitos de auditabilidade RIISPOA Art. 74 §1 para sistemas digitais de PAC e livro do RT"
+    },
+    {
+      "id": "POA_DOC_CADASTRO_PROD_01",
+      "titulo": "Cadastro de Produtores e Fornecedores de Matéria-Prima",
+      "categoria": "Compliance e Jurídico",
+      "subtipo": "producao_origem_animal",
+      "legislacao": "RIISPOA Art. 74; SISBI-POA; Portaria MAPA 558/2022",
+      "gap": "12 — MAIOR",
+      "resolve": "Cadastro estruturado com qualificação, suspensão e tabela de fornecedores ativos"
+    }
+  ]
+}

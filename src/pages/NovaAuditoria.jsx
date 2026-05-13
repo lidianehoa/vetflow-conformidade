@@ -197,7 +197,53 @@ const BLOCOS_POR_AREA = {
         { id:"POA_G4_06", desc:"Resíduos sólidos triados (orgânico, reciclável, industrial perigoso) conforme PGRS?", class:"MAIOR" },
       ]
     },
+    {
+      id: "POA_REGISTRO", titulo: "Fase Extra · Registro de Produtos e PGA/SIGSIF",
+      fase: "gestao", legislacao: "Portaria MAPA 558/2022",
+      itens: [
+        { id:"POA_REG_1", desc:"Todos os produtos expedidos possuem registro ATIVO no PGA/SIGSIF?", class:"CRÍTICO" },
+        { id:"POA_REG_2", desc:"Rótulos impressos conferem 100% com os dados e RTIQ aprovados no registro?", class:"CRÍTICO" },
+        { id:"POA_REG_3", desc:"Aditivos e ingredientes listados no rótulo constam no memorial aprovado?", class:"CRÍTICO" }
+      ]
+    },
+    {
+      id: "POA_OBRIG_SIF", titulo: "Fase Extra · Obrigações Administrativas SIF",
+      fase: "gestao", legislacao: "RIISPOA Art. 74",
+      itens: [
+        { id:"POA_SIF_1", desc:"Dados estatísticos de produção e condenações enviados ao SIF até o 10º dia útil?", class:"CRÍTICO" },
+        { id:"POA_SIF_2", desc:"Paralisação ou reinício de atividades comunicado ao SIF com 72h de antecedência?", class:"CRÍTICO" },
+        { id:"POA_SIF_3", desc:"Processos administrativos/autuações respondidos dentro do prazo legal?", class:"MAIOR" }
+      ]
+    },
+    {
+      id: "POA_FORMULACAO", titulo: "Fase Extra · Formulação e Combate à Fraude",
+      fase: "chao", legislacao: "RDC ANVISA 778/2023",
+      itens: [
+        { id:"POA_FORM_1", desc:"Uso de aditivos (nitritos/nitratos) rigorosamente dentro do limite legal (RDC 778/2023)?", class:"CRÍTICO" },
+        { id:"POA_FORM_2", desc:"Uso de maltodextrina apenas quando o RTIQ autoriza expressamente (direto ou mix)?", class:"CRÍTICO" },
+        { id:"POA_FORM_3", desc:"Controle de pesagem de ingredientes/aditivos assinado e auditável lote a lote?", class:"CRÍTICO" }
+      ]
+    },
+    {
+      id: "POA_TI_PAC", titulo: "Fase Extra · Auditabilidade Digital dos PACs",
+      fase: "gestao", legislacao: "RIISPOA Art. 74 § 1º",
+      itens: [
+        { id:"POA_TI_1", desc:"Sistema de registro digital garante imutabilidade e rastreabilidade de alterações?", class:"CRÍTICO" },
+        { id:"POA_TI_2", desc:"Acesso ao sistema restrito por senhas ou biometria individual (login/senha)?", class:"CRÍTICO" },
+        { id:"POA_TI_3", desc:"Acesso de leitura ao sistema disponibilizado in loco para os fiscais do SIF?", class:"CRÍTICO" }
+      ]
+    },
+    {
+      id: "POA_RISCO_AVES", titulo: "Fase Extra · Gestão de Risco em Abatedouros de Aves",
+      fase: "gestao", legislacao: "Portaria SDA 736/2022",
+      itens: [
+        { id:"POA_AVE_1", desc:"Protocolo de segregação de lotes com histórico de Salmonella spp. aplicado?", class:"CRÍTICO" },
+        { id:"POA_AVE_2", desc:"Destinação de carcaças positivas para Salmonella spp. conforme normas do SIF?", class:"CRÍTICO" },
+        { id:"POA_AVE_3", desc:"Plano de Ação para redução de condenações por miopatias (pectoralis maior) ativo?", class:"MAIOR" }
+      ]
+    }
   ],
+
   comercio_agronegocio: [
     {
       id: "COM1", titulo: "Etapa 1: Armazenamento e Logística",

@@ -2,6 +2,8 @@
 // Execução: node scripts/seeds/seedTemplatesBovinos.js
 // Requer: serviceAccountKey.json na raiz do projeto
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 const admin = require("firebase-admin");
 const serviceAccount = require("../../serviceAccountKey.json");
 
