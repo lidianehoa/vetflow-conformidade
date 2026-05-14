@@ -16,13 +16,18 @@ export default function ProtectedRoute({ children }) {
   const [userData, setUserData] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [selectedClinicaId, setSelectedClinicaId] = useState(() => localStorage.getItem("selectedClinicaId"));
+  const [clinicaData, setClinicaData] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
     if (selectedClinicaId) {
       localStorage.setItem("selectedClinicaId", selectedClinicaId);
+      getDoc(doc(db, "clinicas", selectedClinicaId)).then(snap => {
+        if (snap.exists()) setClinicaData({ id: snap.id, ...snap.data() });
+      });
     } else {
       localStorage.removeItem("selectedClinicaId");
+      setClinicaData(null);
     }
   }, [selectedClinicaId]);
 
@@ -69,7 +74,8 @@ export default function ProtectedRoute({ children }) {
   const contextValue = {
     ...userData,
     selectedClinicaId,
-    setSelectedClinicaId
+    setSelectedClinicaId,
+    clinicaData,
   };
 
   return (

@@ -119,12 +119,10 @@ export default function NovaAuditoria() {
 
 // ── COMPONENTE INTERNO: FLUXO DE NOVA AUDITORIA ──────────────────────────
 function NovaAuditoriaFluxo() {
-  const userData = useUserData();
+  const { uid, selectedClinicaId, clinicaData } = useUserData();
   const navigate = useNavigate();
-  const [smartId] = useState(() => gerarSmartId(userData?.uid));
+  const [smartId] = useState(() => gerarSmartId(uid));
   const [etapa, setEtapa] = useState("inicio");
-  const [clinica, setClinica] = useState(null);
-  const [loadingClinica, setLoadingClinica] = useState(true);
   
   const [tipoRT, setTipoRT] = useState("titular");
   const [identificacao, setIdentificacao] = useState("");
@@ -139,28 +137,19 @@ function NovaAuditoriaFluxo() {
   const [xpGanho, setXpGanho] = useState(0);
 
   useEffect(() => {
-    if (!userData?.selectedClinicaId) {
-      setLoadingClinica(false);
-      return;
-    }
-    setLoadingClinica(true);
-    getDoc(doc(db, "clinicas", userData.selectedClinicaId))
-      .then(snap => { if (snap.exists()) setClinica({ id: snap.id, ...snap.data() }); })
-      .finally(() => setLoadingClinica(false));
-
-    if (userData?.uid) {
-      getDoc(doc(db, "users", userData.uid)).then(snap => {
+    if (uid) {
+      getDoc(doc(db, "users", uid)).then(snap => {
         if (snap.exists()) setGamData(snap.data().gamificacao);
       });
     }
-  }, [userData?.selectedClinicaId, userData?.uid]);
+  }, [uid]);
 
   const concluir = async (resCalculado) => {
     setSalvando(true);
     try {
       const uid = userData.uid;
       const score = resCalculado?.score ?? 0;
-      const areaAtual = clinica?.areaAtuacao || "pequenos_animais";
+      const areaAtual = clinicaData?.areaAtuacao || "pequenos_animais";
 
       let xpFinal = 0;
       let bNovos = [];
@@ -190,7 +179,7 @@ function NovaAuditoriaFluxo() {
 
       await addDoc(collection(db, "auditorias"), {
         userId: uid,
-        clinicaId: clinica?.id || null,
+        clinicaId: clinicaData?.id || null,
         smartId,
         nomeProntuario: identificacao,
         tipoRT,
@@ -214,8 +203,6 @@ function NovaAuditoriaFluxo() {
       setSalvando(false);
     }
   };
-
-  if (loadingClinica) return <Box sx={{ textAlign: "center", py: 10 }}><CircularProgress /></Box>;
 
   return (
     <Box>
@@ -265,7 +252,7 @@ function NovaAuditoriaFluxo() {
 
               <Button
                 variant="contained" fullWidth size="large"
-                disabled={!identificacao.trim() || !clinica}
+                disabled={!identificacao.trim() || !clinicaData}
                 onClick={() => setEtapa("auditoria")}
                 sx={{ bgcolor: "#1b4332", py: 2, borderRadius: 3, fontWeight: 800 }}
               >
@@ -275,12 +262,12 @@ function NovaAuditoriaFluxo() {
           </Grid>
           
           <Grid item xs={12} md={5}>
-            {clinica && (
+            {clinicaData && (
               <Card variant="outlined" sx={{ borderRadius: 4, bgcolor: "#f9fdfa" }}>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight={800} color="#1b4332">Estabelecimento Selecionado</Typography>
-                  <Typography variant="h6" fontWeight={900} sx={{ mt: 1 }}>{clinica.nomeFantasia}</Typography>
-                  <Typography variant="caption" color="text.secondary">{LABEL_TIPO[clinica.tipo]}</Typography>
+                  <Typography variant="h6" fontWeight={900} sx={{ mt: 1 }}>{clinicaData.nomeFantasia}</Typography>
+                  <Typography variant="caption" color="text.secondary">{LABEL_TIPO[clinicaData.tipo]}</Typography>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="caption" fontWeight={700} color="text.secondary">SMART ID: {smartId}</Typography>
                 </CardContent>
@@ -294,9 +281,11 @@ function NovaAuditoriaFluxo() {
         <Box>
           {tipoAuditoria === "trilha_cfmv" ? (
             <TrilhaGuiada 
-              area={clinica?.areaAtuacao || "pequenos_animais"} 
+              area={clinicaData?.areaAtuacao || "pequenos_animais"} 
               respostas={respostas} 
               setRespostas={setRespostas}
+              parecerRT={parecerRT}
+              setParecerRT={setParecerRT}
               onConcluir={concluir}
               salvando={salvando}
               onVoltar={() => setEtapa("inicio")}
@@ -304,9 +293,11 @@ function NovaAuditoriaFluxo() {
           ) : (
             <AuditoriaPadrao 
               tipo={tipoAuditoria}
-              clinica={clinica}
+              clinica={clinicaData}
               respostas={respostas}
               setRespostas={setRespostas}
+              parecerRT={parecerRT}
+              setParecerRT={setParecerRT}
               evidencias={evidencias}
               setEvidencias={setEvidencias}
               onConcluir={concluir}
@@ -323,6 +314,11 @@ function NovaAuditoriaFluxo() {
           <Typography variant="h4" fontWeight={900} color="#1b4332">Auditoria Concluída!</Typography>
           <Typography variant="h6" sx={{ mt: 1, mb: 4 }}>Score Final: {scoreFinal}%</Typography>
           
+          <Box sx={{ mb: 4, p: 3, bgcolor: "#f9fdfa", borderRadius: 3, border: "1px solid #e8f5e9", textAlign: "left", mx: "auto", maxWidth: 600 }}>
+            <Typography variant="subtitle2" fontWeight={800} color="#1b4332" mb={1}>Parecer Técnico Registrado:</Typography>
+            <Typography variant="body2" sx={{ fontStyle: "italic", color: "text.secondary" }}>"{parecerRT}"</Typography>
+          </Box>
+
           {xpGanho > 0 && (
             <Chip icon={<Star />} label={`+${xpGanho} XP Ganhos`} sx={{ mb: 2, bgcolor: "#fff9c4", color: "#f57f17", fontWeight: 700 }} />
           )}
@@ -349,7 +345,7 @@ function NovaAuditoriaFluxo() {
 }
 
 // ── SUBCOMPONENTE: TRILHA GUIADA (GAMIFICADA) ──────────────────────────
-function TrilhaGuiada({ area, respostas, setRespostas, onConcluir, salvando, onVoltar }) {
+function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, onConcluir, salvando, onVoltar }) {
   const { SECOES_TRILHA } = getGamificacaoPorArea(area);
   const [secaoIdx, setSecaoIdx] = useState(0);
   const secao = SECOES_TRILHA[secaoIdx];
@@ -398,6 +394,20 @@ function TrilhaGuiada({ area, respostas, setRespostas, onConcluir, salvando, onV
         ))}
       </Stack>
 
+      {isUltima && (
+        <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 4, border: "1.5px solid #e8f5e9", bgcolor: "#f9fdfa" }}>
+          <Typography variant="subtitle2" fontWeight={800} color="#1b4332" mb={2}>
+            Parecer Técnico do RT (Observações Finais)
+          </Typography>
+          <TextField
+            multiline rows={4} fullWidth
+            placeholder="Descreva aqui as não conformidades observadas, recomendações técnicas e prazos para adequação..."
+            value={parecerRT || ""}
+            onChange={(e) => setParecerRT(e.target.value)}
+          />
+        </Paper>
+      )}
+
       <Box sx={{ display: "flex", justifyContent: "space-between", position: "sticky", bottom: 20, bgcolor: "rgba(255,255,255,0.9)", p: 2, borderRadius: 3, backdropFilter: "blur(4px)", border: "1px solid #eee" }}>
         <Button startIcon={<NavigateBefore />} onClick={() => secaoIdx === 0 ? onVoltar() : setSecaoIdx(s => s - 1)}>
           {secaoIdx === 0 ? "Setup" : "Anterior"}
@@ -405,11 +415,11 @@ function TrilhaGuiada({ area, respostas, setRespostas, onConcluir, salvando, onV
         {isUltima ? (
           <Button 
             variant="contained" color="secondary" 
-            disabled={salvando}
+            disabled={salvando || !parecerRT?.trim()}
             onClick={() => onConcluir(calcularScoreTrilha(respostas, SECOES_TRILHA))}
             sx={{ px: 4, fontWeight: 900 }}
           >
-            {salvando ? <CircularProgress size={24} /> : "Finalizar Trilha ⭐"}
+            {salvando ? <CircularProgress size={24} color="inherit" /> : "Finalizar Trilha ⭐"}
           </Button>
         ) : (
           <Button variant="contained" color="secondary" endIcon={<NavigateNext />} onClick={() => setSecaoIdx(s => s + 1)}>
@@ -422,7 +432,7 @@ function TrilhaGuiada({ area, respostas, setRespostas, onConcluir, salvando, onV
 }
 
 // ── SUBCOMPONENTE: AUDITORIA PADRÃO (ROTINA / COMPLETA) ──────────────────
-function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, evidencias, setEvidencias, onConcluir, salvando, onVoltar }) {
+function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, parecerRT, setParecerRT, evidencias, setEvidencias, onConcluir, salvando, onVoltar }) {
   const ids = CHECKLISTS_POR_TIPO[clinica?.tipo] || [];
   const checklists = ids.map(id => CHECKLISTS[id]).filter(Boolean);
 
@@ -497,10 +507,36 @@ function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, evidencias, s
         </Accordion>
       ))}
 
+      {/* Resumo de Não Conformidades */}
+      {Object.values(respostas).includes("nao_conforme") && (
+        <Alert severity="warning" sx={{ mt: 4, borderRadius: 3, border: "1px solid #ff980040" }}>
+          <Typography variant="subtitle2" fontWeight={800}>Atenção: Itens Críticos Encontrados</Typography>
+          <Typography variant="caption">Foram identificadas não conformidades que precisam de plano de ação imediato.</Typography>
+        </Alert>
+      )}
+
+      <Paper elevation={0} sx={{ p: 3, mt: 3, borderRadius: 4, border: "1.5px solid #e8f5e9", bgcolor: "#f9fdfa" }}>
+        <Typography variant="subtitle2" fontWeight={800} color="#1b4332" mb={2}>
+          Parecer Técnico do RT (Observações Finais)
+        </Typography>
+        <TextField
+          multiline rows={4} fullWidth
+          placeholder="Descreva aqui as não conformidades observadas, recomendações técnicas e prazos para adequação..."
+          value={parecerRT || ""}
+          onChange={(e) => setParecerRT(e.target.value)}
+        />
+      </Paper>
+
       <Box sx={{ mt: 4, display: "flex", gap: 2 }}>
         <Button variant="outlined" onClick={onVoltar} sx={{ flex: 1 }}>Voltar</Button>
-        <Button variant="contained" fullWidth onClick={handleConcluir} disabled={salvando} sx={{ flex: 2, bgcolor: "#1b4332" }}>
-          {salvando ? "Salvando..." : "Concluir Auditoria"}
+        <Button 
+          variant="contained" 
+          fullWidth 
+          onClick={handleConcluir} 
+          disabled={salvando || !parecerRT?.trim()} 
+          sx={{ flex: 2, bgcolor: "#1b4332", "&:hover": { bgcolor: "#2d6a4f" } }}
+        >
+          {salvando ? <CircularProgress size={24} color="inherit" /> : "Concluir e Salvar Relatório"}
         </Button>
       </Box>
     </Box>
