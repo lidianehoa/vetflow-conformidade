@@ -29,7 +29,8 @@ const ICON_MAP = {
 
 export default function TrilhaAuditoria() {
   const navigate = useNavigate();
-  const { userData, clinicaData } = useUserData();
+  const { uid, plan, clinicaData } = useUserData();
+  const userData = { uid, plan }; // Compatibilidade local
 
   // State
   const [etapa, setEtapa] = useState("intro");       // intro | auditando | resultado | conquistas

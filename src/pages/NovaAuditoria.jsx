@@ -12,6 +12,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import InfoIcon from "@mui/icons-material/Info";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import HistoryIcon from "@mui/icons-material/History";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -24,10 +25,13 @@ import Factory from "@mui/icons-material/Factory";
 import Groups from "@mui/icons-material/Groups";
 import Nature from "@mui/icons-material/Nature";
 import LocalShipping from "@mui/icons-material/LocalShipping";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
-import { db, auth } from "../firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, auth, storage } from "../firebase";
+import { gerarParecerAuditoria, gerarPlanoAcao } from "../services/firebaseAI";
 import { 
   getGamificacaoPorArea, 
   getNivel, 
@@ -147,7 +151,6 @@ function NovaAuditoriaFluxo() {
   const concluir = async (resCalculado) => {
     setSalvando(true);
     try {
-      const uid = userData.uid;
       const score = resCalculado?.score ?? 0;
       const areaAtual = clinicaData?.areaAtuacao || "pequenos_animais";
 
@@ -162,7 +165,9 @@ function NovaAuditoriaFluxo() {
         const auditorias_locais = [{ ...resCalculado, respostas,
           itensConformes: Object.entries(respostas).filter(([,v]) => v === "conforme").map(([id]) => ({ id })) }];
         
-        bNovos = BADGES.filter(b => !gamData?.badges?.includes(b.id) && b.criterio?.(userData, auditorias_locais));
+        // Passa um objeto simulando userData para os critérios
+        const mockUserData = { uid, clinicaData };
+        bNovos = BADGES.filter(b => !gamData?.badges?.includes(b.id) && b.criterio?.(mockUserData, auditorias_locais));
 
         const novoXP = (gamData?.xp ?? 0) + xpFinal + bNovos.reduce((acc, b) => acc + (b.xp ?? 0), 0);
         const novo_hist = [score, ...(gamData?.historico_scores ?? [])].slice(0, 12);
@@ -286,6 +291,9 @@ function NovaAuditoriaFluxo() {
               setRespostas={setRespostas}
               parecerRT={parecerRT}
               setParecerRT={setParecerRT}
+              evidencias={evidencias}
+              setEvidencias={setEvidencias}
+              smartId={smartId}
               onConcluir={concluir}
               salvando={salvando}
               onVoltar={() => setEtapa("inicio")}
@@ -344,8 +352,62 @@ function NovaAuditoriaFluxo() {
   );
 }
 
+// ── COMPONENTE DE UPLOAD DE FOTO ──────────────────────────────────────
+function FotoEvidencia({ itemId, evidencias, setEvidencias, auditoriaId }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleCapture = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `auditorias/${auditoriaId}/${itemId}_${Date.now()}.jpg`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setEvidencias(prev => ({ ...prev, [itemId]: url }));
+    } catch (err) {
+      console.error("Erro no upload da foto:", err);
+      alert("Erro ao enviar foto. Verifique sua conexão.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <input
+        accept="image/*"
+        id={`icon-button-file-${itemId}`}
+        type="file"
+        capture="environment"
+        style={{ display: "none" }}
+        onChange={handleCapture}
+      />
+      <label htmlFor={`icon-button-file-${itemId}`}>
+        <IconButton 
+          color="primary" 
+          aria-label="upload picture" 
+          component="span" 
+          disabled={uploading}
+          sx={{ bgcolor: evidencias[itemId] ? "#e8f5e9" : "#f5f5f5" }}
+        >
+          {uploading ? <CircularProgress size={20} color="inherit" /> : <PhotoCameraIcon />}
+        </IconButton>
+      </label>
+      {evidencias[itemId] && (
+        <Box 
+          component="img" 
+          src={evidencias[itemId]} 
+          sx={{ width: 40, height: 40, borderRadius: 1, objectFit: "cover", border: "1px solid #ddd" }} 
+        />
+      )}
+    </Box>
+  );
+}
+
 // ── SUBCOMPONENTE: TRILHA GUIADA (GAMIFICADA) ──────────────────────────
-function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, onConcluir, salvando, onVoltar }) {
+function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, evidencias, setEvidencias, smartId, onConcluir, salvando, onVoltar }) {
   const { SECOES_TRILHA } = getGamificacaoPorArea(area);
   const [secaoIdx, setSecaoIdx] = useState(0);
   const secao = SECOES_TRILHA[secaoIdx];
@@ -377,28 +439,83 @@ function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, 
       <Stack spacing={2} mb={5}>
         {secao.itens.map(item => (
           <Paper key={item.id} sx={{ p: 3, borderRadius: 3, border: "1.5px solid", borderColor: respostas[item.id] ? secao.cor : "#f3e5f5" }}>
-            <Stack direction="row" spacing={1} mb={2}>
-              <Chip label={item.class} size="small" sx={{ fontSize: 10, fontWeight: 700 }} />
-              <Typography variant="body1" fontWeight={700}>{item.desc}</Typography>
+            <Stack direction="row" spacing={1} mb={2} alignItems="flex-start">
+              <Box sx={{ flex: 1 }}>
+                <Chip label={item.class} size="small" sx={{ fontSize: 10, fontWeight: 700, mb: 1 }} />
+                <Typography variant="body1" fontWeight={700}>{item.desc}</Typography>
+              </Box>
+              
+              {/* Câmera para evidência */}
+              <FotoEvidencia 
+                itemId={item.id} 
+                evidencias={evidencias} 
+                setEvidencias={setEvidencias} 
+                auditoriaId={smartId} 
+              />
             </Stack>
-            <RadioGroup 
-              row value={respostas[item.id] || ""} 
-              onChange={(e) => handleResposta(item.id, e.target.value)}
-              sx={{ gap: 2 }}
-            >
-              <FormControlLabel value="conforme" control={<Radio color="success" />} label="✅ Conforme" />
-              <FormControlLabel value="nao_conforme" control={<Radio color="error" />} label="❌ NC" />
-              <FormControlLabel value="na" control={<Radio />} label="N/A" />
-            </RadioGroup>
+            
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1 }}>
+              <RadioGroup 
+                row value={respostas[item.id] || ""} 
+                onChange={(e) => handleResposta(item.id, e.target.value)}
+                sx={{ gap: 2 }}
+              >
+                <FormControlLabel value="conforme" control={<Radio color="success" />} label="✅ Conforme" />
+                <FormControlLabel value="nao_conforme" control={<Radio color="error" />} label="❌ NC" />
+                <FormControlLabel value="na" control={<Radio />} label="N/A" />
+              </RadioGroup>
+              {respostas[item.id] === "nao_conforme" && (
+                <Button
+                  size="small"
+                  variant="text"
+                  color="secondary"
+                  startIcon={<AutoAwesomeIcon sx={{ fontSize: 14 }} />}
+                  onClick={async () => {
+                    const plano = await gerarPlanoAcao(
+                      item.desc,
+                      secao.referencia || "CFMV 1275",
+                      area,
+                      item.class
+                    );
+                    alert(`Plano 5W2H Sugerido:\n\nO que: ${plano.o_que}\nQuem: ${plano.quem}\nQuando: ${plano.quando}\nComo: ${plano.como}`);
+                  }}
+                  sx={{ textTransform: "none", fontSize: 10, fontWeight: 700 }}
+                >
+                  Plano 5W2H
+                </Button>
+              )}
+            </Box>
           </Paper>
         ))}
       </Stack>
 
       {isUltima && (
-        <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 4, border: "1.5px solid #e8f5e9", bgcolor: "#f9fdfa" }}>
-          <Typography variant="subtitle2" fontWeight={800} color="#1b4332" mb={2}>
-            Parecer Técnico do RT (Observações Finais)
-          </Typography>
+        <Paper elevation={0} sx={{ p: 3, mt: 3, borderRadius: 3, border: "1.5px solid #e8f5e9", bgcolor: "#f1f8f6" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography variant="subtitle2" fontWeight={800} color="#1b4332">
+              Parecer Técnico do RT (Observações Finais)
+            </Typography>
+            <Button 
+              size="small" 
+              variant="outlined" 
+              startIcon={<AutoAwesomeIcon />}
+              onClick={async () => {
+                const resCalculado = calcularScoreTrilha(respostas, SECOES_TRILHA);
+                const ncs = Object.entries(respostas).filter(([id, v]) => v === "nao_conforme");
+                const parecer = await gerarParecerAuditoria({
+                  score: resCalculado.score,
+                  tipo: area,
+                  criticosNC: ncs.length,
+                  maioresNC: 0,
+                  secoesCriticas: [secao.nome]
+                });
+                setParecerRT(parecer.parecer_tecnico);
+              }}
+              sx={{ borderRadius: 2, textTransform: "none", fontSize: 11 }}
+            >
+              Sugerir com IA
+            </Button>
+          </Box>
           <TextField
             multiline rows={4} fullWidth
             placeholder="Descreva aqui as não conformidades observadas, recomendações técnicas e prazos para adequação..."
@@ -475,8 +592,9 @@ function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, parecerRT, se
             <TableContainer>
               <Table size="small">
                 <TableHead sx={{ bgcolor: "#f9fbf9" }}>
-                  <TableRow>
+                  <TableRow sx={{ background: "#f9fbf9" }}>
                     <TableCell sx={{ fontWeight: 800 }}>Item</TableCell>
+                    <TableCell sx={{ fontWeight: 800, width: 80 }}>Foto</TableCell>
                     <TableCell sx={{ fontWeight: 800, width: 160 }}>Resultado</TableCell>
                   </TableRow>
                 </TableHead>
@@ -488,15 +606,44 @@ function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, parecerRT, se
                         <Typography variant="caption" color="text.secondary">{item.class}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Select 
-                          size="small" fullWidth 
-                          value={respostas[item.id] || ""} 
-                          onChange={e => setRespostas(p => ({...p, [item.id]: e.target.value}))}
-                        >
-                          <MenuItem value="conforme">✅ C</MenuItem>
-                          <MenuItem value="nao_conforme">❌ NC</MenuItem>
-                          <MenuItem value="na">N/A</MenuItem>
-                        </Select>
+                        <FotoEvidencia 
+                          itemId={item.id} 
+                          evidencias={evidencias} 
+                          setEvidencias={setEvidencias} 
+                          auditoriaId={clinica?.id || "temp"} 
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <Select 
+                            size="small" fullWidth 
+                            value={respostas[item.id] || ""} 
+                            onChange={e => setRespostas(p => ({...p, [item.id]: e.target.value}))}
+                          >
+                            <MenuItem value="conforme">✅ C</MenuItem>
+                            <MenuItem value="nao_conforme">❌ NC</MenuItem>
+                            <MenuItem value="na">N/A</MenuItem>
+                          </Select>
+                          {respostas[item.id] === "nao_conforme" && (
+                            <Tooltip title="Gerar Plano 5W2H com IA">
+                              <IconButton 
+                                size="small" 
+                                color="secondary"
+                                onClick={async () => {
+                                  const plano = await gerarPlanoAcao(
+                                    item.desc,
+                                    item.legislacao || "norma técnica",
+                                    clinica?.tipo,
+                                    item.class
+                                  );
+                                  alert(`Plano 5W2H Sugerido:\n\nO que: ${plano.o_que}\nQuem: ${plano.quem}\nQuando: ${plano.quando}\nComo: ${plano.como}`);
+                                }}
+                              >
+                                <AutoAwesomeIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -516,9 +663,30 @@ function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, parecerRT, se
       )}
 
       <Paper elevation={0} sx={{ p: 3, mt: 3, borderRadius: 4, border: "1.5px solid #e8f5e9", bgcolor: "#f9fdfa" }}>
-        <Typography variant="subtitle2" fontWeight={800} color="#1b4332" mb={2}>
-          Parecer Técnico do RT (Observações Finais)
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Typography variant="subtitle2" fontWeight={800} color="#1b4332">
+            Parecer Técnico do RT (Observações Finais)
+          </Typography>
+          <Button 
+            size="small" 
+            variant="outlined" 
+            startIcon={<AutoAwesomeIcon />}
+            onClick={async () => {
+              const ncs = Object.entries(respostas).filter(([, v]) => v === "nao_conforme");
+              const parecer = await gerarParecerAuditoria({
+                score: 50, // Temporário para teste
+                tipo: clinica?.tipo,
+                criticosNC: ncs.length,
+                maioresNC: 0,
+                secoesCriticas: checklists.map(c => c.nome)
+              });
+              setParecerRT(parecer.parecer_tecnico);
+            }}
+            sx={{ borderRadius: 2, textTransform: "none", fontSize: 11 }}
+          >
+            Sugerir com IA
+          </Button>
+        </Box>
         <TextField
           multiline rows={4} fullWidth
           placeholder="Descreva aqui as não conformidades observadas, recomendações técnicas e prazos para adequação..."

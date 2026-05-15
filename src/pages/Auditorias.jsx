@@ -199,8 +199,12 @@ export default function Auditorias() {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: "flex", gap: 0.5 }}>
-                            <Tooltip title="PDF (em breve)">
-                              <IconButton size="small" sx={{ color: "#546e7a" }}>
+                            <Tooltip title="Visualizar Relatório / PDF">
+                              <IconButton 
+                                size="small" 
+                                sx={{ color: "#1b4332" }}
+                                onClick={() => navigate(`/auditorias/visualizar/${aud.id}`)}
+                              >
                                 <PictureAsPdfIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>

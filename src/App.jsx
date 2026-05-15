@@ -27,6 +27,8 @@ import TrilhaAuditoria from "./pages/TrilhaAuditoria";
 import Conquistas from "./pages/Conquistas";
 import HubAuditoria from "./pages/HubAuditoria";
 import HubDocumentacao from "./pages/HubDocumentacao";
+import VisualizadorAuditoria from "./pages/VisualizadorAuditoria";
+import Auditorias from "./pages/Auditorias";
 
 // Layout & guards
 import Layout         from "./components/Layout";
@@ -107,12 +109,14 @@ export default function App() {
           >
             <Route index element={<CentralRT />} />
             <Route path="/central-rt"      element={<CentralRT />} />
+            <Route path="/clinicas"        element={<CentralRT />} />
             <Route path="/clinicas/nova"   element={<NovaClinica />} />
             <Route path="/dashboard"       element={<Dashboard />} />
             
             {/* Hubs */}
-            <Route path="/auditorias"      element={<NovaAuditoria />} />
+            <Route path="/auditorias"      element={<Auditorias />} />
             <Route path="/auditorias/nova" element={<NovaAuditoria />} />
+            <Route path="/auditorias/visualizar/:id" element={<VisualizadorAuditoria />} />
             <Route path="/documentacao"    element={<HubDocumentacao />} />
 
             {/* Sub-páginas de formulários/edição (Full Screen) */}

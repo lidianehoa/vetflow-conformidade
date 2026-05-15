@@ -20,7 +20,9 @@ import {
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Accordion, AccordionSummary, AccordionDetails, Button } from "@mui/material";
+import { validarAdmissaoPet } from "../services/firebaseAI";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 export default function ChecklistMensal() {
   const userData = useUserData();
@@ -183,6 +185,61 @@ export default function ChecklistMensal() {
           </AccordionDetails>
         </Accordion>
       ))}
+      {/* IA: Validador de Admissão de Pet (Específico para Creche/Hotel) */}
+      {clinicaSelecionada?.tipo === "creche_hotel" && (
+        <Paper elevation={0} sx={{ p: 4, mt: 4, borderRadius: 4, border: "2px solid #6a1b9a20", bgcolor: "#f3e5f510" }}>
+          <Stack direction="row" spacing={2} alignItems="center" mb={3}>
+            <AutoAwesomeIcon sx={{ color: "#6a1b9a" }} />
+            <Box>
+              <Typography variant="h6" fontWeight={800} color="#6a1b9a">Assistente de Admissão IA</Typography>
+              <Typography variant="caption" color="text.secondary">Preencha os dados sanitários do pet para validar a entrada.</Typography>
+            </Box>
+          </Stack>
+          
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Nome do Pet" id="adm-nome" />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Validade Raiva" id="adm-raiva" placeholder="Ex: 10/2026" />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Validade V8/V10" id="adm-v10" />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Validade Bordetella" id="adm-bordetella" />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Data Vermífugo" id="adm-vermifugo" />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth size="small" label="Data Ecto" id="adm-ecto" />
+            </Grid>
+          </Grid>
+
+          <Button 
+            variant="contained" 
+            fullWidth 
+            onClick={async () => {
+              const pet = {
+                nome: document.getElementById("adm-nome").value,
+                vacinacaoRaiva: document.getElementById("adm-raiva").value,
+                vacinacaoV8V10: document.getElementById("adm-v10").value,
+                vacinacaoBordetella: document.getElementById("adm-bordetella").value,
+                vermifugacao: document.getElementById("adm-vermifugo").value,
+                ectoparasitas: document.getElementById("adm-ecto").value,
+                dataAdmissao: new Date().toLocaleDateString("pt-BR")
+              };
+              
+              const analise = await validarAdmissaoPet(pet);
+              alert(`ANÁLISE DE ADMISSÃO:\n\nStatus: ${analise.status_admissao}\n\nEntrada Permitida: ${analise.pode_entrar ? 'SIM' : 'NÃO'}\n\nRecomendação: ${analise.recomendacao}\n\nPendências: ${analise.pendencias?.join(", ") || "Nenhuma"}`);
+            }}
+            sx={{ bgcolor: "#6a1b9a", "&:hover": { bgcolor: "#4a148c" }, py: 1.5, fontWeight: 800 }}
+          >
+            Validar Protocolo de Admissão
+          </Button>
+        </Paper>
+      )}
     </Box>
   );
 }

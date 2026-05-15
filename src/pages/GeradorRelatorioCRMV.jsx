@@ -9,6 +9,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import { collection, query, where, getDocs, doc, getDoc, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
+import { gerarResumoMensal } from "../services/firebaseAI";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { useUserData } from "../components/ProtectedRoute";
 import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
@@ -140,8 +142,30 @@ export default function GeradorRelatorioCRMV() {
 
         {(id === "atividades" || id === "constatacao") && (
           <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <Typography variant="caption" fontWeight={800} color="text.secondary">PARECER TÉCNICO / OBSERVAÇÕES</Typography>
+              <Button 
+                size="small" 
+                variant="outlined" 
+                startIcon={<AutoAwesomeIcon />}
+                onClick={async () => {
+                  const texto = await gerarResumoMensal({
+                    mesReferencia: semestre,
+                    tipoEstabelecimento: clinicaAtual?.tipo,
+                    numVisitas: auditoriasFiltradas.length,
+                    scoreMedio: auditoriasFiltradas.reduce((a, b) => a + (b.score || 0), 0) / (auditoriasFiltradas.length || 1),
+                    acoesRealizadas: "Visitas técnicas de conformidade",
+                    naoConformidades: "Verificadas em auditoria",
+                    pendencias: "Em regularização"
+                  });
+                  setParecerEditavel(texto);
+                }}
+                sx={{ borderRadius: 2, textTransform: "none", fontSize: 11 }}
+              >
+                Gerar com IA
+              </Button>
+            </Box>
             <TextField
-              label="Editar Parecer Técnico / Observações"
               fullWidth
               multiline
               rows={3}

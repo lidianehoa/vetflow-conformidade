@@ -3,6 +3,7 @@ import {
   Box, Typography, Grid, Paper, Button, Chip, Card, CardContent,
   LinearProgress, Divider, Alert, Stack,
   Accordion, AccordionSummary, AccordionDetails,
+  Dialog, TextField, CircularProgress, IconButton
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -21,9 +22,13 @@ import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PsychologyIcon from "@mui/icons-material/Psychology";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SendIcon from "@mui/icons-material/Send";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { consultarAssistenteCompliance, gerarDiagnosticoBVO } from "../services/firebaseAI";
 import { useUserData } from "../components/ProtectedRoute";
 import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
@@ -74,7 +79,8 @@ function VencimentoItem({ label, venc }) {
 }
 
 export default function Dashboard() {
-  const userData = useUserData();
+  const { uid, plan, especialidades, selectedClinicaId, clinicaData } = useUserData();
+  const userData = { uid, plan, especialidades, selectedClinicaId, clinicaData }; // Mantém compatibilidade com o resto do código
   const { pode, planoMinimo } = usePlano(userData);
   const navigate = useNavigate();
   const [scores, setScores] = useState([80, 75, 60, 85, 70]);
@@ -87,6 +93,130 @@ export default function Dashboard() {
   const [auditoriasAltas, setAuditoriasAltas] = useState(0);
   const [ultimaData, setUltimaData] = useState("—");
   const [estoqueCritico, setEstoqueCritico] = useState(0);
+
+  // Estados para IA
+  const [chatOpen, setChatOpen] = useState(false);
+  const [pergunta, setPergunta] = useState("");
+  const [mensagens, setMensagens] = useState([]);
+  const [pensando, setPensando] = useState(false);
+  const [docTexto, setDocTexto] = useState("");
+  const [nomeDoc, setNomeDoc] = useState("");
+
+  const extractTextFromPDF = async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      fullText += textContent.items.map(item => item.str).join(" ") + "\n";
+    }
+    return fullText;
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || file.type !== "application/pdf") {
+      alert("Por favor, selecione um arquivo PDF.");
+      return;
+    }
+    try {
+      setPensando(true);
+      const text = await extractTextFromPDF(file);
+      setDocTexto(text);
+      setNomeDoc(file.name);
+      setMensagens(prev => [...prev, { role: "user", text: `📎 Arquivo anexado: ${file.name}` }]);
+    } catch (err) {
+      console.error("Erro ao ler PDF:", err);
+      alert("Erro ao processar PDF.");
+    } finally {
+      setPensando(false);
+    }
+  };
+
+  const perguntarIA = async () => {
+    if (!pergunta.trim()) return;
+    const q = pergunta;
+    const msgUser = { role: "user", text: q };
+    setMensagens(prev => [...prev, msgUser]);
+    setPergunta("");
+    setPensando(true);
+
+    try {
+      const text = await consultarAssistenteCompliance(
+        q,
+        userData?.especialidades?.join(", ") || "Clínica Veterinária",
+        unidade?.tipo || "clinica",
+        docTexto
+      );
+      
+      setMensagens(prev => [...prev, { role: "ia", text }]);
+      setDocTexto(""); // Limpa após usar
+      setNomeDoc("");
+    } catch (err) {
+      console.error("Erro na IA:", err);
+      const erroMsg = err.message?.includes("not found") 
+        ? "❌ Erro: Template não encontrado no Firebase Console. Verifique os IDs."
+        : `❌ Erro ao processar: ${err.message || "Tente novamente."}`;
+      setMensagens(prev => [...prev, { role: "ia", text: erroMsg }]);
+    } finally {
+      setPensando(false);
+    }
+  };
+
+  const handleDiagnostico360 = async () => {
+    if (!docTexto || docTexto.trim().length < 5) {
+      setMensagens(prev => [...prev, { role: "ia", text: "⚠️ O texto do PDF não foi extraído corretamente. Tente reenviar o arquivo ou copiar o texto manualmente." }]);
+      return;
+    }
+    setPensando(true);
+    try {
+      console.log("Iniciando Diagnóstico 360 com texto:", docTexto.substring(0, 100) + "...");
+      const diag = await gerarAnaliseLegislativa(
+        docTexto, 
+        unidade?.cidade || "Campo Grande", 
+        unidade?.uf || "MS",
+        unidade?.tipo || "Clínica Veterinária"
+      );
+      
+      let resFormatada = `🛡️ **AGENTE VERTOS INTELLIGENCE — ANALISTA LEGISLATIVO SÊNIOR**\n`;
+      resFormatada += `📍 **Setor Identificado:** ${diag.setor_atuacao || 'PET'}\n`;
+      resFormatada += `📉 **Risco de Multa:** ${diag.analise_de_risco_multa}\n\n`;
+      
+      resFormatada += `🧐 **RESUMO DA FISCALIZAÇÃO:**\n${diag.resumo_fiscalizacao}\n\n`;
+
+      if (diag.exigencias_documentais?.length > 0) {
+        resFormatada += `📂 **EXIGÊNCIAS DOCUMENTAIS (Organização de Pastas):**\n`;
+        diag.exigencias_documentais.forEach(item => resFormatada += `• ${item}\n`);
+        resFormatada += `\n`;
+      }
+      
+      if (diag.exigencias_estruturais?.length > 0) {
+        resFormatada += `🏗️ **EXIGÊNCIAS ESTRUTURAIS (Ações Físicas):**\n`;
+        diag.exigencias_estruturais.forEach(item => resFormatada += `• ${item}\n`);
+        resFormatada += `\n`;
+      }
+      
+      resFormatada += `🕒 **PRAZOS IDENTIFICADOS:** ${diag.prazos_identificados}\n\n`;
+      
+      resFormatada += `📜 **BASE LEGAL CITADA:**\n`;
+      diag.leis_e_resolucoes_citadas?.forEach(lei => resFormatada += `• ${lei}\n`);
+      
+      resFormatada += `\n💡 **ORIENTAÇÃO PRÁTICA PARA O RT:**\n${diag.orientacao_praticas_rt}`;
+
+      setMensagens(prev => [...prev, { role: "ia", text: resFormatada }]);
+      setDocTexto("");
+      setNomeDoc("");
+    } catch (err) {
+      console.error("Erro no 360 Sênior:", err);
+      const erroMsg = err.message?.includes("not found") 
+        ? "❌ Erro: Template 'vertos-diagnostico-bvo-v1' não encontrado no Console."
+        : `❌ Falha ao gerar blindagem sênior: ${err.message}`;
+      setMensagens(prev => [...prev, { role: "ia", text: erroMsg }]);
+    } finally {
+      setPensando(false);
+    }
+  };
 
   // Carregar dados da unidade (vencimentos + área RT)
   useEffect(() => {
@@ -697,14 +827,30 @@ export default function Dashboard() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Canal direto para dúvidas sobre fiscalização, contratos e Blindagem Jurídica.
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  fullWidth 
-                  onClick={() => navigate("/suporte")}
-                  sx={{ borderColor: "#1b4332", color: "#1b4332", fontWeight: 800 }}
-                >
-                  Falar com Consultor
-                </Button>
+                <Stack spacing={1}>
+                  <Button 
+                    variant="contained" 
+                    fullWidth 
+                    onClick={() => setChatOpen(true)}
+                    startIcon={<AutoAwesomeIcon />}
+                    sx={{ 
+                      background: "linear-gradient(45deg, #1b4332 30%, #52b788 90%)", 
+                      color: "#fff", 
+                      fontWeight: 900,
+                      boxShadow: "0 4px 14px 0 rgba(27,67,50,0.3)"
+                    }}
+                  >
+                    Consultar IA Jurídica
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    onClick={() => navigate("/suporte")}
+                    sx={{ borderColor: "#1b4332", color: "#1b4332", fontWeight: 800, border: "1.5px solid" }}
+                  >
+                    Falar com Consultor
+                  </Button>
+                </Stack>
               </CardContent>
             </Card>
           </Grid>
@@ -743,6 +889,109 @@ export default function Dashboard() {
           </Grid>
         </Grid>
       </Grid>
+
+      {/* MODAL DE CHAT IA JURÍDICA */}
+      <Dialog 
+        open={chatOpen} 
+        onClose={() => setChatOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: { borderRadius: 4, height: "80vh" } }}
+      >
+        <Box sx={{ p: 2, bgcolor: "#1b4332", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AutoAwesomeIcon />
+            <Typography fontWeight={900}>Consultor Jurídico IA</Typography>
+          </Box>
+          <Chip label="BETA" size="small" sx={{ color: "#fff", border: "1px solid #fff", fontSize: 10 }} />
+        </Box>
+        
+        <Box sx={{ flex: 1, overflowY: "auto", p: 2, display: "flex", flexDirection: "column", gap: 2, bgcolor: "#f9fdfa" }}>
+          <Alert severity="info" sx={{ borderRadius: 2, fontSize: 11 }}>
+            Olá! Sou a IA do VERTOS especializada em CFMV/MAPA. Como posso ajudar na blindagem da sua unidade hoje?
+          </Alert>
+          
+          {mensagens.map((m, i) => (
+            <Box 
+              key={i} 
+              sx={{ 
+                alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                maxWidth: "85%",
+                p: 2,
+                borderRadius: 3,
+                bgcolor: m.role === "user" ? "#1b4332" : "#fff",
+                color: m.role === "user" ? "#fff" : "#1b4332",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                border: m.role === "ia" ? "1px solid #e8f5e9" : "none"
+              }}
+            >
+              <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>{m.text}</Typography>
+            </Box>
+          ))}
+          {pensando && (
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center", pl: 1 }}>
+              <CircularProgress size={16} sx={{ color: "#1b4332" }} />
+              <Typography variant="caption" sx={{ fontStyle: "italic" }}>Consultando jurisprudência e normas técnicas...</Typography>
+            </Box>
+          )}
+        </Box>
+
+        <Box sx={{ p: 2, borderTop: "1px solid #e8f5e9", bgcolor: "#fff" }}>
+          {nomeDoc && (
+            <Box sx={{ mb: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Chip 
+                label={nomeDoc} 
+                onDelete={() => { setDocTexto(""); setNomeDoc(""); }}
+                size="small"
+                color="success"
+                sx={{ fontWeight: 700, fontSize: 10 }}
+              />
+              <Button 
+                size="small" 
+                variant="contained" 
+                color="secondary"
+                onClick={handleDiagnostico360}
+                startIcon={<PsychologyIcon />}
+                sx={{ fontSize: 9, fontWeight: 900, borderRadius: 2 }}
+                disabled={pensando}
+              >
+                Gerar Blindagem 360°
+              </Button>
+            </Box>
+          )}
+          <Stack direction="row" spacing={1}>
+            <IconButton 
+              component="label"
+              disabled={pensando}
+              sx={{ color: "#1b4332", border: "1px solid #e8f5e9" }}
+            >
+              <input
+                type="file"
+                accept="application/pdf"
+                hidden
+                onChange={handleFileUpload}
+              />
+              <AttachFileIcon />
+            </IconButton>
+            <TextField 
+              fullWidth 
+              size="small" 
+              placeholder={nomeDoc ? "Faça uma pergunta sobre o documento..." : "Ex: Qual a validade da autoclave?"} 
+              value={pergunta}
+              onChange={(e) => setPergunta(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && perguntarIA()}
+              disabled={pensando}
+            />
+            <IconButton 
+              sx={{ bgcolor: "#1b4332", color: "#fff", "&:hover": { bgcolor: "#2d6a4f" } }}
+              onClick={perguntarIA}
+              disabled={pensando || (!pergunta.trim() && !nomeDoc)}
+            >
+              <SendIcon />
+            </IconButton>
+          </Stack>
+        </Box>
+      </Dialog>
     </Box>
   );
 }

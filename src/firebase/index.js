@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId:             import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app  = initializeApp(firebaseConfig);
+export const app  = initializeApp(firebaseConfig);
 export const auth    = getAuth(app);
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
@@ -21,5 +21,5 @@ export const storage = getStorage(app);
 // Inicializa o serviço conforme solicitado (Gemini Developer API)
 const ai = getAI(app, { backend: new GoogleAIBackend() });
 
-// Instancia o modelo para o VERTOS OS (Gemini 1.5 Flash)
-export const modelIA = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
+// Instancia o modelo para o VERTOS OS (Gemini 3.1 Flash Lite)
+export const modelIA = getGenerativeModel(ai, { model: "gemini-3.1-flash-lite" });

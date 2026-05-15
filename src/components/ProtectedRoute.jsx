@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, query, collection, where, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 import { Box, CircularProgress } from "@mui/material";
@@ -17,7 +17,21 @@ export default function ProtectedRoute({ children }) {
   const [dataLoading, setDataLoading] = useState(true);
   const [selectedClinicaId, setSelectedClinicaId] = useState(() => localStorage.getItem("selectedClinicaId"));
   const [clinicaData, setClinicaData] = useState(null);
+  const [clinicas, setClinicas] = useState([]);
   const location = useLocation();
+
+  // Buscar todas as clínicas do usuário para o seletor global
+  useEffect(() => {
+    if (!user) {
+      setClinicas([]);
+      return;
+    }
+    const q = query(collection(db, "clinicas"), where("userId", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      setClinicas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   useEffect(() => {
     if (selectedClinicaId) {
@@ -67,7 +81,7 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/pagamento" replace />;
   }
 
-  if (userData?.plan === "pending" && location.pathname !== "/perfil") {
+  if (userData?.plan === "pending" && (location.pathname !== "/perfil" && location.pathname !== "/clinicas")) {
     return <Navigate to="/perfil" replace />;
   }
 
@@ -76,6 +90,7 @@ export default function ProtectedRoute({ children }) {
     selectedClinicaId,
     setSelectedClinicaId,
     clinicaData,
+    clinicas,
   };
 
   return (
