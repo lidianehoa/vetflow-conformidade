@@ -31,7 +31,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, auth, storage } from "../firebase";
-import { gerarParecerAuditoria, gerarPlanoAcao } from "../services/firebaseAI";
+import { gerarResumoMensal, gerarParecerAuditoria, gerarPlanoAcao } from "../utils/analiseIA";
 import { 
   getGamificacaoPorArea, 
   getNivel, 

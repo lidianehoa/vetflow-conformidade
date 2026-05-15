@@ -21,7 +21,7 @@ import { collection, query, where, getDocs, doc, getDoc } from "firebase/firesto
 import { db } from "../firebase";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Accordion, AccordionSummary, AccordionDetails, Button } from "@mui/material";
-import { validarAdmissaoPet } from "../services/firebaseAI";
+import { validarAdmissaoPet } from "../utils/analiseIA";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 export default function ChecklistMensal() {

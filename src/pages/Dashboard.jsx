@@ -28,7 +28,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { consultarAssistenteCompliance, gerarDiagnosticoBVO } from "../services/firebaseAI";
+import { consultarAssistenteCompliance, interpretarBVO as gerarDiagnosticoBVO, gerarAnaliseLegislativa } from "../utils/bvoAI";
 import { useUserData } from "../components/ProtectedRoute";
 import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
@@ -174,45 +174,45 @@ export default function Dashboard() {
       console.log("Iniciando Diagnóstico 360 com texto:", docTexto.substring(0, 100) + "...");
       const diag = await gerarAnaliseLegislativa(
         docTexto, 
-        unidade?.cidade || "Campo Grande", 
         unidade?.uf || "MS",
+        unidade?.cidade || "Campo Grande", 
         unidade?.tipo || "Clínica Veterinária"
       );
       
+      // ✅ GUARDA: protege contra retorno null
+      if (!diag) {
+        setMensagens(prev => [...prev, { role: "ia", text: "❌ A IA não conseguiu processar o documento. Verifique se o PDF contém texto legível e tente novamente." }]);
+        return;
+      }
+
       let resFormatada = `🛡️ **AGENTE VERTOS INTELLIGENCE — ANALISTA LEGISLATIVO SÊNIOR**\n`;
       resFormatada += `📍 **Setor Identificado:** ${diag.setor_atuacao || 'PET'}\n`;
       resFormatada += `📉 **Risco de Multa:** ${diag.analise_de_risco_multa}\n\n`;
-      
       resFormatada += `🧐 **RESUMO DA FISCALIZAÇÃO:**\n${diag.resumo_fiscalizacao}\n\n`;
 
       if (diag.exigencias_documentais?.length > 0) {
-        resFormatada += `📂 **EXIGÊNCIAS DOCUMENTAIS (Organização de Pastas):**\n`;
+        resFormatada += `📂 **EXIGÊNCIAS DOCUMENTAIS:**\n`;
         diag.exigencias_documentais.forEach(item => resFormatada += `• ${item}\n`);
         resFormatada += `\n`;
       }
       
       if (diag.exigencias_estruturais?.length > 0) {
-        resFormatada += `🏗️ **EXIGÊNCIAS ESTRUTURAIS (Ações Físicas):**\n`;
+        resFormatada += `🏗️ **EXIGÊNCIAS ESTRUTURAIS:**\n`;
         diag.exigencias_estruturais.forEach(item => resFormatada += `• ${item}\n`);
         resFormatada += `\n`;
       }
       
       resFormatada += `🕒 **PRAZOS IDENTIFICADOS:** ${diag.prazos_identificados}\n\n`;
-      
       resFormatada += `📜 **BASE LEGAL CITADA:**\n`;
       diag.leis_e_resolucoes_citadas?.forEach(lei => resFormatada += `• ${lei}\n`);
-      
-      resFormatada += `\n💡 **ORIENTAÇÃO PRÁTICA PARA O RT:**\n${diag.orientacao_praticas_rt}`;
+      resFormatada += `\n💡 **ORIENTAÇÃO PRÁTICA PARA O RT:**\n${diag.orientacao_pratica_rt}`;
 
       setMensagens(prev => [...prev, { role: "ia", text: resFormatada }]);
       setDocTexto("");
       setNomeDoc("");
     } catch (err) {
       console.error("Erro no 360 Sênior:", err);
-      const erroMsg = err.message?.includes("not found") 
-        ? "❌ Erro: Template 'vertos-diagnostico-bvo-v1' não encontrado no Console."
-        : `❌ Falha ao gerar blindagem sênior: ${err.message}`;
-      setMensagens(prev => [...prev, { role: "ia", text: erroMsg }]);
+      setMensagens(prev => [...prev, { role: "ia", text: `❌ Falha ao gerar blindagem sênior: ${err.message}` }]);
     } finally {
       setPensando(false);
     }

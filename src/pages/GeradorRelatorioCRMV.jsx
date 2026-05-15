@@ -9,7 +9,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import { collection, query, where, getDocs, doc, getDoc, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
-import { gerarResumoMensal } from "../services/firebaseAI";
+import { gerarResumoMensal } from "../utils/analiseIA";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { useUserData } from "../components/ProtectedRoute";
 import { usePlano } from "../hooks/usePlano";
