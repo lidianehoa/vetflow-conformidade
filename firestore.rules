@@ -1,52 +1,117 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Função básica de dono
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+
+    // ── Helpers ──────────────────────────────────────────────
+
+    function uid() {
+      return request.auth.uid;
     }
 
-    // Regras para Usuários
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(uid())).data.role == "admin";
+    }
+
+    // RT é dono da clínica se tenantId == uid dele
+    function isTenant(tenantId) {
+      return isAuth() && uid() == tenantId;
+    }
+
+    // Documento sendo criado tem tenantId == uid de quem cria
+    function criaComTenantCorreto() {
+      return request.resource.data.tenantId == uid();
+    }
+
+    // Plano do RT que está fazendo a requisição
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(uid())).data;
+    }
+
+    function plano() {
+      return profile().plan;
+    }
+
+    // RT tem plano ativo (core ou pro) ou trial ativo
+    function temPlanoAtivo() {
+      return isAuth() && (plano() in ["core", "pro"] || profile().trialActive == true);
+    }
+
+    // ── Usuários ─────────────────────────────────────────────
+
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if uid() == userId || isAdmin();
+      allow create: if isAuth() && uid() == userId;
+      allow update: if uid() == userId || isAdmin();
+      allow delete: if false;
     }
 
-    // Regras para Clínicas e Unidades
-    match /clinicas/{docId} {
-      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+    // ── Clínicas ─────────────────────────────────────────────
+
+    match /clinicas/{clinicaId} {
+      allow read: if isTenant(resource.data.tenantId) || isAdmin();
+      allow create: if isAuth() && criaComTenantCorreto();
+      allow update, delete: if isTenant(resource.data.tenantId) || isAdmin();
+
+      // Subcoleções de Clínica
+      match /vistorias/{docId} {
+        allow read, write: if isTenant(get(/databases/$(database)/documents/clinicas/$(clinicaId)).data.tenantId) || isAdmin();
+      }
+      match /diagnosticos/{docId} {
+        allow read, write: if isTenant(get(/databases/$(database)/documents/clinicas/$(clinicaId)).data.tenantId) || isAdmin();
+      }
     }
 
-    match /unidades/{userId} {
-      allow read, write: if isOwner(userId);
-    }
+    // ── Coleções Operacionais (Isoladas e Protegidas por Plano) ──
 
-    // Regras para Auditorias e Laudos
     match /auditorias/{docId} {
-      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+      allow read: if isTenant(resource.data.tenantId) || isAdmin();
+      allow create: if temPlanoAtivo() && criaComTenantCorreto();
+      allow update: if isTenant(resource.data.tenantId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     match /laudos/{docId} {
-      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+      allow read: if isAuth() && (resource.data.userId == uid() || resource.data.tenantId == uid() || isAdmin());
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && (resource.data.userId == uid() || resource.data.tenantId == uid() || isAdmin());
     }
 
-    // Regras para Relatórios e Checklists
-    match /relatorios_regularizacao/{docId} {
-      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+    match /notificacoes/{docId} {
+      allow read: if isAuth() && (resource.data.tenantId == uid() || resource.data.clinicaId == uid() || isAdmin());
+      allow create, update: if isAdmin(); // Notificações são geradas pelo sistema
+      allow delete: if isAdmin();
     }
 
-    match /checklist_mensal/{docId} {
-      allow read, write: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+    match /rotinas_diarias/{docId} {
+      allow read: if isTenant(resource.data.tenantId) || isAdmin();
+      allow create: if isAuth();
+      allow update, delete: if isTenant(resource.data.tenantId) || isAdmin();
     }
 
-    // Regras para Controlados
+    match /gtas/{userId}/{document=**} {
+      allow read, write: if uid() == userId || isAdmin();
+    }
+
     match /controlados/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if uid() == userId || isAdmin();
     }
 
-    // Regras para Templates Globais
     match /template/{docId} {
-      allow read: if request.auth != null;
+      allow read: if isAuth(); // Qualquer RT logado lê templates
+      allow write: if isAdmin();
+    }
+
+    // Pendentes da Hotmart: Protegido
+    match /hotmart_pendentes/{docId} {
+      allow read, write: if false; // Só acessível via Admin SDK (Cloud Functions)
+    }
+    match /erros_app/{docId} {
+      allow create: if true;
     }
   }
 }

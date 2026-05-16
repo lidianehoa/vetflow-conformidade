@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Box, Paper, Typography, TextField, Button, Divider,
@@ -11,7 +11,9 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import GoogleIcon from "@mui/icons-material/Google";
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
   GoogleAuthProvider,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -22,7 +24,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [showSenha, setShowSenha] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
   const handleEmail = async (e) => {
@@ -31,7 +33,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, senha);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       setErro("E-mail ou senha incorretos.");
     } finally {
@@ -39,28 +41,57 @@ export default function Login() {
     }
   };
 
+  // Captura o resultado do redirecionamento ao carregar a página
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.warn("✅ Login por redirecionamento concluído:", result.user.email);
+          const uid = result.user.uid;
+          const snap = await getDoc(doc(db, "users", uid));
+          if (!snap.exists()) {
+            await setDoc(doc(db, "users", uid), {
+              email: result.user.email,
+              displayName: result.user.displayName,
+              role: "rt", // Padrão
+              plan: "pending",
+              onboardingCompleto: false,
+              createdAt: serverTimestamp(),
+            });
+            navigate("/onboarding");
+          } else {
+            const data = snap.data();
+            if (data.role === "admin") {
+              navigate("/dashboard");
+            } else if (!data.onboardingCompleto) {
+              navigate("/onboarding");
+            } else {
+              navigate("/dashboard");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("❌ ERRO NO REDIRECT:", err.code, err.message, err);
+        setErro(`Erro ao entrar: ${err.code || err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkRedirect();
+  }, [navigate]);
+
   const handleGoogle = async () => {
+    console.log("🚀 Iniciando login Google via Redirect...");
     setErro("");
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const uid = result.user.uid;
-      const snap = await getDoc(doc(db, "users", uid));
-      if (!snap.exists() || !snap.data().plan) {
-        await setDoc(doc(db, "users", uid), {
-          email: result.user.email,
-          displayName: result.user.displayName,
-          plan: "pending",
-          createdAt: serverTimestamp(),
-        }, { merge: true });
-        navigate("/pagamento");
-      } else {
-        navigate("/");
-      }
+      // Não precisa do await aqui pois ele vai redirecionar a página inteira
+      await signInWithRedirect(auth, provider);
     } catch (err) {
-      setErro("Erro ao entrar com Google.");
-    } finally {
+      console.error("❌ Erro ao disparar redirecionamento:", err);
+      setErro(`Erro ao entrar: ${err.message}`);
       setLoading(false);
     }
   };

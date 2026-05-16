@@ -29,6 +29,7 @@ import { signOut } from "firebase/auth";
 import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { usePlano } from "../hooks/usePlano";
 import { getAreaById } from "../data/rtTypes";
+import ClinicaSelector from "./ClinicaSelector";
 
 const DRAWER_WIDTH = 260;
 
@@ -44,8 +45,7 @@ const MENU_ITEMS = [
 ];
 
 export default function Layout() {
-  const { uid, email, displayName, plan, role, selectedClinicaId, setSelectedClinicaId, clinicas } = useUserData();
-  const userData = { uid, email, displayName, plan, role, selectedClinicaId, setSelectedClinicaId }; 
+  const userData = useUserData();
   const { pode } = usePlano(userData);
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,6 +63,7 @@ export default function Layout() {
 
     const q = query(
       collection(db, "notificacoes"),
+      where("tenantId", "==", userData.uid), // Isolamento multi-tenant
       where("clinicaId", "==", userData.selectedClinicaId),
       orderBy("criadoEm", "desc"),
       limit(5)
@@ -73,9 +74,9 @@ export default function Layout() {
     });
   }, [userData?.uid, userData?.selectedClinicaId]);
 
-  const clinicaAtiva = (clinicas || []).find(c => c.id === userData?.selectedClinicaId);
+  const clinicaAtiva = (userData?.clinicas || []).find(c => c.id === userData?.selectedClinicaId);
   const area = clinicaAtiva ? getAreaById(clinicaAtiva.tipo) : null;
-  const planLabel = userData?.role === "admin" ? "ADMIN" : (plan || "trial").toUpperCase();
+  const planLabel = userData?.role === "admin" ? "ADMIN" : (userData?.plan || "trial").toUpperCase();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -101,33 +102,7 @@ export default function Layout() {
           </Typography>
         </Box>
         <Box mt={2}>
-          <FormControl fullWidth size="small" variant="outlined">
-            <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ mb: 0.5, ml: 0.5, fontSize: 9, textTransform: "uppercase" }}>
-              Unidade Ativa
-            </Typography>
-            {/* Reutilizando o seletor simplificado */}
-            <select
-              value={userData?.selectedClinicaId || ""}
-              onChange={(e) => userData.setSelectedClinicaId(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                borderRadius: "8px",
-                border: "1px solid #e8f5e9",
-                fontSize: "12px",
-                fontWeight: "700",
-                background: "#f9fdfa",
-                color: "#1b4332"
-              }}
-            >
-              <option value="" disabled>Selecione uma unidade...</option>
-              {clinicas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nomeFantasia || c.razaoSocial}
-                </option>
-              ))}
-            </select>
-          </FormControl>
+          <ClinicaSelector />
 
           {clinicaAtiva && area && (
             <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
@@ -254,13 +229,13 @@ export default function Layout() {
               size="small" 
               sx={{ 
                 height: 18, fontSize: 9, fontWeight: 800, 
-                bgcolor: plan === "pro" ? "#1b4332" : "#f0fdf4", 
-                color: plan === "pro" ? "#fff" : "#1b4332",
+                bgcolor: userData?.plan === "pro" ? "#1b4332" : "#f0fdf4", 
+                color: userData?.plan === "pro" ? "#fff" : "#1b4332",
                 border: "1px solid #1b433230"
               }} 
             />
           </Box>
-          {plan === "core" && (
+          {userData?.plan === "core" && (
             <Button
               variant="contained"
               fullWidth
@@ -367,7 +342,9 @@ export default function Layout() {
               <Typography variant="subtitle1" fontWeight={900} color="#1b4332">VERTOS</Typography>
             </Box>
 
-            <Box sx={{ flex: 1, display: { xs: "none", md: "block" } }} />
+            <Box sx={{ flex: 1, display: { xs: "none", md: "block" } }}>
+              <ClinicaSelector />
+            </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <IconButton onClick={(e) => setAnchorNotif(e.currentTarget)}>
@@ -446,7 +423,12 @@ export default function Layout() {
               <Button size="small" href="https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm" target="_blank" sx={{ fontSize: 10, color: "#1b4332", fontWeight: 700, textTransform: "none" }}>
                 CDC
               </Button>
-              <Button size="small" onClick={() => navigate("/suporte")} sx={{ fontSize: 10, color: "#1b4332", fontWeight: 700, textTransform: "none" }}>
+              <Button 
+                size="small" 
+                component="a"
+                href="mailto:contato@vetflow.app.br?subject=Suporte Técnico - VERTOS OS"
+                sx={{ fontSize: 10, color: "#1b4332", fontWeight: 700, textTransform: "none" }}
+              >
                 Suporte
               </Button>
             </Grid>

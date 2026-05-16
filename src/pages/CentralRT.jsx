@@ -19,6 +19,7 @@ import { useNavigate, useLocation }  from "react-router-dom";
 import { db }     from "../firebase";
 import { useUserData } from "../components/ProtectedRoute";
 import { LABEL_TIPO, VENCIMENTOS_POR_TIPO } from "../data/checklistsRT";
+import { InterpreteBVOButton } from "../components/InterpreteBVOButton";
 
 const COR = "#1b4332";
 const ACENTO = "#52b788";
@@ -128,24 +129,15 @@ function CardClinica({ clinica, auditorias, navigate }) {
             ? `Última auditoria: ${ultimaAudit.data}`
             : "Nenhuma auditoria realizada"}
         </Typography>
-        
-        <Tooltip title="Intérprete BVO (IA)">
-          <IconButton 
-            size="small" 
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/clinicas/${clinica.id}`, { state: { openBVO: true } });
-            }}
-            sx={{ 
-              bgcolor: COR + "08", 
-              color: COR, 
-              "&:hover": { bgcolor: COR, color: "#fff" } 
-            }}
-          >
-            <PsychologyIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
       </Stack>
+
+      <InterpreteBVOButton
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/clinicas/${clinica.id}`, { state: { openBVO: true } });
+        }}
+        sublabel={`Analise ${clinica.nomeFantasia || clinica.razaoSocial || 'esta clínica'} agora`}
+      />
     </Paper>
   );
 }

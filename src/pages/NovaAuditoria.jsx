@@ -184,6 +184,7 @@ function NovaAuditoriaFluxo() {
 
       await addDoc(collection(db, "auditorias"), {
         userId: uid,
+        tenantId: uid, // Campo obrigatório para as regras de segurança
         clinicaId: clinicaData?.id || null,
         smartId,
         nomeProntuario: identificacao,

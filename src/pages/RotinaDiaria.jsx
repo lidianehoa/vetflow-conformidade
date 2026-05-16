@@ -123,7 +123,7 @@ export default function RotinaDiaria() {
         ...form,
         userId: userData.uid,
         clinicaId: userData.selectedClinicaId,
-        userName: userData.displayName || userData.rtNome,
+        userName: userData.displayName || userData.rtNome || "Usuário",
         areaAtuacao: unidade?.areaAtuacao || "N/A",
         criadoEm: serverTimestamp(),
         dataRef: new Date().toLocaleDateString("pt-BR"),

@@ -2,7 +2,9 @@
 // Execução: node scripts/seeds/seedTemplates.js
 // Requer: serviceAccountKey.json na raiz do projeto
 
-const admin = require("firebase-admin");
+import admin from "firebase-admin";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 const serviceAccount = require("../../serviceAccountKey.json");
 
 admin.initializeApp({
@@ -416,7 +418,7 @@ VERTOS OS · Smart ID: {{SMART_ID}} · {{RT_NOME}} — {{RT_CRMV}}`,
 
 // ── Seed para o Firestore ──────────────────────────────────────────────────
 async function seed() {
-  console.log(\`\\nIniciando seed de \${TEMPLATES.length} templates...\\n\`);
+  console.log(`\nIniciando seed de ${TEMPLATES.length} templates...\n`);
   const batch = db.batch();
 
   for (const template of TEMPLATES) {
@@ -426,11 +428,11 @@ async function seed() {
       criadoEm: admin.firestore.FieldValue.serverTimestamp(),
       ativo: true,
     });
-    console.log(\`  ✅ \${template.id}: \${template.titulo}\`);
+    console.log(`  ✅ ${template.id}: ${template.titulo}`);
   }
 
   await batch.commit();
-  console.log("\\nSeed concluído com sucesso!");
+  console.log("\nSeed concluído com sucesso!");
   process.exit(0);
 }
 

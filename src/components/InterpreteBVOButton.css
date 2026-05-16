@@ -1,0 +1,104 @@
+/* ── Wrapper posiciona o anel em relação ao botão ── */
+.bvo-pulse-wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* ── Anel pulsante externo ── */
+.bvo-pulse-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 10px;
+  border: 1.5px solid #1D9E75;
+  opacity: 0;
+  pointer-events: none;
+  animation: bvoPulseRing 2.2s ease-out infinite;
+}
+
+@keyframes bvoPulseRing {
+  0%   { opacity: 0.75; inset: 0px; }
+  100% { opacity: 0;    inset: -10px; }
+}
+
+/* ── Botão principal ── */
+.bvo-pulse-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: #0F6E56;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 14px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.bvo-pulse-btn:hover:not(:disabled) {
+  background: #085041;
+}
+
+.bvo-pulse-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.bvo-pulse-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Dot de IA piscante ── */
+.bvo-ai-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9FE1CB;
+  flex-shrink: 0;
+  animation: bvoBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes bvoBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+/* ── Textos ── */
+.bvo-pulse-text {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bvo-pulse-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.bvo-pulse-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Seta ── */
+.bvo-pulse-arrow {
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.bvo-pulse-btn:hover .bvo-pulse-arrow {
+  transform: translateX(3px);
+}
+
+/* ── Pausa animação se usuário preferir menos movimento ── */
+@media (prefers-reduced-motion: reduce) {
+  .bvo-pulse-ring { animation: none; opacity: 0; }
+  .bvo-ai-dot     { animation: none; opacity: 1; }
+}

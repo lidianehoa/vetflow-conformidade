@@ -36,6 +36,8 @@ import FolderCopyIcon from "@mui/icons-material/FolderCopy";
 import HandymanIcon from "@mui/icons-material/Handyman";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import { gerarHashSHA256, gerarSmartID } from "../utils/security";
 import { consultarAssistenteCompliance, gerarAnaliseLegislativa } from "../utils/analiseIA";
 
@@ -75,6 +77,7 @@ export default function DetalheClinica() {
   const [dialogBVO, setDialogBVO] = useState(false);
   const [textoBVO, setTextoBVO] = useState("");
   const [interpretando, setInterpretando] = useState(false);
+  const [arquivos, setArquivos] = useState([]);
   const location = useLocation();
   const [diagnostico, setDiagnostico] = useState(null);
 
@@ -123,20 +126,27 @@ export default function DetalheClinica() {
             lista.forEach(a => {
               if (a.secaoId && !bySetor[a.secaoId]) bySetor[a.secaoId] = a.score;
             });
+            const checklists = getChecklistsPorTipo(data.tipo)?.setores || [];
             const newScores = checklists.map(c => bySetor[c.id] ?? 0);
             setScores(newScores);
           } else {
+            const checklists = getChecklistsPorTipo(data.tipo)?.setores || [];
             setScores(checklists.map(() => 0));
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error("Erro ao carregar clínica:", err);
       } finally {
         setLoading(false);
       }
     };
     carregar();
   }, [clinicaId]);
+
+  const alertasParaIA = clinica ? VENCIMENTOS_POR_TIPO[clinica.tipo]?.map(({ label, campo }) => {
+    if (!clinica[campo]) return null;
+    return { label, data: clinica[campo] };
+  }).filter(Boolean) : [];
 
   const extractTextFromPDF = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -157,8 +167,6 @@ export default function DetalheClinica() {
   );
 
   if (!clinica) return <Alert severity="error">Estabelecimento não encontrado.</Alert>;
-
-  const scoreGeral = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto", pb: 10 }}>
@@ -292,10 +300,9 @@ export default function DetalheClinica() {
             </Grid>
           )}
 
-          {tab === 7 && <AbaVistorias clinica={clinica} clinicaId={clinicaId} />}
+          {tab === 7 && <AbaVistorias clinica={clinica} clinicaId={clinicaId} alertasParaIA={alertasParaIA} />}
         </Box>
 
-        {/* DIALOG IMPORTAR BVO */}
         <Dialog open={dialogBVO} onClose={() => !interpretando && setDialogBVO(false)} maxWidth="sm" fullWidth>
           <DialogTitle sx={{ fontWeight: 900, color: "#1b4332" }}>Importar BVO / Notificação Vigilância Sanitária</DialogTitle>
           <DialogContent>
@@ -334,7 +341,6 @@ export default function DetalheClinica() {
               onClick={async () => {
                 setInterpretando(true);
                 try {
-                  // 1. Upload do documento para o Storage (se houver arquivo)
                   let docUrl = "";
                   if (arquivos.length > 0) {
                     const storageRef = ref(storage, `clinicas/${clinicaId}/diagnosticos/${Date.now()}_${arquivos[0].name}`);
@@ -342,7 +348,6 @@ export default function DetalheClinica() {
                     docUrl = await getDownloadURL(storageRef);
                   }
 
-                  // 2. Chamada para o Agente Sênior com ordem correta (texto, estado, cidade, tipo)
                   const res = await gerarAnaliseLegislativa(
                     textoBVO, 
                     clinica.estado || "", 
@@ -350,9 +355,9 @@ export default function DetalheClinica() {
                     clinica.tipo || "Clínica"
                   );
                   
-                  // 3. Persistir o diagnóstico no Firestore
                   const docRef = await addDoc(collection(db, `clinicas/${clinicaId}/diagnosticos`), {
                     ...res,
+                    tenantId: userData.uid,
                     textoOriginal: textoBVO,
                     arquivoUrl: docUrl,
                     dataProcessamento: new Date().toISOString()
@@ -363,6 +368,7 @@ export default function DetalheClinica() {
                   setDialogBVO(false);
                   setTextoBVO("");
                   setArquivos([]);
+                } catch (e) {
                   console.error(e);
                   alert("Erro ao interpretar documento. Tente extrair o texto manualmente.");
                 } finally {
@@ -382,7 +388,6 @@ export default function DetalheClinica() {
   );
 }
 
-// ── COMPONENTE: ABA EQUIPE (Blindagem 360°) ──────────────────────
 function AbaEquipe({ clinica, clinicaId }) {
   const [membro, setMembro] = useState({ nome: "", cargo: "", vencAntirrabica: "", vencAntitetanica: "", vencSorologia: "", epiConfirmado: false });
   const [loading, setLoading] = useState(false);
@@ -460,7 +465,6 @@ function AbaEquipe({ clinica, clinicaId }) {
   );
 }
 
-// ── COMPONENTE: ABA TERCEIROS (Dossiê 360°) ──────────────────────
 function AbaTerceiros({ clinica, clinicaId }) {
   const [terceiro, setTerceiro] = useState({ nome: "", tipo: "Veterinário Volante", crmv_cnpj: "", regularidade: false });
   const [loading, setLoading] = useState(false);
@@ -526,7 +530,74 @@ function AbaTerceiros({ clinica, clinicaId }) {
   );
 }
 
-// ── COMPONENTE: ABA DIAGNÓSTICO 360 (Agente Vertos Intelligence) ──
+const diagStyles = `
+  .solucao-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  .solucao-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
+  }
+  .solucao-icone { font-size: 20px; }
+  .solucao-problema { color: #1e293b; font-size: 16px; font-weight: 800; }
+  
+  .cinco-w2h { display: flex; flex-direction: column; gap: 16px; }
+  .w2h-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+    gap: 12px; 
+  }
+  .w2h-item {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #f1f5f9;
+  }
+  .w2h-destaque { background: #eff6ff; border-color: #dbeafe; }
+  .w2h-label { 
+    display: block; 
+    font-size: 10px; 
+    font-weight: 800; 
+    color: #64748b; 
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .w2h-valor { font-size: 13px; color: #334155; font-weight: 600; margin: 0; }
+  
+  .w2h-acoes { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 12px; 
+    margin-top: 4px;
+  }
+  .w2h-acao { padding: 12px; border-radius: 8px; }
+  .w2h-acao-vertos { background: #1e293b; color: #fff; }
+  .w2h-acao-externo { background: #f1f5f9; border: 1px solid #e2e8f0; }
+  .w2h-acao-label { font-size: 11px; font-weight: 800; display: block; margin-bottom: 4px; opacity: 0.9; }
+  .w2h-acao-texto { font-size: 13px; margin: 0; line-height: 1.4; }
+  
+  .w2h-custo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: #f0fdf4;
+    border-radius: 8px;
+    border: 1px solid #dcfce7;
+  }
+  .w2h-custo-valor { font-weight: 800; color: #166534; font-size: 14px; }
+  .fase-sem-pendencia { color: #64748b; font-style: italic; font-size: 14px; }
+`;
+
 function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
   const navigate = useNavigate();
 
@@ -548,8 +619,9 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
     </Box>
   );
 
-  const FaseCard = ({ num, titulo, itens, cor, icon: Icon }) => (
+  const FaseCard = ({ num, titulo, cor, icon: Icon, fase }) => (
     <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 4, mb: 3, borderLeft: `6px solid ${cor}` }}>
+      <style>{diagStyles}</style>
       <Stack direction="row" alignItems="center" spacing={2} mb={2}>
         <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: cor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
           <Typography fontWeight={900}>{num}</Typography>
@@ -560,18 +632,62 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
         </Box>
         <Icon sx={{ color: "#cbd5e1" }} />
       </Stack>
-      <Stack spacing={1.5}>
-        {itens?.map((it, i) => (
-          <Box key={i} sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2, border: "1px solid #f1f5f9" }}>
-            <Typography variant="body2" fontWeight={800} color="#1e293b" gutterBottom>{it.item || it.descricao}</Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>{it.descricao}</Typography>
-            <Box sx={{ p: 1, bgcolor: "#eff6ff", borderRadius: 1, border: "1px dashed #bfdbfe" }}>
-              <Typography variant="caption" fontWeight={700} color="#1e40af">⚡ SOLUÇÃO: {it.solucao}</Typography>
-            </Box>
-          </Box>
+
+      <Stack spacing={2}>
+        {fase?.solucoes && fase.solucoes.map((solucao, idx) => (
+          <div key={idx} className="solucao-card">
+            <div className="solucao-header">
+              <span className="solucao-icone">⚡</span>
+              <strong className="solucao-problema">{solucao.problema}</strong>
+            </div>
+
+            {solucao['5w2h'] && (
+              <div className="cinco-w2h">
+                <div className="w2h-grid">
+                  <div className="w2h-item w2h-destaque">
+                    <span className="w2h-label">O QUE fazer</span>
+                    <p className="w2h-valor">{solucao['5w2h'].o_que}</p>
+                  </div>
+                  <div className="w2h-item">
+                    <span className="w2h-label">⚖️ POR QUE (legislação)</span>
+                    <p className="w2h-valor">{solucao['5w2h'].por_que}</p>
+                  </div>
+                  <div className="w2h-item">
+                    <span className="w2h-label">👤 QUEM</span>
+                    <p className="w2h-valor">{solucao['5w2h'].quem}</p>
+                  </div>
+                  <div className="w2h-item">
+                    <span className="w2h-label">📅 QUANDO</span>
+                    <p className="w2h-valor">{solucao['5w2h'].quando}</p>
+                  </div>
+                  <div className="w2h-item">
+                    <span className="w2h-label">📍 ONDE</span>
+                    <p className="w2h-valor">{solucao['5w2h'].onde}</p>
+                  </div>
+                </div>
+
+                <div className="w2h-acoes">
+                  <div className="w2h-acao w2h-acao-vertos">
+                    <span className="w2h-acao-label">🖥️ Como resolver no Vertos</span>
+                    <p className="w2h-acao-texto">{solucao['5w2h'].como_vertos}</p>
+                  </div>
+                  <div className="w2h-acao w2h-acao-externo">
+                    <span className="w2h-acao-label">🏢 Como resolver externamente</span>
+                    <p className="w2h-acao-texto">{solucao['5w2h'].como_externo}</p>
+                  </div>
+                </div>
+
+                <div className="w2h-custo">
+                  <span className="w2h-label">💰 CUSTO ESTIMADO</span>
+                  <span className="w2h-custo-valor">{solucao['5w2h'].custo}</span>
+                </div>
+              </div>
+            )}
+          </div>
         ))}
-        {(!itens || itens.length === 0) && (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>Nenhuma pendência identificada nesta fase.</Typography>
+
+        {(!fase?.solucoes || fase.solucoes.length === 0) && (
+          <p className="fase-sem-pendencia">✅ Nenhuma pendência identificada nesta fase.</p>
         )}
       </Stack>
     </Paper>
@@ -582,7 +698,7 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
       {/* Hero Header High-End */}
       <Box sx={{ 
         p: 4, mb: 4, borderRadius: 5, 
-        background: "linear-gradient(135deg, #1e293b 0%, #4338ca 100%)", 
+        background: "linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%)", 
         color: "#fff", position: "relative", overflow: "hidden" 
       }}>
         <Box sx={{ position: "absolute", right: -40, top: -40, opacity: 0.1 }}>
@@ -605,27 +721,22 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
-          <FaseCard 
-            num="1" 
-            titulo="Infraestrutura (Execução Técnica)" 
-            itens={diagnostico.fase1_infra || diagnostico.exigencias_estruturais} 
-            cor="#6366f1"
-            icon={EngineeringIcon}
-          />
-          <FaseCard 
-            num="2" 
-            titulo="Gestão de Suprimentos (Logística)" 
-            itens={diagnostico.fase2_logistica} 
-            cor="#8b5cf6"
-            icon={ShoppingBagIcon}
-          />
-          <FaseCard 
-            num="3" 
-            titulo="Burocracia e Documentação" 
-            itens={diagnostico.fase3_burocracia || diagnostico.exigencias_documentais} 
-            cor="#4f46e5"
-            icon={HistoryEduIcon}
-          />
+          {diagnostico.fases?.map((fase, i) => (
+            <FaseCard 
+              key={fase.id}
+              num={fase.id} 
+              titulo={fase.nome} 
+              fase={fase}
+              cor={["#6366f1", "#8b5cf6", "#4f46e5", "#10b981", "#f59e0b"][i] || "#6366f1"}
+              icon={
+                fase.icone === "building" ? EngineeringIcon :
+                fase.icone === "package" ? ShoppingBagIcon :
+                fase.icone === "file-text" ? HistoryEduIcon :
+                fase.icone === "users" ? GroupsIcon :
+                fase.icone === "message-circle" ? PsychologyIcon : EngineeringIcon
+              }
+            />
+          ))}
         </Grid>
         <Grid item xs={12} md={4}>
           <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 4, bgcolor: "#f8fafc", position: "sticky", top: 20 }}>
@@ -658,7 +769,7 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
 // ═══════════════════════════════════════════════════════════════
 // COMPONENTE: ABA VISTORIAS (Órgãos Oficiais)
 // ═══════════════════════════════════════════════════════════════
-function AbaVistorias({ clinica, clinicaId }) {
+function AbaVistorias({ clinica, clinicaId, alertasParaIA }) {
   const navigate = useNavigate();
 
   // Estados de visualização e dados
@@ -750,7 +861,7 @@ function AbaVistorias({ clinica, clinicaId }) {
         
         setTimeout(() => setLoadingMsg("Aplicando Blindagem de Fé Pública (LC 148/2009)..."), 2000);
         
-        const analise = await interpretarBVO(textoBVO, clinica.tipo);
+        const analise = await interpretarBVO(textoBVO, clinica, alertasParaIA);
 
         // 4. Mapeamento das 3 Fases de Blindagem
         await updateDoc(

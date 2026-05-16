@@ -236,7 +236,7 @@ export default function Dashboard() {
     }
     const q = query(
       collection(db, "auditorias"),
-      where("userId", "==", userData.uid),
+      where("tenantId", "==", userData.uid), // Isolamento multi-tenant
       where("clinicaId", "==", userData.selectedClinicaId),
       orderBy("criadoEm", "desc"),
       limit(20)
@@ -272,7 +272,11 @@ export default function Dashboard() {
 
     // Carregar Alertas de Estoque (SIPEAGRO) para PRO
     if (userData?.plan === "pro" && userData?.uid) {
-      const qE = query(collection(db, "controlados", userData.uid, "estoque"), where("status", "==", "ativo"));
+      const qE = query(
+        collection(db, "controlados", userData.uid, "estoque"), 
+        where("tenantId", "==", userData.uid), // Garantia multi-tenant
+        where("status", "==", "ativo")
+      );
       getDocs(qE).then(snap => {
         const criticos = snap.docs.filter(d => {
           const item = d.data();
@@ -809,7 +813,10 @@ export default function Dashboard() {
                 <Button 
                   variant="contained" 
                   fullWidth 
-                  onClick={() => navigate("/ajuda")}
+                  component="a"
+                  href="https://vetflow.app.br/cursos/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   sx={{ bgcolor: "#fff", color: "#1b4332", fontWeight: 800, "&:hover": { bgcolor: "#f0fdf4" } }}
                 >
                   Explorar Biblioteca
@@ -844,9 +851,16 @@ export default function Dashboard() {
                   </Button>
                   <Button 
                     variant="outlined" 
-                    fullWidth 
-                    onClick={() => navigate("/suporte")}
-                    sx={{ borderColor: "#1b4332", color: "#1b4332", fontWeight: 800, border: "1.5px solid" }}
+                    fullWidth
+                    component="a"
+                    href="mailto:contato@vetflow.app.br?subject=Suporte e Consultoria - VERTOS OS"
+                    sx={{ 
+                      borderRadius: 2, 
+                      textTransform: "none", 
+                      fontWeight: 700,
+                      color: "#1b4332",
+                      borderColor: "#1b4332"
+                    }}
                   >
                     Falar com Consultor
                   </Button>

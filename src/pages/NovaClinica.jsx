@@ -93,8 +93,9 @@ export default function NovaClinica() {
         ...formData,
         userId: userData.uid,
         rtId: userData.uid,
-        rtNome: userData.rtNome || userData.displayName,
-        rtCrmv: userData.rtCrmv,
+        tenantId: userData.uid, // Garante multi-tenant
+        rtNome: userData.rtNome || userData.displayName || formData.rtNome || "Responsável Técnico",
+        rtCrmv: userData.crmv || formData.crmv || "",
         criadoEm: serverTimestamp(),
       };
       await addDoc(collection(db, "clinicas"), {

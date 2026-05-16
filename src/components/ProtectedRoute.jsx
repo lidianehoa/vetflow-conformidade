@@ -1,101 +1,116 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { doc, getDoc, query, collection, where, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
-import { useAuth } from "../hooks/useAuth";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "../firebase";
 import { Box, CircularProgress } from "@mui/material";
 
-const UserDataContext = createContext(null);
+export const UserContext = createContext(null);
+
+export function UserProvider({ children }) {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  console.warn("🌐 UserProvider montado. Status atual:", { loading, hasUser: !!userData });
+
+  useEffect(() => {
+    console.warn("🎬 Iniciando onAuthStateChanged...");
+    let isMounted = true;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!isMounted) return;
+      console.warn("🔐 Firebase Auth:", user ? user.email : "nenhum usuário");
+      
+      if (!user) { 
+        setUserData(null); 
+        setLoading(false); 
+        return; 
+      }
+
+      // Se tem usuário, garante que o loading continue true até carregar o Firestore
+      setLoading(true); 
+
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        const profile = snap.data() || {};
+
+        // Busca todas as clínicas do RT (tenant)
+        const clinicasSnap = await getDocs(
+          query(collection(db, "clinicas"), where("tenantId", "==", user.uid))
+        );
+        const clinicas = clinicasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // Clínica ativa: a salva no perfil ou a primeira disponível
+        const selectedId = profile.selectedClinicaId || clinicas[0]?.id || null;
+        const clinicaData = clinicas.find(c => c.id === selectedId) || null;
+
+        if (isMounted) {
+          setUserData({
+            uid: user.uid,
+            email: user.email,
+            ...profile, // Inclui todos os campos do documento (rtNome, crmv, etc)
+            role: profile.role || "rt",
+            plan: profile.plan || "free",
+            onboardingCompleto: profile.onboardingCompleto || false,
+            especialidades: profile.especialidades || [],
+            clinicas,
+            selectedClinicaId: selectedId,
+            clinicaData,
+          });
+          console.warn("✅ Dados sincronizados para:", user.email);
+        }
+      } catch (err) {
+        console.error("🔥 ERRO NO USERPROVIDER:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    });
+    
+    // Timeout de segurança: se em 10 segundos nada acontecer, para o loading
+    const timer = setTimeout(() => {
+      if (isMounted) {
+        setLoading(prev => {
+          if (prev) console.warn("⏳ Timeout de segurança atingido no UserProvider");
+          return false;
+        });
+      }
+    }, 10000);
+
+    return () => { 
+      isMounted = false; 
+      unsubscribe();
+      clearTimeout(timer);
+    };
+  }, []);
+
+  return (
+    <UserContext.Provider value={{ userData, loading, setUserData }}>
+      {children}
+    </UserContext.Provider>
+  );
+}
 
 export function useUserData() {
-  return useContext(UserDataContext);
+  const context = useContext(UserContext);
+  if (!context) return null;
+  return context.userData;
 }
 
 export default function ProtectedRoute({ children }) {
-  const { user, loading: authLoading } = useAuth();
-  const [userData, setUserData] = useState(null);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [selectedClinicaId, setSelectedClinicaId] = useState(() => localStorage.getItem("selectedClinicaId"));
-  const [clinicaData, setClinicaData] = useState(null);
-  const [clinicas, setClinicas] = useState([]);
+  const context = useContext(UserContext);
   const location = useLocation();
 
-  // Buscar todas as clínicas do usuário para o seletor global
-  useEffect(() => {
-    if (!user) {
-      setClinicas([]);
-      return;
-    }
-    const q = query(collection(db, "clinicas"), where("userId", "==", user.uid));
-    const unsubscribe = onSnapshot(q, (snap) => {
-      setClinicas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-    return () => unsubscribe();
-  }, [user]);
-
-  useEffect(() => {
-    if (selectedClinicaId) {
-      localStorage.setItem("selectedClinicaId", selectedClinicaId);
-      getDoc(doc(db, "clinicas", selectedClinicaId)).then(snap => {
-        if (snap.exists()) setClinicaData({ id: snap.id, ...snap.data() });
-      });
-    } else {
-      localStorage.removeItem("selectedClinicaId");
-      setClinicaData(null);
-    }
-  }, [selectedClinicaId]);
-
-  useEffect(() => {
-    if (!user) {
-      setDataLoading(false);
-      return;
-    }
-    setDataLoading(true);
-    getDoc(doc(db, "users", user.uid))
-      .then((snap) => {
-        if (snap.exists()) {
-          setUserData({ uid: user.uid, email: user.email, ...snap.data() });
-        } else {
-          setUserData({ uid: user.uid, email: user.email, plan: "pending" });
-        }
-      })
-      .catch(() => {
-        setUserData({ uid: user.uid, email: user.email, plan: "pending" });
-      })
-      .finally(() => setDataLoading(false));
-  }, [user]);
-
-  if (authLoading || dataLoading) {
+  if (context?.loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f0fdf4" }}>
-        <CircularProgress sx={{ color: "#1b4332" }} size={48} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <CircularProgress color="primary" />
       </Box>
     );
   }
 
-  if (!user) {
+  if (!context?.userData) {
+    console.warn("🚫 Sem userData, expulsando para /login...");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (userData?.plan === "expired" && location.pathname !== "/pagamento") {
-    return <Navigate to="/pagamento" replace />;
-  }
-
-  if (userData?.plan === "pending" && (location.pathname !== "/perfil" && location.pathname !== "/clinicas")) {
-    return <Navigate to="/perfil" replace />;
-  }
-
-  const contextValue = {
-    ...userData,
-    selectedClinicaId,
-    setSelectedClinicaId,
-    clinicaData,
-    clinicas,
-  };
-
-  return (
-    <UserDataContext.Provider value={contextValue}>
-      {children}
-    </UserDataContext.Provider>
-  );
+  return children;
 }

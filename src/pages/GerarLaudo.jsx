@@ -70,6 +70,7 @@ export default function GerarLaudo() {
     try {
       const data = {
         userId: userData.uid,
+        tenantId: userData.uid,
         clinicaId: userData.selectedClinicaId || "",
         tipoId: tipo.id,
         nomeTemplate: tipo.nome,

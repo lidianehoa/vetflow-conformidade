@@ -8,6 +8,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import StarIcon from "@mui/icons-material/Star";
 import FlashOnIcon from "@mui/icons-material/FlashOn";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { db } from "../firebase";
 import { useAuth } from "../hooks/useAuth";
 
@@ -86,14 +87,15 @@ export default function Pagamento() {
     if (!user) return;
     setLoading(true);
     try {
-      await setDoc(doc(db, "users", user.uid), { 
-        plan: "core", 
-        trialActive: true, 
-        trialExpiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 dias
-      }, { merge: true });
+      const functions = getFunctions();
+      const ativarTrial = httpsCallable(functions, "ativarTrial");
+      await ativarTrial();
       navigate("/dashboard");
-    } catch {
-      setErro("Erro ao ativar acesso. Tente novamente.");
+    } catch (err) {
+      console.error("Erro ao ativar trial:", err);
+      setErro(err.message?.includes("Trial já utilizado") 
+        ? "Você já utilizou seu período de test drive." 
+        : "Erro ao ativar acesso. Tente novamente.");
     } finally {
       setLoading(false);
     }
