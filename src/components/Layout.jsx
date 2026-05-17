@@ -40,7 +40,6 @@ const MENU_ITEMS = [
   { label: "💊 Controlados",      icon: <ScienceIcon />,            path: "/controlados",     recurso: "controlados" },
   { label: "📅 Rotina Diária",    icon: <CalendarMonthIcon />,      path: "/rotina" },
   { label: "🏥 Minhas Clínicas",   icon: <BusinessIcon />,           path: "/clinicas" },
-  { label: "🏆 Conquistas",       icon: <EmojiEventsIcon />,        path: "/conquistas" },
   { label: "👤 Meu Perfil",       icon: <PersonIcon />,             path: "/perfil" },
 ];
 

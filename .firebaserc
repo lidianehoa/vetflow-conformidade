@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "vet-flow-app-joysdq"
+  },
+  "targets": {
+    "vet-flow-app-joysdq": {
+      "hosting": {
+        "app": [
+          "vetflow-conformidade"
+        ]
+      }
+    }
   }
 }

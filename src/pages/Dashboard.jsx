@@ -34,8 +34,10 @@ import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
 import ReactApexChart from "react-apexcharts";
 import { getAreaById } from "../data/rtTypes";
-import { getNivel } from "../data/gamificacao";
+import { getNivel, getGamificacaoPorArea } from "../data/gamificacao";
+import EscudoConformidade from "../components/gamificacao/EscudoConformidade";
 import { generateFlightPlan } from "../data/flightPlan";
+import FlightPlan5W2H from "../components/Dashboard/FlightPlan5W2H";
 
 const SETORES_LABELS = ["Recepção (A)", "Clínica (B)", "CC (C)", "Higienização (D)", "Medicamentos (E)"];
 
@@ -93,6 +95,8 @@ export default function Dashboard() {
   const [auditoriasAltas, setAuditoriasAltas] = useState(0);
   const [ultimaData, setUltimaData] = useState("—");
   const [estoqueCritico, setEstoqueCritico] = useState(0);
+  const [auditoriasHistoricas, setAuditoriasHistoricas] = useState([]);
+  const [gamData, setGamData] = useState(null);
 
   // Estados para IA
   const [chatOpen, setChatOpen] = useState(false);
@@ -218,6 +222,19 @@ export default function Dashboard() {
     }
   };
 
+  // Carregar dados de gamificação do usuário
+  useEffect(() => {
+    if (!userData?.uid) return;
+    getDoc(doc(db, "users", userData.uid)).then(snap => {
+      if (snap.exists()) {
+        setGamData(snap.data()?.gamificacao ?? {
+          xp: 0, level: 1, badges: [], missoes_concluidas: [],
+          missoes_progresso: {}, historico_scores: [],
+        });
+      }
+    });
+  }, [userData?.uid]);
+
   // Carregar dados da unidade (vencimentos + área RT)
   useEffect(() => {
     if (!userData?.selectedClinicaId || typeof userData.selectedClinicaId !== 'string') return;
@@ -245,6 +262,8 @@ export default function Dashboard() {
       setTotalAuditorias(snap.docs.length);
       
       if (!snap.empty) {
+        const rawAudits = snap.docs.map(d => ({ score: d.data().score || 0 }));
+        setAuditoriasHistoricas(rawAudits);
         const bySetor = {};
         snap.docs.forEach((auditDoc) => {
           const data = auditDoc.data();
@@ -297,6 +316,15 @@ export default function Dashboard() {
   const planningData = React.useMemo(() => {
     return generateFlightPlan(unidade?.areaAtuacao, userData?.especialidades || []);
   }, [unidade?.areaAtuacao, userData?.especialidades]);
+
+  const missoesRecomendadas = React.useMemo(() => {
+    const areaAtual = unidade?.areaAtuacao || "pequenos_animais";
+    const { MISSOES } = getGamificacaoPorArea(areaAtual);
+    const concluidas = gamData?.missoes_concluidas ?? [];
+    return MISSOES
+      .filter(m => !concluidas.includes(m.id))
+      .sort((a, b) => b.escudo_incremento - a.escudo_incremento);
+  }, [unidade?.areaAtuacao, gamData?.missoes_concluidas]);
 
   const [activeWeek, setActiveWeek] = useState(0);
 
@@ -442,6 +470,74 @@ export default function Dashboard() {
           </Button>
         </Paper>
       )}
+
+      {/* TAREFA 7: Widget de Escudo de Conformidade & Top 2 Missões em Aberto */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={7}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: "1.5px solid #e8f5e9", bgcolor: "#ffffff" }}>
+            <Typography variant="subtitle1" fontWeight={850} color="#1b4332" mb={2}>
+              🛡️ ESCUDO DE CONFORMIDADE ATIVO (VISÃO RT)
+            </Typography>
+            <EscudoConformidade 
+              auditorias={auditoriasHistoricas} 
+              userData={unidade} 
+              compact={true} 
+            />
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={5}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: "1.5px solid #e8f5e9", bgcolor: "#ffffff", height: "100%", display: "flex", flexDirection: "column" }}>
+            <Typography variant="subtitle1" fontWeight={850} color="#1b4332" mb={1}>
+              🎯 BLINDAGENS RECOMENDADAS (IA)
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+              Missões abertas com maior impacto para aumentar seu Escudo
+            </Typography>
+            
+            <Stack spacing={1.5} sx={{ flex: 1, justifyContent: "center" }}>
+              {missoesRecomendadas.slice(0, 2).map(missao => (
+                <Box 
+                  key={missao.id} 
+                  sx={{ 
+                    p: 1.8, 
+                    borderRadius: 3, 
+                    border: "1.5px dashed #ffa00030", 
+                    bgcolor: "#fffde750",
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 1.5 
+                  }}
+                >
+                  <Typography fontSize={24}>{missao.emoji || "🎯"}</Typography>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography fontSize={12} fontWeight={900} color="#1b4332">{missao.nome}</Typography>
+                    <Typography fontSize={10} color="text.secondary">{missao.recompensaXP} XP · +{missao.escudo_incremento}% de Escudo</Typography>
+                  </Box>
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    onClick={() => navigate("/perfil")}
+                    sx={{ 
+                      fontSize: 10, 
+                      fontWeight: 800, 
+                      borderColor: "#ffa000", 
+                      color: "#b26a00",
+                      "&:hover": { bgcolor: "#ffa00010", borderColor: "#e65100" } 
+                    }}
+                  >
+                    Ativar
+                  </Button>
+                </Box>
+              ))}
+              {missoesRecomendadas.length === 0 && (
+                <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center", py: 3, display: "block" }}>
+                  🎉 Todas as missões estão concluídas! O estabelecimento está 100% blindado.
+                </Typography>
+              )}
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
 
       {/* 4. Linha de 4 KPI cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -687,113 +783,7 @@ export default function Dashboard() {
 
         {/* ── PLANO DE VOO MENSAL (REMODELADO) ── */}
         <Grid item xs={12}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1.5px solid #1b4332", p: 0, overflow: "hidden" }}>
-            {/* Header do Bloco */}
-            <Box sx={{ p: 3, bgcolor: "#f1f8f6", borderBottom: "1.5px solid #1b433220", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Box>
-                <Typography variant="h6" fontWeight={800} color="#1b4332">
-                  Plano de Voo Mensal do RT
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Planejamento Integrado: CFMV, ANVISA e SIPEAGRO
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                {["CFMV 1374", "RDC 222", "SIPEAGRO"].map(tag => (
-                  <Chip key={tag} label={tag} size="small" sx={{ fontWeight: 800, fontSize: 10, bgcolor: "#1b4332", color: "#fff" }} />
-                ))}
-              </Box>
-            </Box>
-
-            <Box sx={{ p: 2 }}>
-              {planningData.map((data, idx) => (
-                <Accordion 
-                  key={idx} 
-                  elevation={0} 
-                  sx={{ 
-                    mb: 1, 
-                    border: "1.5px solid #e8f5e9", 
-                    borderRadius: "12px !important",
-                    "&:before": { display: "none" }
-                  }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#1b4332" }} />}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box sx={{ 
-                        width: 32, height: 32, borderRadius: "50%", 
-                        bgcolor: "#e8f5e9", color: "#1b4332",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontWeight: 900, fontSize: 12
-                      }}>
-                        {idx + 1}
-                      </Box>
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight={800} color="#1b4332">
-                          {data.week}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Foco: {data.focus}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ pt: 0 }}>
-                    <Grid container spacing={1.5}>
-                      {data.tasks.map((task) => (
-                        <Grid item xs={12} key={task.id}>
-                          <Box sx={{ 
-                            display: "flex", alignItems: "center", justifyContent: "space-between", 
-                            p: 1.5, borderRadius: 2, border: "1px solid #f0fdf4",
-                            bgcolor: "#fcfdfc"
-                          }}>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                              <Box sx={{ 
-                                p: 0.8, borderRadius: 1.5, 
-                                bgcolor: task.urgent ? "#fff3e0" : "#f0fdf4",
-                                color: task.urgent ? "#e65100" : "#1b4332"
-                              }}>
-                                {task.urgent ? <WarningAmberIcon sx={{ fontSize: 18 }} /> : <CheckCircleIcon sx={{ fontSize: 18 }} />}
-                              </Box>
-                              <Box>
-                                <Typography variant="body2" fontWeight={700} color="#1b4332" sx={{ fontSize: "0.85rem" }}>{task.text}</Typography>
-                                <Typography variant="caption" sx={{ color: "#aaa", fontWeight: 800, textTransform: "uppercase", fontSize: 8 }}>
-                                  Base Legal: {task.source}
-                                </Typography>
-                              </Box>
-                            </Box>
-                            <Box sx={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid #e8f5e9" }} />
-                          </Box>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </Box>
-
-            {/* Rodapé de Alertas */}
-            <Box sx={{ p: 2, bgcolor: "#fafafa", borderTop: "1.5px solid #1b433220" }}>
-              <Grid container spacing={2}>
-                {clinicaData?.areaAtuacao === "industria_poa" && (
-                  <Grid item xs={12}>
-                    <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ borderRadius: 3, mb: 1 }}>
-                      <strong>Alerta POA:</strong> Envio de dados estatísticos ao SIF obrigatório até o 10º dia útil do mês (RIISPOA Art. 74).
-                    </Alert>
-                  </Grid>
-                )}
-                <Grid item xs={12} md={6}>
-                  <Alert icon={<BuildIcon fontSize="small" />} severity="warning" sx={{ borderRadius: 3, "& .MuiAlert-message": { fontSize: "0.75rem" } }}>
-                    <strong>Alerta Crítico (SIPEAGRO):</strong> Relatórios de psicotrópicos devem ser fechados mensalmente para evitar multas.
-                  </Alert>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Alert icon={<AssignmentIcon fontSize="small" />} severity="info" sx={{ borderRadius: 3, "& .MuiAlert-message": { fontSize: "0.75rem" } }}>
-                    <strong>Gestão de Laudos (Res. 1374):</strong> Armazenamento obrigatório por 5 anos. Participe do CEQ anualmente.
-                  </Alert>
-                </Grid>
-              </Grid>
-            </Box>
-          </Paper>
+          <FlightPlan5W2H clinicaId={selectedClinicaId} />
         </Grid>
 
         {/* ─── BLINDAGEM 360°: BASE DE CONHECIMENTO & OUVIDORIA ─── */}
@@ -848,21 +838,6 @@ export default function Dashboard() {
                     }}
                   >
                     Consultar IA Jurídica
-                  </Button>
-                  <Button 
-                    variant="outlined" 
-                    fullWidth
-                    component="a"
-                    href="mailto:contato@vetflow.app.br?subject=Suporte e Consultoria - VERTOS OS"
-                    sx={{ 
-                      borderRadius: 2, 
-                      textTransform: "none", 
-                      fontWeight: 700,
-                      color: "#1b4332",
-                      borderColor: "#1b4332"
-                    }}
-                  >
-                    Falar com Consultor
                   </Button>
                 </Stack>
               </CardContent>

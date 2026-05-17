@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Typography, Grid, Paper, Tabs, Tab, CircularProgress,
   Button, Stack, Chip, Divider, List, ListItem, ListItemText, Alert,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
   ListItemIcon, Tooltip, CardContent, Card, FormControlLabel,
-  Checkbox, Select, MenuItem
+  Checkbox, Select, MenuItem, IconButton
 } from "@mui/material";
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs, updateDoc, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -38,8 +38,118 @@ import SmartToyIcon from "@mui/icons-material/SmartToy";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { gerarHashSHA256, gerarSmartID } from "../utils/security";
 import { consultarAssistenteCompliance, gerarAnaliseLegislativa } from "../utils/analiseIA";
+import { useReactToPrint } from "react-to-print";
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: ABA DOCUMENTOS (Repositório Técnico)
+// ═══════════════════════════════════════════════════════════════
+function AbaDocumentos({ clinicaId }) {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!clinicaId) {
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        const totalDocs = [];
+        
+        // 1. Auditorias (Coleção de Topo com filtro)
+        const qAud = query(collection(db, "auditorias"), where("clinicaId", "==", clinicaId));
+        
+        // 2. Diagnósticos e Vistorias (Subcoleções)
+        const qDiag = collection(db, "clinicas", clinicaId, "diagnosticos");
+        const qVis  = collection(db, "clinicas", clinicaId, "vistorias");
+
+        const [snapAud, snapDiag, snapVis] = await Promise.all([
+          getDocs(qAud),
+          getDocs(qDiag),
+          getDocs(qVis)
+        ]);
+
+        if (!active) return;
+
+        snapAud.forEach(d => {
+          const data = d.data();
+          if (data.arquivoUrl) totalDocs.push({ nome: `Auditoria ${data.smartId || d.id}`, url: data.arquivoUrl, data: data.criadoEm?.toDate() || new Date(), tipo: "Auditoria" });
+        });
+
+        snapDiag.forEach(d => {
+          const data = d.data();
+          if (data.arquivoUrl) totalDocs.push({ nome: `Diagnóstico 360° ${data.smartId || ''}`, url: data.arquivoUrl, data: data.dataProcessamento ? new Date(data.dataProcessamento) : new Date(), tipo: "Diagnóstico" });
+        });
+
+        snapVis.forEach(d => {
+          const data = d.data();
+          (data.documentos || []).forEach(file => {
+            totalDocs.push({ nome: file.nome, url: file.url, data: data.criadoEm?.toDate() || new Date(), tipo: "Fiscalização" });
+          });
+        });
+
+        setDocs(totalDocs.sort((a, b) => (b.data || 0) - (a.data || 0)));
+      } catch (e) {
+        console.error("Erro em AbaDocumentos:", e);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [clinicaId]);
+
+  if (loading) return (
+    <Box sx={{ py: 5, textAlign: 'center' }}>
+      <CircularProgress size={30} sx={{ color: "#1b4332" }} />
+      <Typography variant="caption" display="block" sx={{ mt: 1, color: "#aaa" }}>Carregando documentos...</Typography>
+    </Box>
+  );
+
+  return (
+    <Box sx={{ animation: "fadeIn 0.5s ease-in-out" }}>
+      <Stack direction="row" alignItems="center" spacing={1} mb={3}>
+        <DescriptionIcon sx={{ color: "#1b4332" }} />
+        <Typography variant="h6" fontWeight={800} color="#1b4332">Repositório de Evidências e Dossiês</Typography>
+      </Stack>
+
+      {docs.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 6, textAlign: 'center', borderRadius: 4, borderStyle: 'dashed', bgcolor: "#f8fafc" }}>
+          <FolderCopyIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 2 }} />
+          <Typography fontWeight={700} color="#64748b" gutterBottom>Nenhum documento arquivado</Typography>
+          <Typography variant="body2" color="#94a3b8">Relatórios de auditorias e diagnósticos 360 aparecerão aqui automaticamente após a geração.</Typography>
+        </Paper>
+      ) : (
+        <Grid container spacing={2}>
+          {docs.map((d, i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2, transition: 'all 0.2s', '&:hover': { bgcolor: '#f1f5f9', borderColor: '#1b4332', transform: 'translateY(-2px)' } }}>
+                <Box sx={{ p: 1.5, bgcolor: d.tipo === 'Auditoria' ? '#e1f5fe' : d.tipo === 'Diagnóstico' ? '#e8f5e9' : '#fff3e0', borderRadius: 2 }}>
+                  <PictureAsPdfIcon sx={{ color: d.tipo === 'Auditoria' ? '#0288d1' : d.tipo === 'Diagnóstico' ? '#2e7d32' : '#e65100' }} />
+                </Box>
+                <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                  <Typography variant="body2" fontWeight={700} sx={{ lineHeight: 1.2, mb: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome}</Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip label={d.tipo} size="small" sx={{ height: 16, fontSize: 8, fontWeight: 900, textTransform: 'uppercase' }} />
+                    <Typography variant="caption" color="text.secondary">{d.data?.toLocaleDateString('pt-BR')}</Typography>
+                  </Stack>
+                </Box>
+                <IconButton component="a" href={d.url} target="_blank" size="small" sx={{ color: '#1b4332' }}>
+                  <OpenInNewIcon fontSize="small" />
+                </IconButton>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Box>
+  );
+}
 
 function VencimentoItem({ label, venc }) {
   if (!venc) return null;
@@ -98,17 +208,24 @@ export default function DetalheClinica() {
           setClinica(data);
           
           // Get sector labels for radar
-          const checklists = getChecklistsPorTipo(data.tipo);
-          setLabels(checklists.map(c => c.nome.split("—")[0].trim()));
+          const checklistsSetores = getChecklistsPorTipo(data.tipo);
+          setLabels(checklistsSetores.map(c => c.nome.split("—")[0].trim()));
           
-          // Load inspections (vistorias)
-          const qV = query(
-            collection(db, `clinicas/${clinicaId}/vistorias`),
-            orderBy("dataProcessamento", "desc")
-          );
-          const snapV = await getDocs(qV);
-          const vistorias = snapV.docs.map(d => ({ id: d.id, ...d.data() }));
-          if (vistorias.length > 0) setDiagnostico(vistorias[0]); // Pega a mais recente
+          // Load inspections (vistorias) and general diagnostics
+          const qV = query(collection(db, `clinicas/${clinicaId}/vistorias`), orderBy("dataProcessamento", "desc"), limit(1));
+          const qD = query(collection(db, `clinicas/${clinicaId}/diagnosticos`), orderBy("dataProcessamento", "desc"), limit(1));
+          
+          const [snapV, snapD] = await Promise.all([getDocs(qV), getDocs(qD)]);
+          
+          const docs = [
+            ...snapV.docs.map(d => ({ id: d.id, ...d.data(), source: 'vistorias' })),
+            ...snapD.docs.map(d => ({ id: d.id, ...d.data(), source: 'diagnosticos' }))
+          ].sort((a, b) => new Date(b.dataProcessamento) - new Date(a.dataProcessamento));
+
+          if (docs.length > 0) {
+            const v = docs[0];
+            setDiagnostico(v.analise ? { ...v, ...v.analise } : v);
+          }
           
           // Load auditorias
           const q = query(
@@ -126,12 +243,10 @@ export default function DetalheClinica() {
             lista.forEach(a => {
               if (a.secaoId && !bySetor[a.secaoId]) bySetor[a.secaoId] = a.score;
             });
-            const checklists = getChecklistsPorTipo(data.tipo)?.setores || [];
-            const newScores = checklists.map(c => bySetor[c.id] ?? 0);
+            const newScores = checklistsSetores.map(c => bySetor[c.id] ?? 0);
             setScores(newScores);
           } else {
-            const checklists = getChecklistsPorTipo(data.tipo)?.setores || [];
-            setScores(checklists.map(() => 0));
+            setScores(checklistsSetores.map(() => 0));
           }
         }
       } catch (err) {
@@ -272,6 +387,7 @@ export default function DetalheClinica() {
             </Box>
           )}
 
+          {tab === 3 && <AbaDocumentos clinicaId={clinicaId} />}
           {tab === 4 && <AbaEquipe clinica={clinica} clinicaId={clinicaId} />}
           {tab === 5 && <AbaTerceiros clinica={clinica} clinicaId={clinicaId} />}
 
@@ -532,74 +648,133 @@ function AbaTerceiros({ clinica, clinicaId }) {
 
 const diagStyles = `
   .solucao-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    border: 1px solid #e8e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
   }
+  
   .solucao-header {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 12px;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
   }
-  .solucao-icone { font-size: 20px; }
-  .solucao-problema { color: #1e293b; font-size: 16px; font-weight: 800; }
   
-  .cinco-w2h { display: flex; flex-direction: column; gap: 16px; }
-  .w2h-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-    gap: 12px; 
+  .solucao-icone { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .solucao-problema { font-size: 14px; font-weight: 600; color: #1a1a2e; line-height: 1.4; }
+  
+  .cinco-w2h { border-top: 1px solid #f0f0f8; padding-top: 12px; }
+  
+  .w2h-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
   }
+  
   .w2h-item {
-    background: #f8fafc;
-    padding: 10px;
+    background: #f8f8fc;
     border-radius: 8px;
-    border: 1px solid #f1f5f9;
+    padding: 10px 12px;
   }
-  .w2h-destaque { background: #eff6ff; border-color: #dbeafe; }
-  .w2h-label { 
-    display: block; 
-    font-size: 10px; 
-    font-weight: 800; 
-    color: #64748b; 
+  
+  .w2h-destaque {
+    background: #eef0ff;
+    border-left: 3px solid #6366f1;
+  }
+  
+  .w2h-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #7c7c9a;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: 4px;
   }
-  .w2h-valor { font-size: 13px; color: #334155; font-weight: 600; margin: 0; }
   
-  .w2h-acoes { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 12px; 
-    margin-top: 4px;
+  .w2h-valor {
+    font-size: 13px;
+    color: #2d2d4e;
+    margin: 0;
+    line-height: 1.5;
   }
-  .w2h-acao { padding: 12px; border-radius: 8px; }
-  .w2h-acao-vertos { background: #1e293b; color: #fff; }
-  .w2h-acao-externo { background: #f1f5f9; border: 1px solid #e2e8f0; }
-  .w2h-acao-label { font-size: 11px; font-weight: 800; display: block; margin-bottom: 4px; opacity: 0.9; }
-  .w2h-acao-texto { font-size: 13px; margin: 0; line-height: 1.4; }
+  
+  .w2h-acoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  @media (max-width: 600px) {
+    .w2h-acoes { grid-template-columns: 1fr; }
+    .w2h-grid  { grid-template-columns: 1fr; }
+  }
+  
+  .w2h-acao {
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  
+  .w2h-acao-vertos  { background: #e8f5e9; border-left: 3px solid #2e7d32; }
+  .w2h-acao-externo { background: #fff3e0; border-left: 3px solid #e65100; }
+  
+  .w2h-acao-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #444;
+  }
+  
+  .w2h-acao-texto { font-size: 13px; color: #2d2d4e; margin: 0; line-height: 1.5; }
   
   .w2h-custo {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 10px 16px;
-    background: #f0fdf4;
-    border-radius: 8px;
-    border: 1px solid #dcfce7;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fafafa;
+    border-radius: 6px;
+    border: 1px solid #ebebf5;
+  .w2h-custo-valor { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+  
+  .fase-sem-pendencia {
+    font-size: 13px;
+    padding: 10px 0;
+    margin: 0;
   }
-  .w2h-custo-valor { font-weight: 800; color: #166534; font-size: 14px; }
-  .fase-sem-pendencia { color: #64748b; font-style: italic; font-size: 14px; }
+
+  @media print {
+    .print-none { display: none !important; }
+    .diag-container { padding: 0 !important; margin: 0 !important; }
+    .hero-header { 
+      background: #1b4332 !important; 
+      color: #fff !important; 
+      -webkit-print-color-adjust: exact; 
+      border-radius: 0 !important;
+    }
+    .fase-card { 
+      break-inside: avoid; 
+      border: 1px solid #eee !important;
+      margin-bottom: 20px !important;
+    }
+  }
 `;
 
 function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
   const navigate = useNavigate();
+  const componentRef = useRef(null);
+  const [editDialog, setEditDialog] = useState(false);
+  const [selectedSol, setSelectedSol] = useState(null);
+
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    documentTitle: `Diagnostico_360_${clinica?.nomeFantasia || 'Clinica'}_${diagnostico?.smartId || 'VOS'}`,
+  });
 
   if (!diagnostico) return (
     <Box textAlign="center" py={10}>
@@ -619,10 +794,57 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
     </Box>
   );
 
-  const FaseCard = ({ num, titulo, cor, icon: Icon, fase }) => (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 4, mb: 3, borderLeft: `6px solid ${cor}` }}>
-      <style>{diagStyles}</style>
-      <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+  const handleOpenEdit = (faseIdx, solIdx, sol) => {
+    setSelectedSol({ 
+      faseIdx, 
+      solIdx, 
+      problema: sol.problema,
+      o_que: sol['5w2h']?.o_que || "",
+      taxas: sol['5w2h']?.investimento?.taxas || sol['5w2h']?.custo || "R$ 0,00",
+      honorarios: sol['5w2h']?.investimento?.honorarios || "R$ 0,00",
+      obs: sol['5w2h']?.investimento?.obs || ""
+    });
+    setEditDialog(true);
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const novaFases = [...diagnostico.fases];
+      const sol = novaFases[selectedSol.faseIdx].solucoes[selectedSol.solIdx];
+      
+      if (!sol['5w2h']) sol['5w2h'] = {};
+      
+      sol.problema = selectedSol.problema;
+      sol['5w2h'].o_que = selectedSol.o_que;
+      sol['5w2h'].investimento = {
+        taxas: selectedSol.taxas,
+        honorarios: selectedSol.honorarios,
+        total: `R$ ${(parseFloat(selectedSol.taxas.replace(/\D/g,''))/100 + parseFloat(selectedSol.honorarios.replace(/\D/g,''))/100).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`,
+        obs: selectedSol.obs
+      };
+
+      const diagId = diagnostico.id;
+      const collectionName = diagnostico.source === 'vistorias' ? 'vistorias' : 'diagnosticos';
+      
+      const docRef = doc(db, "clinicas", clinicaId, collectionName, diagId);
+      
+      if (diagnostico.source === 'vistorias') {
+        await updateDoc(docRef, { "analise.fases": novaFases });
+      } else {
+        await updateDoc(docRef, { fases: novaFases });
+      }
+
+      setDiagnostico({ ...diagnostico, fases: novaFases });
+      setEditDialog(false);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao salvar alterações.");
+    }
+  };
+
+  const FaseCard = ({ num, titulo, cor, icon: Icon, fase, faseIdx, className }) => (
+    <Paper elevation={0} variant="outlined" className={className} sx={{ p: 3, borderRadius: 4, mb: 3, borderLeft: `6px solid ${cor}` }}>
+      <div className="fase-header" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
         <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: cor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
           <Typography fontWeight={900}>{num}</Typography>
         </Box>
@@ -631,72 +853,106 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
           <Typography variant="h6" fontWeight={900} color="#334155">{titulo}</Typography>
         </Box>
         <Icon sx={{ color: "#cbd5e1" }} />
-      </Stack>
+      </div>
 
       <Stack spacing={2}>
-        {fase?.solucoes && fase.solucoes.map((solucao, idx) => (
-          <div key={idx} className="solucao-card">
-            <div className="solucao-header">
-              <span className="solucao-icone">⚡</span>
-              <strong className="solucao-problema">{solucao.problema}</strong>
-            </div>
-
-            {solucao['5w2h'] && (
-              <div className="cinco-w2h">
-                <div className="w2h-grid">
-                  <div className="w2h-item w2h-destaque">
-                    <span className="w2h-label">O QUE fazer</span>
-                    <p className="w2h-valor">{solucao['5w2h'].o_que}</p>
-                  </div>
-                  <div className="w2h-item">
-                    <span className="w2h-label">⚖️ POR QUE (legislação)</span>
-                    <p className="w2h-valor">{solucao['5w2h'].por_que}</p>
-                  </div>
-                  <div className="w2h-item">
-                    <span className="w2h-label">👤 QUEM</span>
-                    <p className="w2h-valor">{solucao['5w2h'].quem}</p>
-                  </div>
-                  <div className="w2h-item">
-                    <span className="w2h-label">📅 QUANDO</span>
-                    <p className="w2h-valor">{solucao['5w2h'].quando}</p>
-                  </div>
-                  <div className="w2h-item">
-                    <span className="w2h-label">📍 ONDE</span>
-                    <p className="w2h-valor">{solucao['5w2h'].onde}</p>
-                  </div>
-                </div>
-
-                <div className="w2h-acoes">
-                  <div className="w2h-acao w2h-acao-vertos">
-                    <span className="w2h-acao-label">🖥️ Como resolver no Vertos</span>
-                    <p className="w2h-acao-texto">{solucao['5w2h'].como_vertos}</p>
-                  </div>
-                  <div className="w2h-acao w2h-acao-externo">
-                    <span className="w2h-acao-label">🏢 Como resolver externamente</span>
-                    <p className="w2h-acao-texto">{solucao['5w2h'].como_externo}</p>
-                  </div>
-                </div>
-
-                <div className="w2h-custo">
-                  <span className="w2h-label">💰 CUSTO ESTIMADO</span>
-                  <span className="w2h-custo-valor">{solucao['5w2h'].custo}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {(!fase?.solucoes || fase.solucoes.length === 0) && (
+        {(!fase?.temPendencia || !fase?.solucoes || fase.solucoes.length === 0) ? (
           <p className="fase-sem-pendencia">✅ Nenhuma pendência identificada nesta fase.</p>
+        ) : (
+          fase.solucoes.map((solucao, idx) => (
+            <div key={idx} className="solucao-card" style={{ position: 'relative' }}>
+              <IconButton 
+                size="small" 
+                className="print-none"
+                onClick={() => handleOpenEdit(faseIdx, idx, solucao)}
+                sx={{ position: 'absolute', right: 8, top: 8, color: '#94a3b8', zIndex: 10 }}
+              >
+                <BuildIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+
+              <div className="solucao-header">
+                <span className="solucao-icone" aria-hidden="true">⚡</span>
+                <strong className="solucao-problema">{solucao.problema}</strong>
+              </div>
+
+              {solucao['5w2h'] && (
+                <div className="cinco-w2h">
+                  <div className="w2h-grid">
+                    <div className="w2h-item w2h-destaque">
+                      <span className="w2h-label">O QUE fazer</span>
+                      <p className="w2h-valor">{solucao['5w2h'].o_que}</p>
+                    </div>
+                    <div className="w2h-item">
+                      <span className="w2h-label">⚖️ POR QUE (legislação)</span>
+                      <p className="w2h-valor">{solucao['5w2h'].por_que}</p>
+                    </div>
+                    <div className="w2h-item">
+                      <span className="w2h-label">👤 QUEM</span>
+                      <p className="w2h-valor">{solucao['5w2h'].quem}</p>
+                    </div>
+                    <div className="w2h-item">
+                      <span className="w2h-label">📅 QUANDO</span>
+                      <p className="w2h-valor">{solucao['5w2h'].quando}</p>
+                    </div>
+                    <div className="w2h-item">
+                      <span className="w2h-label">📍 ONDE</span>
+                      <p className="w2h-valor">{solucao['5w2h'].onde}</p>
+                    </div>
+                  </div>
+
+                  <div className="w2h-acoes">
+                    <div className="w2h-acao w2h-acao-vertos" style={{ background: '#e8f5e9', borderLeft: '3px solid #2e7d32' }}>
+                      <span className="w2h-acao-label" style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#444' }}>🖥️ No sistema Vertos</span>
+                      <p className="w2h-acao-texto" style={{ fontSize: '13px', color: '#2d2d4e', margin: 0, lineHeight: 1.5 }}>{solucao['5w2h'].como_vertos}</p>
+                    </div>
+                    <div className="w2h-acao w2h-acao-externo" style={{ background: '#fff3e0', borderLeft: '3px solid #e65100' }}>
+                      <span className="w2h-acao-label" style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#444' }}>🏢 Externamente</span>
+                      <p className="w2h-acao-texto" style={{ fontSize: '13px', color: '#2d2d4e', margin: 0, lineHeight: 1.5 }}>{solucao['5w2h'].como_externo}</p>
+                    </div>
+                  </div>
+
+                  {/* Renderização Discriminada de Investimento */}
+                  <div className="w2h-custo" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b' }}>TAXAS / TERCEIROS:</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#1e293b' }}>{solucao['5w2h'].investimento?.taxas || solucao['5w2h'].custo || "R$ 0,00"}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#1b4332' }}>MEUS HONORÁRIOS (RT):</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#1b4332' }}>{solucao['5w2h'].investimento?.honorarios || "R$ 0,00"}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 900, color: '#1e293b' }}>INVESTIMENTO TOTAL:</span>
+                      <span style={{ fontSize: '14px', fontWeight: 900, color: '#1e293b' }}>
+                        {(() => {
+                          const parseBRL = (s) => {
+                            if (!s) return 0;
+                            const n = parseFloat(String(s).replace(/[^\d,]/g, '').replace(',', '.'));
+                            return isNaN(n) ? 0 : n;
+                          };
+                          const t = parseBRL(solucao['5w2h'].investimento?.taxas);
+                          const h = parseBRL(solucao['5w2h'].investimento?.honorarios);
+                          const total = t + h;
+                          if (total > 0) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+                          return solucao['5w2h'].investimento?.total || solucao['5w2h'].custo || "R$ 0,00";
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
         )}
       </Stack>
     </Paper>
   );
 
   return (
-    <Box>
+    <Box ref={componentRef} className="diag-container">
+      <style>{diagStyles}</style>
       {/* Hero Header High-End */}
-      <Box sx={{ 
+      <Box className="hero-header" sx={{ 
         p: 4, mb: 4, borderRadius: 5, 
         background: "linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%)", 
         color: "#fff", position: "relative", overflow: "hidden" 
@@ -724,7 +980,9 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
           {diagnostico.fases?.map((fase, i) => (
             <FaseCard 
               key={fase.id}
+              className="fase-card"
               num={fase.id} 
+              faseIdx={i}
               titulo={fase.nome} 
               fase={fase}
               cor={["#6366f1", "#8b5cf6", "#4f46e5", "#10b981", "#f59e0b"][i] || "#6366f1"}
@@ -738,23 +996,68 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
             />
           ))}
         </Grid>
+        
+        {/* Dialog de Edição de Proposta */}
+        <Dialog open={editDialog} onClose={() => setEditDialog(false)} fullWidth maxWidth="sm">
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight={900} mb={3}>Personalizar Proposta Técnica</Typography>
+            <Stack spacing={3}>
+              <TextField label="O Problema" fullWidth multiline rows={2} value={selectedSol?.problema || ""} onChange={e => setSelectedSol({...selectedSol, problema: e.target.value})} />
+              <TextField label="Ação Corretiva (O que fazer)" fullWidth multiline rows={2} value={selectedSol?.o_que || ""} onChange={e => setSelectedSol({...selectedSol, o_que: e.target.value})} />
+              
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField label="Taxas / Terceiros (R$)" fullWidth value={selectedSol?.taxas || ""} onChange={e => setSelectedSol({...selectedSol, taxas: e.target.value})} />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField label="Seus Honorários RT (R$)" fullWidth value={selectedSol?.honorarios || ""} onChange={e => setSelectedSol({...selectedSol, honorarios: e.target.value})} />
+                </Grid>
+              </Grid>
+
+              <TextField label="Observações Adicionais" fullWidth value={selectedSol?.obs || ""} onChange={e => setSelectedSol({...selectedSol, obs: e.target.value})} />
+            </Stack>
+            <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button onClick={() => setEditDialog(false)}>Cancelar</Button>
+              <Button variant="contained" onClick={handleSaveEdit} sx={{ bgcolor: "#1e293b", borderRadius: 2 }}>Salvar na Proposta</Button>
+            </Box>
+          </Box>
+        </Dialog>
         <Grid item xs={12} md={4}>
           <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 4, bgcolor: "#f8fafc", position: "sticky", top: 20 }}>
             <Typography variant="subtitle1" fontWeight={900} color="#334155" mb={2}>Resumo Executivo</Typography>
-            <Typography variant="body2" color="#64748b" lineHeight={1.6} mb={3}>
-              {diagnostico.resumoExecutivo || diagnostico.parecer || "Processando análise detalhada do estabelecimento..."}
+            <Typography variant="body2" color="text.secondary" mb={3} sx={{ lineHeight: 1.6 }}>
+              {diagnostico.resumoExecutivo || "Análise concluída com base nos documentos fornecidos."}
             </Typography>
             
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: 2 }} />
             
+            <Box mb={3}>
+              <Typography variant="caption" fontWeight={800} color="#64748b" sx={{ textTransform: "uppercase" }}>Estado Analisado</Typography>
+              <Typography variant="h6" fontWeight={900} color="#1b4332">{diagnostico.estadoAnalisado || clinica.estado || "Não Identificado"}</Typography>
+            </Box>
+
+            {diagnostico.legislacaoAplicada?.length > 0 && (
+              <Box mb={3}>
+                <Typography variant="caption" fontWeight={800} color="#64748b" sx={{ textTransform: "uppercase", display: "block", mb: 1 }}>📋 Legislação Aplicada</Typography>
+                <Stack spacing={0.5}>
+                  {diagnostico.legislacaoAplicada.map((lei, i) => (
+                    <Box key={i} sx={{ px: 1.5, py: 0.5, bgcolor: "#fff", border: "1px solid #e2e8f0", borderRadius: 1.5 }}>
+                      <Typography variant="caption" fontWeight={700} color="#475569" sx={{ fontSize: 9 }}>{lei}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
             <Typography variant="subtitle2" fontWeight={800} color="#334155" mb={2}>Ações Imediatas</Typography>
-            <Stack spacing={1}>
+            <Stack spacing={1} className="print-none">
               <Button fullWidth variant="contained" 
                 onClick={() => navigate("/auditorias/nova", { state: { clinicaId, tipo: clinica.tipo } })}
                 sx={{ bgcolor: "#1e293b", borderRadius: 2, textTransform: "none", fontWeight: 700 }}>
                 Iniciar Auditoria de Prova
               </Button>
               <Button fullWidth variant="outlined" 
+                onClick={handlePrint}
                 sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, borderColor: "#cbd5e1", color: "#334155" }}>
                 Exportar Dossiê PDF
               </Button>
@@ -765,6 +1068,7 @@ function AbaDiagnostico({ clinica, clinicaId, diagnostico, setDiagnostico }) {
     </Box>
   );
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 // COMPONENTE: ABA VISTORIAS (Órgãos Oficiais)
@@ -861,7 +1165,16 @@ function AbaVistorias({ clinica, clinicaId, alertasParaIA }) {
         
         setTimeout(() => setLoadingMsg("Aplicando Blindagem de Fé Pública (LC 148/2009)..."), 2000);
         
-        const analise = await interpretarBVO(textoBVO, clinica, alertasParaIA);
+        const analise = await interpretarBVO(
+          textoBVO || '',           // nunca undefined
+          clinica || {},            // nunca undefined  
+          alertasParaIA || []       // nunca undefined
+        );
+
+        if (!analise || analise.erro) {
+          // Fallback handled by the service, but we can log it
+          console.warn("Agente retornou erro, usando fallback estruturado.");
+        }
 
         // 4. Mapeamento das 3 Fases de Blindagem
         await updateDoc(

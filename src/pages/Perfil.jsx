@@ -75,7 +75,23 @@ export default function Perfil() {
   const [erro, setErro] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [alterandoSenha, setAlterandoSenha] = useState(false);
+  const location = useLocation();
   const [abaAtiva, setAbaAtiva] = useState(0);
+
+  useEffect(() => {
+    if (location.state?.aba !== undefined) {
+      setAbaAtiva(location.state.aba);
+    } else {
+      const searchParams = new URLSearchParams(location.search);
+      const abaParam = searchParams.get("aba");
+      if (abaParam !== null) {
+        const parsed = parseInt(abaParam, 10);
+        if (!isNaN(parsed)) {
+          setAbaAtiva(parsed);
+        }
+      }
+    }
+  }, [location]);
 
   const ABAS_PERFIL = [
     { label: "Identidade Profissional", icon: <BusinessIcon fontSize="small" /> },

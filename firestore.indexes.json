@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "rotinas_diarias",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clinicaId", "order": "ASCENDING" },
+        { "fieldPath": "criadoEm", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "auditorias",
       "queryScope": "COLLECTION",
       "fields": [

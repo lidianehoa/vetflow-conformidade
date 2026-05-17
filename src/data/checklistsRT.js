@@ -104,7 +104,7 @@ export const TIPO_PARA_AREA = {
 
 // ── Mapa tipo → IDs dos checklists disponíveis ───────────────
 export const CHECKLISTS_POR_TIPO = {
-  clinica:              ["PA_CK_01", "PA_CK_02", "PA_CK_03", "PA_CK_04"],
+  clinica:              ["PA_CK_01", "PA_CK_02", "PA_CK_03", "PA_CK_04", "PA_CK_05"],
   acougue:              ["POA_CK_01", "POA_CK_02", "POA_CK_03", "POA_CK_04", "POA_CK_07"],
   industria_alimentos:  ["IA_CK_01", "IA_CK_02"],
   comercio_agronegocio: ["CA_CK_01"],
@@ -317,6 +317,42 @@ export const CHECKLISTS = {
       "Acionar atendimento veterinário de urgência quando necessário",
       "Registrar todas as ocorrências no prontuário do animal",
     ],
+  },
+
+  PA_CK_05: {
+    id: "PA_CK_05",
+    area: "pequenos_animais",
+    nome: "Checklist Mensal de Conformidade Técnica e Legal (RT) v2.0",
+    objetivo: "Verificar a adesão aos processos descritos no Manual de Boas Práticas e PGRSS, garantindo a segurança jurídica, sanitária e operacional, em conformidade com a Resolução SES/MS Nº 80/2020 e normas municipais.",
+    frequencia: "mensal",
+    responsavelPreenchimento: "Responsável Técnico (RT)",
+    responsavelVerificacao: "Diretoria / RT",
+    legislacao: "Resolução SES/MS Nº 80/2020",
+    cabecalho: [
+      { campo: "data",        label: "Data da Auditoria", tipo: "date", obrigatorio: true },
+      { campo: "responsavel", label: "Responsável Técnico (RT)", tipo: "text", obrigatorio: true },
+    ],
+    itens: [
+      { id: "PA_CK_05_01", categoria: "1. Recepção e Documentação Administrativa", desc: "O Alvará Sanitário e Licença de Funcionamento estão vigentes e expostos?", criterio: "Manual de Boas Práticas (Cap. 2 e 6)", class: "CRÍTICO", peso: 10 },
+      { id: "PA_CK_05_02", categoria: "1. Recepção e Documentação Administrativa", desc: "O Certificado de Regularidade do RT (CRMV) está visível ao público?", criterio: "Resolução SES/MS Nº 80/2020", class: "CRÍTICO", peso: 10 },
+      { id: "PA_CK_05_03", categoria: "1. Recepção e Documentação Administrativa", desc: "Os Termos de Consentimento (TCLE) para cirurgia/internação estão sendo assinados antes dos procedimentos?", criterio: "Segurança jurídica, sanitária e operacional", class: "CRÍTICO", peso: 10 },
+      { id: "PA_CK_05_04", categoria: "1. Recepção e Documentação Administrativa", desc: "A triagem na recepção está sendo apenas visual/administrativa (sem toque físico/diagnóstico por leigos)?", criterio: "Sem toque físico ou diagnóstico por leigos", class: "MAIOR", peso: 5 },
+      { id: "PA_CK_05_05", categoria: "1. Recepção e Documentação Administrativa", desc: "Existe separação física ou fluxo diferenciado para cães e gatos na espera (Cat Friendly)?", criterio: "Minimizar estresse e riscos", class: "MENOR", peso: 2 },
+      { id: "PA_CK_05_06", categoria: "1. Recepção e Documentação Administrativa", desc: "Os dados sensíveis dos clientes estão protegidos (monitores virados, fichas guardadas) conforme LGPD?", criterio: "Conformidade com a LGPD", class: "MAIOR", peso: 5 },
+      
+      { id: "PA_CK_05_07", categoria: "7. Infraestrutura e Manutenção", desc: "O certificado de limpeza da caixa d'água e dedetização (Controle de Pragas) está em dia?", criterio: "Controle semestral de pragas e água", class: "CRÍTICO", peso: 10 },
+      { id: "PA_CK_05_08", categoria: "7. Infraestrutura e Manutenção", desc: "Os aparelhos de ar-condicionado estão limpos (PMOC visual)?", criterio: "Qualidade do ar e conforto térmico", class: "MAIOR", peso: 5 },
+      
+      { id: "PA_CK_05_09", categoria: "8. Treinamento e Equipe", desc: "A lista de presença do último treinamento (PGRSS/Biossegurança) está assinada e arquivada?", criterio: "PGRSS (Cap. 11) e Manual de Boas Práticas (Cap. 8)", class: "CRÍTICO", peso: 10 },
+      { id: "PA_CK_05_10", categoria: "8. Treinamento e Equipe", desc: "Todos os colaboradores possuem carteira de vacinação (Antitetânica/Antirrábica) atualizada?", criterio: "Imunização ativa de toda a equipe", class: "CRÍTICO", peso: 10 },
+      { id: "PA_CK_05_11", categoria: "8. Treinamento e Equipe", desc: "A equipe de limpeza sabe demonstrar como fechar o saco de lixo corretamente (fechamento em nó duplo, sem comprimir)?", criterio: "Manejo seguro de resíduos infectantes", class: "MAIOR", peso: 5 }
+    ],
+    acoesCorretivas: [
+      "Regularizar alvará ou certificados imediatamente junto aos órgãos",
+      "Submeter a equipe a treinamento emergencial de biossegurança",
+      "Acionar imediatamente serviço terceirizado para dedetização ou higienização da caixa d'água",
+      "Exigir vacinação atualizada dos colaboradores sob pena de suspensão de atividades de risco"
+    ]
   },
 
   // ════════════════════════════════════════════════════════════

@@ -14,7 +14,7 @@ import './InterpreteBVOButton.css';
 export function InterpreteBVOButton({
   onClick,
   disabled = false,
-  label = 'Intérprete BVO (IA)',
+  label = 'Intérprete de documentos emitidos durante vistorias e fiscalizações',
   sublabel = 'Analise esta clínica agora',
 }) {
   return (

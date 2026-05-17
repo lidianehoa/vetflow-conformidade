@@ -4,12 +4,12 @@ import React, { useState, useEffect } from "react";
 import {
   Box, Typography, LinearProgress, Chip, Button, Stepper, Step,
   StepLabel, Card, CardContent, Radio, RadioGroup, FormControlLabel,
-  Alert, Divider, Avatar, Stack, Tooltip, CircularProgress,
+  Alert, Divider, Avatar, Stack, Tooltip, CircularProgress, Grid
 } from "@mui/material";
 import {
   Gavel, Label, Factory, FactCheck, Groups, LocalShipping,
   EmojiEvents, CheckCircle, Cancel, RemoveCircle, Star,
-  NavigateNext, NavigateBefore, FlightTakeoff, Celebration,
+  NavigateNext, NavigateBefore, FlightTakeoff, Celebration, WarningAmber, Shield
 } from "@mui/icons-material";
 import Nature from "@mui/icons-material/Nature";
 import { useNavigate } from "react-router-dom";
@@ -17,9 +17,10 @@ import { db, auth } from "../firebase";
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
   NIVEIS, getNivel, getGamificacaoPorArea,
-  calcularScoreTrilha, calcularXPAuditoria,
+  calcularScoreTrilha, calcularXPAuditoria, proximoPassoMaisImpactante
 } from "../data/gamificacao";
 import { useUserData } from "../components/ProtectedRoute";
+import EscudoConformidade from "../components/gamificacao/EscudoConformidade";
 
 const ICON_MAP = {
   Gavel: <Gavel />, Label: <Label />, Factory: <Factory />,
@@ -132,7 +133,8 @@ export default function TrilhaAuditoria() {
     // Salvar auditoria na collection auditorias
     await addDoc(collection(db, "auditorias"), {
       userId: uid,
-      clinicaId: userData?.selectedClinicaId ?? "",
+      tenantId: uid, // Isolamento multi-tenant
+      clinicaId: clinicaData?.id ?? "",
       tipo: "trilha_diretrizes_cfmv",
       secaoId: "TRILHA_CFMV_2023",
       score: res.score,
@@ -173,10 +175,10 @@ export default function TrilhaAuditoria() {
   // INTRO
   if (etapa === "intro") return (
     <Box sx={{ maxWidth: 800, mx: "auto", p: 3 }}>
-      <Typography variant="h5" fontWeight={700} gutterBottom>
+      <Typography variant="h5" fontWeight={900} gutterBottom color="#1b4332">
         🎯 Trilha de Auditoria — Diretrizes CFMV/CRMVs 2023
       </Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
+      <Typography color="text.secondary" sx={{ mb: 3, fontSize: 14 }}>
         Uma auditoria gamificada baseada nas resoluções e legislações vigentes do CRMV.
         Responda {totalItens} itens em {secoesFiltradas.length} seções e descubra seu nível de conformidade.
       </Typography>
@@ -186,13 +188,14 @@ export default function TrilhaAuditoria() {
         {secoesFiltradas.map((s, i) => (
           <Box key={s.id} sx={{
             display: "flex", alignItems: "center", gap: 2, p: 1.5,
-            border: "0.5px solid", borderColor: "divider", borderRadius: 2,
+            border: "0.5px solid", borderColor: "divider", borderRadius: 3,
+            bgcolor: "#fff"
           }}>
             <Avatar sx={{ bgcolor: s.cor, width: 36, height: 36, fontSize: 14, fontWeight: 700 }}>
               {s.letra}
             </Avatar>
             <Box sx={{ flex: 1 }}>
-              <Typography fontSize={13} fontWeight={600}>{s.nome}</Typography>
+              <Typography fontSize={13} fontWeight={700} color="#1b4332">{s.nome}</Typography>
               <Typography fontSize={11} color="text.secondary">{s.descricao}</Typography>
             </Box>
             <Chip label={`${s.itens.length} itens`} size="small"
@@ -202,7 +205,7 @@ export default function TrilhaAuditoria() {
       </Stack>
 
       {/* Níveis */}
-      <Typography fontSize={13} fontWeight={600} sx={{ mb: 1 }}>Seus Níveis de Conquista</Typography>
+      <Typography fontSize={13} fontWeight={800} sx={{ mb: 1, color: "#1b4332" }}>Seus Níveis de Conquista</Typography>
       <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 3 }}>
         {NIVEIS.map(n => (
           <Chip key={n.level} label={`${n.emoji} ${n.nome}`} size="small"
@@ -213,7 +216,7 @@ export default function TrilhaAuditoria() {
 
       <Button variant="contained" size="large" endIcon={<FlightTakeoff />}
         onClick={() => setEtapa("auditando")}
-        sx={{ borderRadius: 3, fontWeight: 700, px: 4 }}>
+        sx={{ borderRadius: 3, fontWeight: 800, px: 4, bgcolor: "#1b4332", "&:hover": { bgcolor: "#143628" } }}>
         Iniciar Trilha
       </Button>
     </Box>
@@ -255,10 +258,10 @@ export default function TrilhaAuditoria() {
         <CardContent sx={{ py: 2 }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar sx={{ bgcolor: secaoCorrente.cor }}>
-              {ICON_MAP[secaoCorrente.icon]}
+              {ICON_MAP[secaoCorrente.icon] || <FactCheck />}
             </Avatar>
             <Box>
-              <Typography fontWeight={700} fontSize={15}>
+              <Typography fontWeight={800} fontSize={15} color="#1b4332">
                 {secaoCorrente.letra} — {secaoCorrente.nome}
               </Typography>
               <Typography fontSize={11} color="text.secondary">
@@ -269,11 +272,37 @@ export default function TrilhaAuditoria() {
         </CardContent>
       </Card>
 
+      {/* TAREFA 8: Alerta de risco da Seção */}
+      {secaoCorrente.risco_secao && (
+        <Box 
+          sx={{ 
+            mb: 3, 
+            p: 2, 
+            borderRadius: 3, 
+            bgcolor: "#fff3e0", 
+            border: "1px solid #ffe0b2",
+            display: "flex", 
+            alignItems: "flex-start", 
+            gap: 1.5 
+          }}
+        >
+          <WarningAmber sx={{ color: "#e65100", mt: 0.2 }} />
+          <Box>
+            <Typography variant="subtitle2" fontWeight={900} color="#e65100" mb={0.5}>
+              ⚠️ IMPACTO DA NEGLIGÊNCIA NESTE SETOR:
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#5c3e09", fontSize: 12, lineHeight: 1.4, fontWeight: 500 }}>
+              {secaoCorrente.risco_secao}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       {/* Itens da seção */}
       <Stack spacing={1.5} sx={{ mb: 3 }}>
         {secaoCorrente.itens.map((item, idx) => {
           const resp = respostas[item.id];
-          const borderColor = resp === "conforme" ? "#2e7d32"
+          const borderColor = resp === "conforme" ? "#1a7f4b"
             : resp === "nao_conforme" ? "#c62828"
             : resp === "na" ? "#9e9e9e" : "divider";
 
@@ -281,6 +310,7 @@ export default function TrilhaAuditoria() {
             <Card key={item.id} sx={{
               border: `1.5px solid ${borderColor}`,
               transition: "border-color .2s",
+              borderRadius: 3
             }}>
               <CardContent sx={{ py: 1.5 }}>
                 <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1 }}>
@@ -293,7 +323,7 @@ export default function TrilhaAuditoria() {
                       color: item.class === "CRÍTICO" ? "#c62828" : item.class === "MAIOR" ? "#e65100" : "#616161",
                     }}
                   />
-                  <Typography fontSize={12} sx={{ flex: 1 }}>{item.desc}</Typography>
+                  <Typography fontSize={12} fontWeight={700} sx={{ flex: 1 }}>{item.desc}</Typography>
                 </Stack>
                 <Typography fontSize={10} color="text.secondary" sx={{ mb: 1.5 }}>
                   Ref.: {item.ref}
@@ -301,14 +331,14 @@ export default function TrilhaAuditoria() {
 
                 <RadioGroup row value={resp ?? ""} onChange={e => responder(item.id, e.target.value)}>
                   {[
-                    { v: "conforme",      label: "✅ Conforme",      color: "#2e7d32" },
+                    { v: "conforme",      label: "✅ Conforme",      color: "#1a7f4b" },
                     { v: "nao_conforme",  label: "❌ Não Conforme",   color: "#c62828" },
                     { v: "na",            label: "N/A",              color: "#757575" },
                   ].map(opt => (
                     <FormControlLabel key={opt.v} value={opt.v}
-                      control={<Radio size="small" sx={{ color: opt.color,
+                       control={<Radio size="small" sx={{ color: opt.color,
                         "&.Mui-checked": { color: opt.color } }} />}
-                      label={<Typography fontSize={12} color={resp === opt.v ? opt.color : "text.secondary"}>
+                      label={<Typography fontSize={12} fontWeight={600} color={resp === opt.v ? opt.color : "text.secondary"}>
                         {opt.label}
                       </Typography>}
                     />
@@ -332,7 +362,7 @@ export default function TrilhaAuditoria() {
           onClick={avancarSecao}
           disabled={saving}
           sx={{ borderRadius: 2, fontWeight: 700,
-            bgcolor: secaoAtual < secoesFiltradas.length - 1 ? "primary.main" : "#2e7d32" }}>
+            bgcolor: secaoAtual < secoesFiltradas.length - 1 ? "primary.main" : "#1a7f4b" }}>
           {saving ? <CircularProgress size={20} />
             : secaoAtual < secoesFiltradas.length - 1 ? "Próxima Seção" : "Concluir Trilha"}
         </Button>
@@ -340,126 +370,167 @@ export default function TrilhaAuditoria() {
     </Box>
   );
 
-  // RESULTADO
+  // RESULTADO (TAREFA 6)
   if (etapa === "resultado" && resultado) {
     const nivel = resultado.nivel;
-    const todasBadges = [...(gamData?.badges ?? []), ...badgesDesbloqueados.map(b => b.id)];
+    const hist = gamData?.historico_scores ?? [];
+    
+    // Calcular delta do escudo
+    const oldScore = hist[0] ?? 0;
+    const oldShield = getNivel(oldScore).escudo_pct;
+    const newShield = nivel.escudo_pct;
+    const delta = newShield - oldShield;
+
+    const auditoriasFormatadas = [{ score: resultado.score }, ...hist.map(score => ({ score }))];
+    const proximaMissao = proximoPassoMaisImpactante(MISSOES, gamData?.missoes_concluidas ?? []);
 
     return (
-      <Box sx={{ maxWidth: 800, mx: "auto", p: 3 }}>
-        {/* Score card principal */}
-        <Card sx={{ mb: 3, border: `3px solid ${nivel.cor}`,
-          background: `linear-gradient(135deg, ${nivel.cor}08, ${nivel.cor}15)` }}>
-          <CardContent sx={{ textAlign: "center", py: 3 }}>
-            <Typography fontSize={60} lineHeight={1}>{nivel.emoji}</Typography>
-            <Typography variant="h5" fontWeight={800} sx={{ color: nivel.cor, mt: 1 }}>
+      <Box sx={{ maxWidth: 850, mx: "auto", p: { xs: 2, md: 3 } }}>
+        <Card sx={{ mb: 4, border: `3px solid ${nivel.cor}`,
+          background: `linear-gradient(135deg, ${nivel.cor}08, ${nivel.cor}15)`, borderRadius: 4 }}>
+          <CardContent sx={{ textAlign: "center", py: 4 }}>
+            <Typography fontSize={64} lineHeight={1}>{nivel.emoji}</Typography>
+            <Typography variant="h5" fontWeight={900} sx={{ color: nivel.cor, mt: 1 }}>
               {nivel.nome}
             </Typography>
-            <Typography variant="h3" fontWeight={900} sx={{ mt: 1 }}>
-              {resultado.score}%
+            <Typography variant="h3" fontWeight={900} color="#1b4332" sx={{ mt: 1 }}>
+              Score Conquistado: {resultado.score}%
             </Typography>
-            <Typography color="text.secondary" fontSize={13}>{nivel.descricao}</Typography>
+            <Typography color="text.secondary" fontSize={13} sx={{ mt: 1 }}>{nivel.descricao}</Typography>
 
-            <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 2 }}>
+            <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 3 }}>
               <Chip icon={<Star sx={{ fontSize: 16 }} />}
-                label={`+${xpGanho} XP ganhos`}
-                sx={{ bgcolor: "#fff9c4", color: "#f57f17", fontWeight: 700 }} />
+                label={`+${xpGanho} XP Ganhos!`}
+                sx={{ bgcolor: "#fff9c4", color: "#f57f17", fontWeight: 800 }} />
               {resultado.criticos_nc === 0 && (
                 <Chip icon={<CheckCircle sx={{ fontSize: 16 }} />}
-                  label="Sem itens críticos NC!" color="success" />
+                  label="Zero Itens Críticos NC! 🛡️" color="success" sx={{ fontWeight: 800 }} />
               )}
             </Stack>
           </CardContent>
         </Card>
 
-        {/* Scores por seção */}
-        <Typography fontWeight={700} sx={{ mb: 1.5 }}>Resultado por Seção</Typography>
-        <Stack spacing={1} sx={{ mb: 3 }}>
-          {secoesFiltradas.map(secao => {
-            const itens_secao = secao.itens;
-            const conformes = itens_secao.filter(i => respostas[i.id] === "conforme").length;
-            const ncs = itens_secao.filter(i => respostas[i.id] === "nao_conforme").length;
-            const respondidos_s = itens_secao.filter(i => respostas[i.id] && respostas[i.id] !== "na").length;
-            const pct = respondidos_s > 0 ? Math.round((conformes / respondidos_s) * 100) : 0;
+        {/* Exibidor Completo do Escudo */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="subtitle1" fontWeight={850} color="#1b4332" mb={2}>
+            📊 NOVO ESCUDO DE CONFORMIDADE ATIVO
+          </Typography>
+          <EscudoConformidade 
+            auditorias={auditoriasFormatadas} 
+            userData={clinicaData} 
+            compact={false} 
+          />
 
-            return (
-              <Box key={secao.id} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Avatar sx={{ bgcolor: secao.cor, width: 28, height: 28, fontSize: 12 }}>
-                  {secao.letra}
-                </Avatar>
-                <Typography fontSize={12} sx={{ width: 180 }} noWrap>{secao.nome}</Typography>
-                <LinearProgress variant="determinate" value={pct}
-                  sx={{ flex: 1, height: 8, borderRadius: 4,
-                    "& .MuiLinearProgress-bar": { bgcolor: pct >= 80 ? "#2e7d32" : pct >= 60 ? "#f57f17" : "#c62828" } }} />
-                <Typography fontSize={12} fontWeight={700}
-                  sx={{ color: pct >= 80 ? "#2e7d32" : pct >= 60 ? "#f57f17" : "#c62828", minWidth: 36 }}>
-                  {pct}%
-                </Typography>
-                {ncs > 0 && (
-                  <Chip label={`${ncs} NC`} size="small"
-                    sx={{ fontSize: 10, bgcolor: "#ffebee", color: "#c62828" }} />
-                )}
-              </Box>
-            );
-          })}
-        </Stack>
+          {delta > 0 && (
+            <Alert severity="success" sx={{ mt: 2, borderRadius: 3 }}>
+              📈 <strong>Seu Escudo cresceu em +{delta}%!</strong> O estabelecimento está mais blindado contra riscos do MAPA, Vigilância e CRMV.
+            </Alert>
+          )}
+        </Box>
 
         {/* Badges desbloqueados */}
         {badgesDesbloqueados.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
-              <Celebration sx={{ color: "#f57f17" }} />
-              <Typography fontWeight={700}>
-                {badgesDesbloqueados.length === 1 ? "Conquista Desbloqueada!" : `${badgesDesbloqueados.length} Conquistas Desbloqueadas!`}
+          <Box sx={{ mb: 4 }}>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+              <Celebration sx={{ color: "#ffa000" }} />
+              <Typography variant="subtitle1" fontWeight={850} color="#1b4332">
+                🏅 CONQUISTAS DESBLOQUEADAS HOJE!
               </Typography>
             </Stack>
-            <Stack direction="row" flexWrap="wrap" gap={1}>
+            <Grid container spacing={2}>
               {badgesDesbloqueados.map(b => (
-                <Card key={b.id} sx={{ p: 1.5, border: `2px solid ${b.cor}`, minWidth: 140, textAlign: "center" }}>
-                  <Typography fontSize={24}>🏅</Typography>
-                  <Typography fontSize={12} fontWeight={700} sx={{ color: b.cor }}>{b.nome}</Typography>
-                  <Typography fontSize={10} color="text.secondary">{b.descricao}</Typography>
-                  <Chip label={`+${b.xp} XP`} size="small"
-                    sx={{ mt: 0.5, bgcolor: "#fff9c4", color: "#f57f17", fontWeight: 700, fontSize: 10 }} />
-                </Card>
+                <Grid item xs={12} sm={6} key={b.id}>
+                  <Card sx={{ p: 2, border: `2px solid ${b.cor}`, borderRadius: 3, bgcolor: "#f9fdfa" }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+                      <Typography fontSize={32}>🏅</Typography>
+                      <Box>
+                        <Typography fontSize={13} fontWeight={900} color="#1b4332">{b.nome}</Typography>
+                        <Typography fontSize={11} color="text.secondary">{b.descricao}</Typography>
+                      </Box>
+                    </Stack>
+                    {b.protecao && (
+                      <Box sx={{ p: 1.5, bgcolor: "#fff", border: "1.5px dashed #1a7f4b30", borderRadius: 2 }}>
+                        <Stack direction="row" justifyContent="space-between" mb={0.5}>
+                          <Chip label={b.protecao.orgao} size="small" color="success" sx={{ fontSize: 9, fontWeight: 900, height: 16 }} />
+                          <Typography variant="caption" fontWeight={800} color="#1a7f4b">
+                            Risco: {b.protecao.risco_sem}% → {b.protecao.risco_com}%
+                          </Typography>
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 11, lineHeight: 1.4 }}>
+                          🛡️ <strong>Blindagem:</strong> {b.protecao.consequencia_com}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Card>
+                </Grid>
               ))}
-            </Stack>
+            </Grid>
           </Box>
         )}
 
         {/* Missões concluídas */}
         {missoesAtualizadas.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Typography fontWeight={700} sx={{ mb: 1 }}>🎯 Missões Concluídas!</Typography>
-            <Stack spacing={1}>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="subtitle1" fontWeight={850} color="#1b4332" mb={2}>🎯 MISSÕES BLINDADAS!</Typography>
+            <Stack spacing={1.5}>
               {missoesAtualizadas.map(m => (
-                <Alert key={m.id} severity="success" icon={<span>{m.emoji}</span>}>
-                  <strong>{m.nome}</strong> — +{m.recompensaXP} XP
+                <Alert key={m.id} severity="success" icon={<span>{m.emoji}</span>} sx={{ borderRadius: 3 }}>
+                  <strong>{m.nome}</strong> — Missão concluída com sucesso! Proteção ativada e +{m.recompensaXP} XP adicionados.
                 </Alert>
               ))}
             </Stack>
           </Box>
         )}
 
+        {/* PRÓXIMO PASSO MAIS IMPACTANTE */}
+        {proximaMissao && (
+          <Card sx={{ mb: 4, border: "2px dashed #ffa000", borderRadius: 4, bgcolor: "#fffde750" }}>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Avatar sx={{ bgcolor: "#ffa000", color: "#fff", width: 44, height: 44, fontSize: 22 }}>🚀</Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" fontWeight={900} color="#b26a00" sx={{ textTransform: "uppercase", tracking: 0.5 }}>
+                    Recomendação de Próximo Passo Mais Impactante:
+                  </Typography>
+                  <Typography variant="subtitle1" fontWeight={900} color="#1b4332" sx={{ mt: 0.5 }}>
+                    {proximaMissao.nome}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
+                    Ao concluir essa missão, você ganha <strong>+{proximaMissao.escudo_incremento}% de Escudo de Conformidade</strong> e elimina riscos severos de fiscalização.
+                  </Typography>
+                </Box>
+                <Button 
+                  variant="contained" 
+                  size="small"
+                  onClick={() => navigate("/perfil")}
+                  sx={{ bgcolor: "#ffa000", fontWeight: 800, "&:hover": { bgcolor: "#e65100" } }}
+                >
+                  Ver Detalhes
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
+
         {/* ICs identificadas */}
         {resultado.criticos_nc > 0 && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 4, borderRadius: 3 }}>
             <strong>{resultado.criticos_nc} item(ns) CRÍTICO(s) não conforme(s)</strong> identificado(s).
-            Priorize a correção imediata — esses itens têm penalidade de -15 pts cada no score.
+            A negligência de itens críticos acarreta multas pesadas do MAPA/CRMV e riscos éticos-sanitários gravíssimos. Corrija imediatamente!
           </Alert>
         )}
 
         {/* Ações */}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-          <Button variant="outlined" onClick={() => navigate("/central-rt")} sx={{ borderRadius: 2 }}>
+          <Button variant="outlined" onClick={() => navigate("/central-rt")} sx={{ borderRadius: 2, flex: 1 }}>
             Voltar ao Cockpit
           </Button>
-          <Button variant="contained" onClick={() => navigate("/conquistas")}
-            endIcon={<EmojiEvents />} sx={{ borderRadius: 2, fontWeight: 700 }}>
-            Ver Todas as Conquistas
+          <Button variant="contained" onClick={() => navigate("/perfil", { state: { aba: 2 } })}
+            endIcon={<EmojiEvents />} sx={{ borderRadius: 2, fontWeight: 800, flex: 1, bgcolor: "#1b4332", "&:hover": { bgcolor: "#143628" } }}>
+            Ver Minhas Conquistas
           </Button>
           <Button onClick={() => { setEtapa("intro"); setSecaoAtual(0); setRespostas({}); setResultado(null); }}
-            sx={{ borderRadius: 2, color: "text.secondary" }}>
+            sx={{ borderRadius: 2, color: "text.secondary", flex: 0.8 }}>
             Nova Auditoria
           </Button>
         </Stack>

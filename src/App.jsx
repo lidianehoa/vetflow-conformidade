@@ -158,7 +158,7 @@ export default function App() {
                 <Route path="/relatorios-crmv/gerar/:id" element={<GeradorRelatorioCRMV />} />
 
                 <Route path="/trilha-auditoria"  element={<Navigate to="/auditorias" replace />} />
-                <Route path="/conquistas"        element={<Navigate to="/perfil" replace />} />
+                <Route path="/conquistas"        element={<Navigate to="/perfil" state={{ aba: 2 }} replace />} />
                 <Route path="/documentos"        element={<Navigate to="/documentacao" replace />} />
                 <Route path="/planilhas"         element={<Navigate to="/documentacao" replace />} />
                 <Route path="/laudos"            element={<Navigate to="/documentacao" replace />} />

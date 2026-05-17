@@ -22,13 +22,13 @@ const COR_PRIMARIA = "#1b4332";
 export default function VisualizadorAuditoria() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const componentRef = useRef();
+  const componentRef = useRef(null);
   const [auditoria, setAuditoria] = useState(null);
   const [clinica, setClinica] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const handlePrint = useReactToPrint({
-    contentRef: componentRef,
+    content: () => componentRef.current,
     documentTitle: `Relatorio_Auditoria_${auditoria?.smartId || id}`,
   });
 

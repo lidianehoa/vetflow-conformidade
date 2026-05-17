@@ -31,13 +31,15 @@ import { useNavigate } from "react-router-dom";
 import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, auth, storage } from "../firebase";
-import { gerarResumoMensal, gerarParecerAuditoria, gerarPlanoAcao } from "../utils/analiseIA";
+import { gerarResumoMensal, gerarParecerAuditoria, gerarPlanoAcaoNC } from "../utils/analiseIA";
 import { 
   getGamificacaoPorArea, 
   getNivel, 
   calcularScoreTrilha, 
-  calcularXPAuditoria 
+  calcularXPAuditoria,
+  proximoPassoMaisImpactante
 } from "../data/gamificacao";
+import EscudoConformidade from "../components/gamificacao/EscudoConformidade";
 import { useUserData } from "../components/ProtectedRoute";
 import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
@@ -134,8 +136,46 @@ function NovaAuditoriaFluxo() {
   const [gamData, setGamData] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [respostas, setRespostas] = useState({});
+  const [planosNC, setPlanosNC] = useState({});
   const [evidencias, setEvidencias] = useState({});
   const [parecerRT, setParecerRT] = useState("");
+
+  const triggerGerarPlanoNC = async (itemId, itemText, itemClass) => {
+    if (planosNC[itemId]) return;
+    
+    setPlanosNC(prev => ({
+      ...prev,
+      [itemId]: { loading: true }
+    }));
+    
+    try {
+      const gravidades = {
+        "CRÍTICO": "Grave",
+        "MAIOR": "Moderada",
+        "MENOR": "Leve"
+      };
+      const gravidade = gravidades[itemClass] || "Moderada";
+      const estado = clinicaData?.estado || clinicaData?.uf || "MS";
+      
+      const plano = await gerarPlanoAcaoNC(
+        itemText,
+        clinicaData?.tipo || "Clínica Veterinária",
+        estado,
+        gravidade
+      );
+      
+      setPlanosNC(prev => ({
+        ...prev,
+        [itemId]: { ...plano, loading: false }
+      }));
+    } catch (err) {
+      console.error("Erro ao gerar plano de ação:", err);
+      setPlanosNC(prev => ({
+        ...prev,
+        [itemId]: { loading: false, erro: true }
+      }));
+    }
+  };
   const [scoreFinal, setScoreFinal] = useState(0);
   const [badgesDesbloqueados, setBadgesDesbloqueados] = useState([]);
   const [xpGanho, setXpGanho] = useState(0);
@@ -192,6 +232,7 @@ function NovaAuditoriaFluxo() {
         tipoAuditoria,
         score,
         respostas,
+        planosNC,
         evidencias,
         parecerRT,
         xpGanho: xpFinal,
@@ -290,6 +331,10 @@ function NovaAuditoriaFluxo() {
               area={clinicaData?.areaAtuacao || "pequenos_animais"} 
               respostas={respostas} 
               setRespostas={setRespostas}
+              planosNC={planosNC}
+              setPlanosNC={setPlanosNC}
+              triggerGerarPlanoNC={triggerGerarPlanoNC}
+              clinicaData={clinicaData}
               parecerRT={parecerRT}
               setParecerRT={setParecerRT}
               evidencias={evidencias}
@@ -305,6 +350,9 @@ function NovaAuditoriaFluxo() {
               clinica={clinicaData}
               respostas={respostas}
               setRespostas={setRespostas}
+              planosNC={planosNC}
+              setPlanosNC={setPlanosNC}
+              triggerGerarPlanoNC={triggerGerarPlanoNC}
               parecerRT={parecerRT}
               setParecerRT={setParecerRT}
               evidencias={evidencias}
@@ -317,38 +365,138 @@ function NovaAuditoriaFluxo() {
         </Box>
       )}
 
-      {etapa === "concluido" && (
-        <Paper sx={{ p: 6, textAlign: "center", borderRadius: 4 }}>
-          <CheckCircleIcon sx={{ fontSize: 80, color: "#1b4332", mb: 2 }} />
-          <Typography variant="h4" fontWeight={900} color="#1b4332">Auditoria Concluída!</Typography>
-          <Typography variant="h6" sx={{ mt: 1, mb: 4 }}>Score Final: {scoreFinal}%</Typography>
-          
-          <Box sx={{ mb: 4, p: 3, bgcolor: "#f9fdfa", borderRadius: 3, border: "1px solid #e8f5e9", textAlign: "left", mx: "auto", maxWidth: 600 }}>
-            <Typography variant="subtitle2" fontWeight={800} color="#1b4332" mb={1}>Parecer Técnico Registrado:</Typography>
-            <Typography variant="body2" sx={{ fontStyle: "italic", color: "text.secondary" }}>"{parecerRT}"</Typography>
-          </Box>
+      {etapa === "concluido" && (() => {
+        const hist = gamData?.historico_scores ?? [];
+        const oldScore = hist[0] ?? 0;
+        const oldShield = getNivel(oldScore).escudo_pct;
+        const newShield = getNivel(scoreFinal).escudo_pct;
+        const delta = newShield - oldShield;
 
-          {xpGanho > 0 && (
-            <Chip icon={<Star />} label={`+${xpGanho} XP Ganhos`} sx={{ mb: 2, bgcolor: "#fff9c4", color: "#f57f17", fontWeight: 700 }} />
-          )}
+        // Transformar historico simples de score em formato esperado pelo calcularEscudo
+        const auditoriasFormatadas = [{ score: scoreFinal }, ...hist.map(score => ({ score }))];
+        
+        const areaAtual = clinicaData?.areaAtuacao || "pequenos_animais";
+        const { MISSOES, BADGES } = getGamificacaoPorArea(areaAtual);
+        const proximaMissao = proximoPassoMaisImpactante(MISSOES, gamData?.missoes_concluidas ?? []);
 
-          {badgesDesbloqueados.length > 0 && (
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="subtitle2" fontWeight={800} mb={1}>Novas Conquistas!</Typography>
-              <Stack direction="row" spacing={1} justifyContent="center">
-                {badgesDesbloqueados.map(b => (
-                  <Chip key={b} label={`🏅 ${b}`} color="secondary" variant="outlined" />
-                ))}
+        // Obter os objetos badges completos para os badges que foram recém desbloqueados
+        const badgesObjetos = BADGES.filter(b => badgesDesbloqueados.includes(b.id));
+
+        return (
+          <Paper sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: "1.5px solid #e8f5e9", bgcolor: "#ffffff" }}>
+            <Box sx={{ textAlign: "center", mb: 4 }}>
+              <CheckCircleIcon sx={{ fontSize: 72, color: "#1a7f4b", mb: 1.5 }} />
+              <Typography variant="h4" fontWeight={900} color="#1b4332">Auditoria Concluída!</Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ mt: 0.5 }}>
+                Score Técnico Atingido: <span style={{ color: scoreFinal >= 75 ? "#1a7f4b" : "#c62828", fontWeight: 900 }}>{scoreFinal}%</span>
+              </Typography>
+              
+              <Stack direction="row" spacing={1.5} justifyContent="center" sx={{ mt: 2 }}>
+                {xpGanho > 0 && (
+                  <Chip icon={<Star sx={{ fontSize: 14 }} />} label={`+${xpGanho} XP Ganhos`} sx={{ bgcolor: "#fff9c4", color: "#f57f17", fontWeight: 800 }} />
+                )}
+                {scoreFinal >= 95 && (
+                  <Chip label="Selo Excelência Verde 🏅" color="success" sx={{ fontWeight: 800 }} />
+                )}
               </Stack>
             </Box>
-          )}
 
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <Button variant="outlined" onClick={() => window.location.reload()}>Nova Inspeção</Button>
-            <Button variant="contained" onClick={() => navigate("/central-rt")}>Voltar à Central</Button>
-          </Stack>
-        </Paper>
-      )}
+            <Divider sx={{ my: 3.5 }} />
+
+            {/* Parecer Técnico */}
+            <Box sx={{ mb: 4, p: 2.5, bgcolor: "#f9fdfa", borderRadius: 3, border: "1.5px solid #e8f5e9" }}>
+              <Typography variant="subtitle2" fontWeight={850} color="#1b4332" mb={1}>✍️ Parecer Técnico Registrado (Rastreabilidade RT):</Typography>
+              <Typography variant="body2" sx={{ fontStyle: "italic", color: "text.secondary", lineHeight: 1.5 }}>"{parecerRT}"</Typography>
+            </Box>
+
+            {/* Escudo de Conformidade */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle2" fontWeight={850} color="#1b4332" mb={2}>
+                🛡️ ATUALIZAÇÃO DO SEU ESCUDO DE CONFORMIDADE:
+              </Typography>
+              <EscudoConformidade 
+                auditorias={auditoriasFormatadas} 
+                userData={clinicaData} 
+                compact={false} 
+              />
+              
+              {delta > 0 && (
+                <Alert severity="success" sx={{ mt: 2, borderRadius: 3 }}>
+                  📈 <strong>Parabéns! Seu escudo de proteção cresceu em +{delta}%!</strong> O estabelecimento reduziu a exposição regulatória residual.
+                </Alert>
+              )}
+            </Box>
+
+            {/* Badges recém desbloqueados */}
+            {badgesObjetos.length > 0 && (
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle2" fontWeight={850} color="#1b4332" mb={2}>
+                  🏅 NOVAS CONQUISTAS & PROTEÇÃO LEGAL ATIVADA:
+                </Typography>
+                <Grid container spacing={2}>
+                  {badgesObjetos.map(b => (
+                    <Grid item xs={12} sm={6} key={b.id}>
+                      <Card sx={{ p: 2, border: `2px solid ${b.cor}`, borderRadius: 3, bgcolor: "#f7fdf9" }}>
+                        <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+                          <Typography fontSize={24}>🏅</Typography>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography fontSize={13} fontWeight={900} color="#1b4332">{b.nome}</Typography>
+                            <Typography fontSize={11} color="text.secondary">{b.descricao}</Typography>
+                          </Box>
+                        </Stack>
+                        {b.protecao && (
+                          <Box sx={{ p: 1.5, bgcolor: "#fff", border: "1.5px dashed #2e7d3220", borderRadius: 2 }}>
+                            <Typography variant="caption" display="block" fontWeight={900} color="#2e7d32" mb={0.5}>
+                              Ativo: {b.protecao.orgao} Risco {b.protecao.risco_sem}% → {b.protecao.risco_com}%
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: 11, lineHeight: 1.4 }}>
+                              {b.protecao.consequencia_com}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
+            {/* Recomendação Próximo Passo */}
+            {proximaMissao && (
+              <Card sx={{ mb: 4, border: "2px dashed #ff9800", borderRadius: 3, bgcolor: "#fff8e120" }}>
+                <CardContent sx={{ p: "16px !important" }}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: "#ff9800", color: "#fff", width: 40, height: 40 }}>🚀</Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" fontWeight={900} color="#b26a00" sx={{ textTransform: "uppercase" }}>
+                        Próxima Ação Mais Recomendada para Blindagem:
+                      </Typography>
+                      <Typography variant="subtitle2" fontWeight={850} color="#1b4332" sx={{ mt: 0.5 }}>
+                        {proximaMissao.nome}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Ao concluir esta missão você aumenta seu Escudo de Conformidade em <strong>+{proximaMissao.escudo_incremento}%</strong>.
+                      </Typography>
+                    </Box>
+                    <Button variant="contained" color="warning" size="small" onClick={() => setAba(3)} sx={{ fontWeight: 800 }}>
+                      Ver Missão
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
+
+            <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+              <Button variant="outlined" size="large" onClick={() => window.location.reload()} sx={{ borderRadius: 3, px: 3 }}>
+                Nova Inspeção
+              </Button>
+              <Button variant="contained" size="large" onClick={() => navigate("/central-rt")} sx={{ borderRadius: 3, px: 4, bgcolor: "#1b4332", "&:hover": { bgcolor: "#143628" } }}>
+                Voltar à Central
+              </Button>
+            </Stack>
+          </Paper>
+        );
+      })()}
     </Box>
   );
 }
@@ -407,14 +555,169 @@ function FotoEvidencia({ itemId, evidencias, setEvidencias, auditoriaId }) {
   );
 }
 
+// ── COMPONENTE: DETALHAMENTO DO PLANO DE AÇÃO NC 5W2H ──────────────────
+function PlanoAcaoNCItem({ itemId, itemText, itemClass, planosNC, setPlanosNC, clinicaData }) {
+  const plano = planosNC[itemId];
+  
+  if (!plano) return null;
+  
+  if (plano.loading) {
+    return (
+      <Box sx={{ mt: 1.5, p: 2, bgcolor: "#fafafa", borderRadius: 3, border: "1px dashed #ccc", width: "100%" }}>
+        <Stack spacing={1} direction="row" alignItems="center">
+          <CircularProgress size={16} sx={{ color: "#1b4332" }} />
+          <Typography variant="caption" color="text.secondary">
+            Inteligência regulatória Vertos estruturando plano 5W2H...
+          </Typography>
+        </Stack>
+      </Box>
+    );
+  }
+  
+  const handleFieldChange = (field, val) => {
+    setPlanosNC(prev => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        [field]: val
+      }
+    }));
+  };
+  
+  const handleRegenerate = async () => {
+    setPlanosNC(prev => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], loading: true }
+    }));
+    
+    try {
+      const gravidades = {
+        "CRÍTICO": "Grave",
+        "MAIOR": "Moderada",
+        "MENOR": "Leve"
+      };
+      const gravidade = gravidades[itemClass] || "Moderada";
+      const estado = clinicaData?.estado || clinicaData?.uf || "MS";
+      
+      const novoPlano = await gerarPlanoAcaoNC(
+        itemText,
+        clinicaData?.tipo || "Clínica Veterinária",
+        estado,
+        gravidade
+      );
+      
+      setPlanosNC(prev => ({
+        ...prev,
+        [itemId]: { ...novoPlano, loading: false }
+      }));
+    } catch (err) {
+      console.error(err);
+      setPlanosNC(prev => ({
+        ...prev,
+        [itemId]: { ...plano, loading: false }
+      }));
+    }
+  };
+
+  return (
+    <Accordion sx={{ mt: 1.5, borderRadius: 2, border: "1px solid #ff980030", bgcolor: "#fffdf9", width: "100%" }} defaultExpanded>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <AutoAwesomeIcon sx={{ color: "#ff9800", fontSize: 18 }} />
+          <Typography variant="caption" fontWeight={900} color="#e65100">
+            PLANO DE AÇÃO CORRETIVA 5W2H SUGERIDO (EDITÁVEL)
+          </Typography>
+        </Stack>
+      </AccordionSummary>
+      <AccordionDetails sx={{ p: 2 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="WHAT (O que fazer)"
+              fullWidth size="small"
+              value={plano.what || ""}
+              onChange={e => handleFieldChange("what", e.target.value)}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { borderRadius: 8, fontSize: 12 } }}
+            />
+            <TextField
+              label="WHY (Justificativa e base legal)"
+              fullWidth size="small" multiline rows={3}
+              value={plano.why || ""}
+              onChange={e => handleFieldChange("why", e.target.value)}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { borderRadius: 8, fontSize: 12 } }}
+            />
+            <TextField
+              label="WHO (Responsável)"
+              fullWidth size="small"
+              value={plano.who || ""}
+              onChange={e => handleFieldChange("who", e.target.value)}
+              InputProps={{ style: { borderRadius: 8, fontSize: 12 } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="WHERE (Onde)"
+              fullWidth size="small"
+              value={plano.where || ""}
+              onChange={e => handleFieldChange("where", e.target.value)}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { borderRadius: 8, fontSize: 12 } }}
+            />
+            <TextField
+              label="WHEN (Prazo)"
+              fullWidth size="small"
+              value={plano.when || ""}
+              onChange={e => handleFieldChange("when", e.target.value)}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { borderRadius: 8, fontSize: 12 } }}
+            />
+            <TextField
+              label="HOW (Como executar)"
+              fullWidth size="small" multiline rows={2}
+              value={plano.how || ""}
+              onChange={e => handleFieldChange("how", e.target.value)}
+              sx={{ mb: 2 }}
+              InputProps={{ style: { borderRadius: 8, fontSize: 12 } }}
+            />
+            <TextField
+              label="HOW MUCH (Custo estimado)"
+              fullWidth size="small"
+              value={plano.howMuch || ""}
+              onChange={e => handleFieldChange("howMuch", e.target.value)}
+              InputProps={{ style: { borderRadius: 8, fontSize: 12 } }}
+            />
+          </Grid>
+          <Grid item xs={12} sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              size="small"
+              variant="outlined"
+              color="warning"
+              startIcon={<AutoAwesomeIcon />}
+              onClick={handleRegenerate}
+              sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2 }}
+            >
+              Regenerar com IA
+            </Button>
+          </Grid>
+        </Grid>
+      </AccordionDetails>
+    </Accordion>
+  );
+}
+
 // ── SUBCOMPONENTE: TRILHA GUIADA (GAMIFICADA) ──────────────────────────
-function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, evidencias, setEvidencias, smartId, onConcluir, salvando, onVoltar }) {
+function TrilhaGuiada({ area, respostas, setRespostas, planosNC, setPlanosNC, triggerGerarPlanoNC, clinicaData, parecerRT, setParecerRT, evidencias, setEvidencias, smartId, onConcluir, salvando, onVoltar }) {
   const { SECOES_TRILHA } = getGamificacaoPorArea(area);
   const [secaoIdx, setSecaoIdx] = useState(0);
   const secao = SECOES_TRILHA[secaoIdx];
 
-  const handleResposta = (itemId, val) => {
+  const handleResposta = (itemId, val, itemText, itemClass) => {
     setRespostas(prev => ({ ...prev, [itemId]: val }));
+    if (val === "nao_conforme") {
+      triggerGerarPlanoNC(itemId, itemText, itemClass);
+    }
   };
 
   const isUltima = secaoIdx === SECOES_TRILHA.length - 1;
@@ -437,6 +740,32 @@ function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, 
         </Box>
       </Box>
 
+      {/* TAREFA 8: Barra de Alerta de Risco da Seção */}
+      {secao.risco_secao && (
+        <Box 
+          sx={{ 
+            mb: 3, 
+            p: 2, 
+            borderRadius: 3, 
+            bgcolor: "#fff3e0", 
+            border: "1.5px solid #ffe0b2",
+            display: "flex", 
+            alignItems: "flex-start", 
+            gap: 1.5 
+          }}
+        >
+          <WarningAmberIcon sx={{ color: "#e65100", mt: 0.2 }} />
+          <Box>
+            <Typography variant="subtitle2" fontWeight={900} color="#e65100" mb={0.5}>
+              ⚠️ EXPOSIÇÃO DE RISCO NESTE SETOR:
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#5c3e09", fontSize: 12, lineHeight: 1.4, fontWeight: 500 }}>
+              {secao.risco_secao}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       <Stack spacing={2} mb={5}>
         {secao.itens.map(item => (
           <Paper key={item.id} sx={{ p: 3, borderRadius: 3, border: "1.5px solid", borderColor: respostas[item.id] ? secao.cor : "#f3e5f5" }}>
@@ -458,34 +787,23 @@ function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, 
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1 }}>
               <RadioGroup 
                 row value={respostas[item.id] || ""} 
-                onChange={(e) => handleResposta(item.id, e.target.value)}
+                onChange={(e) => handleResposta(item.id, e.target.value, item.desc, item.class)}
                 sx={{ gap: 2 }}
               >
                 <FormControlLabel value="conforme" control={<Radio color="success" />} label="✅ Conforme" />
                 <FormControlLabel value="nao_conforme" control={<Radio color="error" />} label="❌ NC" />
                 <FormControlLabel value="na" control={<Radio />} label="N/A" />
               </RadioGroup>
-              {respostas[item.id] === "nao_conforme" && (
-                <Button
-                  size="small"
-                  variant="text"
-                  color="secondary"
-                  startIcon={<AutoAwesomeIcon sx={{ fontSize: 14 }} />}
-                  onClick={async () => {
-                    const plano = await gerarPlanoAcao(
-                      item.desc,
-                      secao.referencia || "CFMV 1275",
-                      area,
-                      item.class
-                    );
-                    alert(`Plano 5W2H Sugerido:\n\nO que: ${plano.o_que}\nQuem: ${plano.quem}\nQuando: ${plano.quando}\nComo: ${plano.como}`);
-                  }}
-                  sx={{ textTransform: "none", fontSize: 10, fontWeight: 700 }}
-                >
-                  Plano 5W2H
-                </Button>
-              )}
             </Box>
+
+            <PlanoAcaoNCItem
+              itemId={item.id}
+              itemText={item.desc}
+              itemClass={item.class}
+              planosNC={planosNC}
+              setPlanosNC={setPlanosNC}
+              clinicaData={clinicaData}
+            />
           </Paper>
         ))}
       </Stack>
@@ -550,7 +868,7 @@ function TrilhaGuiada({ area, respostas, setRespostas, parecerRT, setParecerRT, 
 }
 
 // ── SUBCOMPONENTE: AUDITORIA PADRÃO (ROTINA / COMPLETA) ──────────────────
-function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, parecerRT, setParecerRT, evidencias, setEvidencias, onConcluir, salvando, onVoltar }) {
+function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, planosNC, setPlanosNC, triggerGerarPlanoNC, parecerRT, setParecerRT, evidencias, setEvidencias, onConcluir, salvando, onVoltar }) {
   const ids = CHECKLISTS_POR_TIPO[clinica?.tipo] || [];
   const checklists = ids.map(id => CHECKLISTS[id]).filter(Boolean);
 
@@ -601,52 +919,53 @@ function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, parecerRT, se
                 </TableHead>
                 <TableBody>
                   {ck.itens.map(item => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>{item.desc}</Typography>
-                        <Typography variant="caption" color="text.secondary">{item.class}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <FotoEvidencia 
-                          itemId={item.id} 
-                          evidencias={evidencias} 
-                          setEvidencias={setEvidencias} 
-                          auditoriaId={clinica?.id || "temp"} 
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
+                    <React.Fragment key={item.id}>
+                      <TableRow>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>{item.desc}</Typography>
+                          <Typography variant="caption" color="text.secondary">{item.class}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <FotoEvidencia 
+                            itemId={item.id} 
+                            evidencias={evidencias} 
+                            setEvidencias={setEvidencias} 
+                            auditoriaId={clinica?.id || "temp"} 
+                          />
+                        </TableCell>
+                        <TableCell>
                           <Select 
                             size="small" fullWidth 
                             value={respostas[item.id] || ""} 
-                            onChange={e => setRespostas(p => ({...p, [item.id]: e.target.value}))}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setRespostas(p => ({...p, [item.id]: val}));
+                              if (val === "nao_conforme") {
+                                triggerGerarPlanoNC(item.id, item.desc, item.class);
+                              }
+                            }}
                           >
                             <MenuItem value="conforme">✅ C</MenuItem>
                             <MenuItem value="nao_conforme">❌ NC</MenuItem>
                             <MenuItem value="na">N/A</MenuItem>
                           </Select>
-                          {respostas[item.id] === "nao_conforme" && (
-                            <Tooltip title="Gerar Plano 5W2H com IA">
-                              <IconButton 
-                                size="small" 
-                                color="secondary"
-                                onClick={async () => {
-                                  const plano = await gerarPlanoAcao(
-                                    item.desc,
-                                    item.legislacao || "norma técnica",
-                                    clinica?.tipo,
-                                    item.class
-                                  );
-                                  alert(`Plano 5W2H Sugerido:\n\nO que: ${plano.o_que}\nQuem: ${plano.quem}\nQuando: ${plano.quando}\nComo: ${plano.como}`);
-                                }}
-                              >
-                                <AutoAwesomeIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                      </TableRow>
+                      {respostas[item.id] === "nao_conforme" && (
+                        <TableRow>
+                          <TableCell colSpan={3} sx={{ py: 0, borderBottom: "none" }}>
+                            <PlanoAcaoNCItem
+                              itemId={item.id}
+                              itemText={item.desc}
+                              itemClass={item.class}
+                              planosNC={planosNC}
+                              setPlanosNC={setPlanosNC}
+                              clinicaData={clinica}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>

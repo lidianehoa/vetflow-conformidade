@@ -1,5 +1,7 @@
 import { templateModel, modelIA, parseJSONSafe } from "../firebase";
 import { gerarHashSHA256, gerarSmartID } from "./security";
+import { getTextoLegislacaoParaPrompt } from "./legislacaoEstadual";
+import { getTextoDiretrizesParaPrompt, getTextoDiretrizesEspecificas } from "./diretrizesRT";
 
 // ── IDs dos Templates (Firebase AI Logic Console) ──
 const T = {
@@ -9,12 +11,14 @@ const T = {
 
 /**
  * 1. ASSISTENTE DE COMPLIANCE (Chat Geral)
- * Corrigido para bater com os campos do console
  */
 export async function consultarAssistenteCompliance(pergunta, areaAtuacao, tipoEstabelecimento) {
   try {
     const prompt = `Você é o Assistente Especialista em Compliance Veterinário da VERTOS OS.
     Seu objetivo é auxiliar o RT com dúvidas técnicas, normativas (MAPA, CRMV, SESAU) e operacionais.
+
+    ${getTextoDiretrizesParaPrompt()}
+    ${getTextoDiretrizesEspecificas(areaAtuacao)}
 
     ÁREA DE ATUAÇÃO DO RT: ${areaAtuacao}
     TIPO DE ESTABELECIMENTO: ${tipoEstabelecimento}
@@ -33,91 +37,91 @@ export async function consultarAssistenteCompliance(pergunta, areaAtuacao, tipoE
 
 export const gerarAnaliseLegislativa = async (texto, estado, cidade, tipo) => {
   try {
-    const prompt = `Você é um Analista Legislativo Sênior especializado em compliance sanitário veterinário no Mato Grosso do Sul.
+    const uf = estado || "MS";
+    const blocoLegislacao = getTextoLegislacaoParaPrompt(uf);
 
-Analise o documento abaixo para um estabelecimento do tipo "${tipo}" localizado em ${cidade}/${estado}.
-Baseie-se na LC 148/2009, Resoluções SESAU e normas CFMV/CRMV-MS.
+    const prompt = `Você é um Analista Legislativo Sênior especializado em compliance sanitário veterinário.
+    
+    ${blocoLegislacao}
 
-Responda APENAS em JSON válido, sem markdown, sem texto fora do JSON:
-{
-  "setor_atuacao": "string",
-  "resumo_fiscalizacao": "string",
-  "exigencias_documentais": ["string"],
-  "exigencias_estruturais": ["string"],
-  "prazos_identificados": "string",
-  "leis_e_resolucoes_citadas": ["string"],
-  "analise_de_risco_multa": "string",
-  "orientacao_pratica_rt": "string"
-}
+    ${getTextoDiretrizesParaPrompt()}
+    ${getTextoDiretrizesEspecificas(tipo)}
 
-Documento:
-${texto}`;
+    Analise o documento para um estabelecimento do tipo "${tipo}" em ${cidade}/${uf}.
+    
+    INSTRUÇÕES:
+    1. IDENTIFICAÇÃO DO CARÁTER: Identifique se o documento é pedagógico (Orientação) ou punitivo (Infração).
+    2. EXTRAÇÃO DE PRAZOS: Se punitivo, extraia o prazo de defesa/regularização.
 
-    const result = await modelIA.generateContent(prompt);
+    Responda APENAS em JSON válido:
+    {
+      "setor_atuacao": "string",
+      "caracterDocumento": "PEDAGOGICO | PUNITIVO",
+      "resumo_fiscalizacao": "string",
+      "exigencias_documentais": ["string"],
+      "exigencias_estruturais": ["string"],
+      "prazos_identificados": "string",
+      "leis_e_resolucoes_citadas": ["string"],
+      "analise_de_risco_multa": "string",
+      "orientacao_pratica_rt": "string"
+    }`;
+
+    const result = await modelIA.generateContent(prompt + `\n\nDocumento:\n${texto}`);
     const data = parseJSONSafe(result.response.text());
-    if (!data) throw new Error("JSON inválido retornado pela IA.");
+    if (!data) throw new Error("JSON inválido");
 
     const hash = await gerarHashSHA256(JSON.stringify(data));
     return { ...data, smartId: gerarSmartID("LEG-AI"), hash, dataProcessamento: new Date().toISOString() };
 
   } catch (error) {
     console.error("Erro na Análise Legislativa:", error);
-    return fallbackLegislativo(texto, tipo);
-  }
-};
-
-const fallbackLegislativo = async (texto, tipo) => {
-  try {
-    const prompt = `Você é um Especialista em Blindagem de Fé Pública para Clínicas Veterinárias no MS. 
-    Analise este documento para um estabelecimento do tipo ${tipo} considerando a Lei Complementar 148/2009 e Resoluções SESAU de Campo Grande/MS:
-    ${texto}. 
-
-    Gere um Diagnóstico 360° rigoroso em JSON:
-    - scoreBlindagem: Numérico (0-100) refletindo o nível de conformidade atual.
-    - fase1_infra: [{ item, descricao, solucao }] (Ações físicas: pintura epóxi, reparos).
-    - fase2_logistica: [{ item, descricao, solucao }] (Suprimentos: lixeiras de pedal, filtros).
-    - fase3_burocracia: [{ item, descricao, solucao }] (Protocolos: CAC, Dossiê Físico).
-    - resumoExecutivo: Texto focado em segurança jurídica para o RT.
-
-    Responda APENAS o JSON.`;
-    const result = await modelIA.generateContent(prompt);
-    return parseJSONSafe(result.response.text());
-  } catch (e) {
-    console.error("Erro no Fallback Legislativo:", e);
     return null;
   }
 };
 
-export const interpretarBVO = async (textoBVO, especialidade) => {
+export const interpretarBVO = async (textoBVO, especialidade, estado) => {
   try {
-    const prompt = `Você é o Agente Vertos Intelligence, especialista em auditoria sanitária no Mato Grosso do Sul.
-    Analise este BVO/Notificação para ${especialidade} com base na LC 148/2009 e normas da SESAU/CG.
+    const uf = estado || "MS";
+    const blocoLegislacao = getTextoLegislacaoParaPrompt(uf);
 
-    Retorne EXATAMENTE este formato JSON:
+    const prompt = `Você é o Agente Vertos Intelligence, especialista em auditoria e compliance veterinário.
+    
+    ${blocoLegislacao}
+
+    ${getTextoDiretrizesParaPrompt()}
+    ${getTextoDiretrizesEspecificas(especialidade)}
+
+    Analise o documento para ${especialidade} em ${uf}.
+
+    INSTRUÇÕES:
+    1. IDENTIFICAÇÃO DO CARÁTER: Pedagógico (Orientação) ou Punitivo (Infração).
+    2. EXTRAÇÃO DE PRAZOS: Se punitivo, extraia prazos de defesa.
+
+    Retorne APENAS JSON:
     {
       "scoreBlindagem": 0-100,
+      "caracterDocumento": "PEDAGOGICO | PUNITIVO",
+      "prazoDefesa": "string",
       "fase1_infra": [{ "item": "", "descricao": "", "solucao": "" }],
       "fase2_logistica": [{ "item": "", "descricao": "", "solucao": "" }],
       "fase3_burocracia": [{ "item": "", "descricao": "", "solucao": "" }],
-      "resumoExecutivo": ""
+      "resumoExecutivo": "string"
     }`;
-    const result = await modelIA.generateContent([
-      { text: prompt },
-      { text: textoBVO }
-    ]);
+    
+    const result = await modelIA.generateContent(prompt + `\n\nTexto:\n${textoBVO}`);
     return parseJSONSafe(result.response.text());
   } catch (error) {
-    console.error("Erro no Interpretador BVO:", error);
+    console.error("Erro ao interpretar documento:", error);
     return null;
   }
 };
 
 /**
- * 4. ANÁLISE DE VISTORIA (Aba Vistorias)
+ * 4. ANÁLISE DE VISTORIA
  */
 export const analisarVistoria = async (textoVistoria, orgao, dataVistoria) => {
   try {
-    const result = await modelIA.generateContent(`Analise a vistoria de ${orgao} em ${dataVistoria}. Texto: ${textoVistoria}. Gere plano de ação JSON.`);
+    const result = await modelIA.generateContent(`Analise a vistoria de ${orgao} em ${dataVistoria}. Texto: ${textoVistoria}. Gere plano JSON.`);
     const data = parseJSONSafe(result.response.text());
     return { ...data, smartId: gerarSmartID("VIST-AI"), dataProcessamento: new Date().toISOString() };
   } catch (error) {
@@ -127,7 +131,7 @@ export const analisarVistoria = async (textoVistoria, orgao, dataVistoria) => {
 };
 
 /**
- * 5. UTILS PARA AUDITORIA (Parecer e 5W2H)
+ * 5. UTILS PARA AUDITORIA
  */
 export const gerarParecerAuditoria = async (dados) => {
   try {

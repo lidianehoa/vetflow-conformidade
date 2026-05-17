@@ -57,13 +57,15 @@ service cloud.firestore {
       allow create: if isAuth() && criaComTenantCorreto();
       allow update, delete: if isTenant(resource.data.tenantId) || isAdmin();
 
-      // Subcoleções de Clínica
-      match /vistorias/{docId} {
+      // Subcoleções (Vistorias, Diagnósticos, etc) - Permite se o usuário é o dono da clínica pai
+      match /{allSubcollections=**} {
         allow read, write: if isTenant(get(/databases/$(database)/documents/clinicas/$(clinicaId)).data.tenantId) || isAdmin();
       }
-      match /diagnosticos/{docId} {
-        allow read, write: if isTenant(get(/databases/$(database)/documents/clinicas/$(clinicaId)).data.tenantId) || isAdmin();
-      }
+    }
+
+    // ── Cronogramas de Conformidade (Flight Plans 5W2H) ──────
+    match /flightPlans/{clinicaId} {
+      allow read, write: if isTenant(get(/databases/$(database)/documents/clinicas/$(clinicaId)).data.tenantId) || isAdmin();
     }
 
     // ── Coleções Operacionais (Isoladas e Protegidas por Plano) ──
@@ -91,6 +93,13 @@ service cloud.firestore {
       allow read: if isTenant(resource.data.tenantId) || isAdmin();
       allow create: if isAuth();
       allow update, delete: if isTenant(resource.data.tenantId) || isAdmin();
+    }
+
+    match /cronogramas_mensais/{docId} {
+      allow read: if isAuth() && (resource == null || isTenant(resource.data.tenantId) || isAdmin());
+      allow create: if isAuth() && (request.resource.data.tenantId == uid() || isAdmin());
+      allow update: if isTenant(resource.data.tenantId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     match /gtas/{userId}/{document=**} {

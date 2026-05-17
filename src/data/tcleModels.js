@@ -428,5 +428,75 @@ Assinatura: _______________________________________________
 
 Médico(a) Veterinário(a): {{RT_NOME}} | CRMV: {{RT_CRMV}}
 HASH: {{HASH}} | Ref.: Res. CFMV 1653/2025`
+  },
+  {
+    id: "pop_diagnostico_imagem_rt",
+    titulo: "POP — Diagnóstico Veterinário por Imagem (Res. CFMV 1.374)",
+    categoria: "POP",
+    conteudo: `PROCEDIMENTO OPERACIONAL PADRÃO (POP) — RESPONSABILIDADE TÉCNICA
+SERVIÇO DE DIAGNÓSTICO VETERINÁRIO POR IMAGEM
+
+ESTABELECIMENTO: {{NOME_CLINICA}}
+CNPJ: {{CNPJ}}
+ENDEREÇO: {{ENDERECO_UNIDADE}}
+RESPONSÁVEL TÉCNICO: {{RT_NOME}} | CRMV: {{RT_CRMV}}
+REFERÊNCIA LEGAL: Resolução nº 1.374 do Conselho Federal de Medicina Veterinária (CFMV)
+REVISÃO: 01 (Histórico: Rev. 00 - Emissão Inicial | Rev. 01 - Atualização Técnica)
+DATA DE ATUALIZAÇÃO: {{DATA_ATUAL}}
+
+1. INTRODUÇÃO
+Este Procedimento Operacional Padrão (POP) estabelece as diretrizes técnicas e operacionais obrigatórias para a prestação de serviços de diagnóstico veterinário por imagem (radiologia, ultrassonografia, tomografia computadorizada, ressonância magnética, etc.) no estabelecimento {{NOME_CLINICA}}, visando assegurar a qualidade dos exames, a proteção radiológica de pacientes e operadores, e a conformidade legal irrestrita com a Resolução nº 1.374 do CFMV.
+
+2. DESIGNAÇÃO DO RESPONSÁVEL TÉCNICO
+Fica formalmente designado como Responsável Técnico (RT) o(a) médico(a) veterinário(a) {{RT_NOME}}, inscrito(a) no CRMV sob o nº {{RT_CRMV}}, conforme Anotação de Responsabilidade Técnica (ART) vigente junto ao órgão de classe. O RT detém plena autonomia técnica para assegurar as condições higiênico-sanitárias, de segurança e operacionais de todo o setor de imagem.
+
+3. RESPONSABILIDADES DO RESPONSÁVEL TÉCNICO
+Compete ao RT do Serviço de Diagnóstico por Imagem:
+- Supervisionar e orientar tecnicamente a equipe de médicos veterinários imaginologistas e auxiliares;
+- Garantir a calibração, manutenção preventiva e controle de qualidade periódicos dos equipamentos;
+- Implementar e fiscalizar o cumprimento das normas de radioproteção (uso de dosímetros, blindagem, EPIs plumbíferos);
+- Garantir a elaboração, emissão e assinatura de laudos por médicos veterinários devidamente habilitados;
+- Garantir o arquivamento e rastreabilidade dos laudos e imagens geradas por no mínimo 5 anos;
+- Promover capacitações e treinamentos periódicos para a equipe do setor de imagem.
+
+4. PROCEDIMENTOS OPERACIONAIS
+4.1. Recepção do Paciente e Indicação Clínica:
+- Todo exame deve ser precedido de requisição formal do clínico veterinário solicitante, contendo suspeita diagnóstica e dados do paciente.
+- Verificação obrigatória do Termo de Consentimento (TCLE) assinado pelo tutor antes de procedimentos com sedação.
+
+4.2. Execução dos Exames e Segurança:
+- Posicionamento do paciente com foco no bem-estar animal, minimizando estresse e dor.
+- Uso obrigatório de Equipamento de Proteção Individual (EPI) plumbífero (avental de chumbo, protetor de tireoide, luvas plumbíferas) para os auxiliares e colaboradores envolvidos no posicionamento radiográfico.
+- Sinalização visível na porta das salas de exames contendo o símbolo internacional de radiação ionizante.
+
+4.3. Elaboração e Liberação de Laudos:
+- Os laudos dos exames de imagem devem ser redigidos em formato claro, preciso e técnico, contendo descrição das alterações, impressões diagnósticas e identificação completa do médico veterinário executor com respectivo CRMV.
+
+5. MONITORAMENTO E AUDITORIA
+- Verificação diária da temperatura ambiental e do correto funcionamento dos equipamentos de imagem.
+- Auditoria mensal das planilhas de manutenção, dosímetros individuais e conformidade dos laudos emitidos pela clínica.
+
+6. REVISÃO E ATUALIZAÇÃO DO POP
+Este POP deve ser revisado anualmente pelo RT {{RT_NOME}} ou sempre que ocorrerem alterações estruturais, substituição de equipamentos ou modificações relevantes na legislação veterinária ou sanitária nacional.
+
+7. CONCLUSÃO
+A implementação eficaz deste Procedimento Operacional Padrão garante que o serviço de diagnóstico por imagem de {{NOME_CLINICA}} cumpra rigorosamente a Resolução nº 1.374 do CFMV, operando sob os mais elevados preceitos éticos, de segurança, biossegurança e qualidade diagnóstica.
+
+8. REFERÊNCIA BIBLIOGRÁFICA
+- Conselho Federal de Medicina Veterinária. Resolução CFMV nº 1.374, que dispõe sobre os serviços de diagnóstico veterinário por imagem.
+- Portaria Federal de Proteção Radiológica vigente e normas sanitárias locais.
+
+{{CIDADE}}, {{DATA_ATUAL}}
+
+_________________________________________________
+{{RT_NOME}} | CRMV: {{RT_CRMV}}
+Responsável Técnico
+
+_________________________________________________
+{{RESPONSAVEL}} | CPF/RG: {{CPF_RESPONSAVEL}}
+Representante Legal do Estabelecimento
+
+HASH DE AUTENTICIDADE: {{HASH}}
+VERTOS OS · Smart ID: {{SMART_ID}}`
   }
 ];
