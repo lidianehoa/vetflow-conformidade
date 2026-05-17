@@ -32,6 +32,7 @@ import Auditorias from "./pages/Auditorias";
 import Onboarding from "./pages/Onboarding";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
+import Renovar from "./pages/Renovar";
 
 // Layout & guards
 import Layout         from "./components/Layout";
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/termos" element={<Termos />} />
               <Route path="/privacidade" element={<Privacidade />} />
+              <Route path="/renovar" element={<Renovar />} />
 
               <Route
                 path="/onboarding"

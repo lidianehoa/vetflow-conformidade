@@ -138,9 +138,17 @@ export default function Perfil() {
     setErro("");
     setSucesso(false);
     try {
-      // Gera Hash de integridade para os dados de saúde
-      const dadosSaudeStr = `${form.vencAntirrabica}-${form.vencAntitetanica}-${form.vencSorologia}`;
-      const hash = await gerarHashSHA256(dadosSaudeStr);
+      // Gera Hash de integridade para os dados de saúde com ordenação garantida
+      const dadosSaudeObj = {
+        vencAntirrabica: form.vencAntirrabica || "",
+        vencAntitetanica: form.vencAntitetanica || "",
+        vencSorologia: form.vencSorologia || "",
+      };
+      const payloadOrdenadoStr = Object.keys(dadosSaudeObj)
+        .sort()
+        .map((k) => `${k}:${dadosSaudeObj[k]}`)
+        .join("|");
+      const hash = await gerarHashSHA256(payloadOrdenadoStr);
       
       const payload = {
         ...form,

@@ -112,7 +112,13 @@ Responda SOMENTE com um objeto JSON válido:
 
     const data = JSON.parse(jsonMatch[0]);
 
-    const hash = await gerarHashSHA256(JSON.stringify(data));
+    const payloadOrdenado = Object.keys(data)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = data[key];
+        return acc;
+      }, {});
+    const hash = await gerarHashSHA256(JSON.stringify(payloadOrdenado));
     return { ...data, smartId: gerarSmartID("LEG-AI"), hash, dataProcessamento: new Date().toISOString() };
   } catch (error) {
     console.error("Erro na Análise Legislativa:", error);

@@ -32,6 +32,8 @@ import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "fireba
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, auth, storage } from "../firebase";
 import { gerarResumoMensal, gerarParecerAuditoria, gerarPlanoAcaoNC } from "../utils/analiseIA";
+import { gerarHashRegistro } from "../utils/security";
+import { BadgeIntegridade } from "../components/Segurança/BadgeIntegridade";
 import { 
   getGamificacaoPorArea, 
   getNivel, 
@@ -222,22 +224,33 @@ function NovaAuditoriaFluxo() {
         }, { merge: true });
       }
 
+      // Assinatura digital da Auditoria via Hash SHA-256 e ordenação garantida
+      const { hash, payload: payloadOrdenado } = await gerarHashRegistro(
+        {
+          nomeProntuario: identificacao,
+          tipoRT,
+          tipoAuditoria,
+          score,
+          respostas,
+          planosNC,
+          evidencias,
+          parecerRT,
+          xpGanho: xpFinal,
+          badgesDesbloqueados: bNovos.map(b => b.id),
+        },
+        uid,
+        clinicaData?.id || "geral"
+      );
+
       await addDoc(collection(db, "auditorias"), {
-        userId: uid,
+        ...payloadOrdenado,
         tenantId: uid, // Campo obrigatório para as regras de segurança
         clinicaId: clinicaData?.id || null,
         smartId,
-        nomeProntuario: identificacao,
-        tipoRT,
-        tipoAuditoria,
-        score,
-        respostas,
-        planosNC,
-        evidencias,
-        parecerRT,
-        xpGanho: xpFinal,
-        badgesDesbloqueados: bNovos.map(b => b.id),
         criadoEm: serverTimestamp(),
+        criadoEmServidor: serverTimestamp(),
+        hashSHA256: hash,
+        imutavel: true,
       });
 
       setScoreFinal(score);

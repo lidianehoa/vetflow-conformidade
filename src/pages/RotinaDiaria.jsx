@@ -25,7 +25,8 @@ import { collection, addDoc, setDoc, query, where, orderBy, limit, getDocs, serv
 import { db } from "../firebase";
 import { useUserData } from "../components/ProtectedRoute";
 import { TIPO_PARA_AREA } from "../data/checklistsRT";
-import { gerarHashSHA256, gerarSmartID } from "../utils/security";
+import { gerarHashSHA256, gerarSmartID, gerarHashRegistro } from "../utils/security";
+import { BadgeIntegridade } from "../components/Segurança/BadgeIntegridade";
 
 const COR = "#1b4332";
 const ACENTO = "#52b788";
@@ -1249,17 +1250,21 @@ export default function RotinaDiaria() {
     try {
       const docId = `${userData.selectedClinicaId}_${selectedMesAno.replace(/\s+/g, "").replace(/\//g, "_")}`;
       
-      // Assinatura digital do RT via Hash SHA-256
-      const dataStr = JSON.stringify(cronograma) + userData.uid + new Date().toISOString();
-      const hash = await gerarHashSHA256(dataStr);
+      // Assinatura digital do RT via Hash SHA-256 e ordenação garantida
+      const { hash, payload: payloadOrdenado } = await gerarHashRegistro(
+        cronograma,
+        userData.uid,
+        userData.selectedClinicaId
+      );
       
       const payload = {
-        ...cronograma,
-        clinicaId: userData.selectedClinicaId,
-        userId: userData.uid,
+        ...payloadOrdenado,
         tenantId: unidade?.tenantId || userData.uid,
         atualizadoEm: serverTimestamp(),
-        hashSeguranca: hash,
+        criadoEmServidor: serverTimestamp(),
+        hashSHA256: hash,
+        hashSeguranca: hash, // Mantido para compatibilidade retrospectiva
+        imutavel: true,
       };
 
       await setDoc(doc(db, "cronogramas_mensais", docId), payload);
@@ -1491,20 +1496,27 @@ export default function RotinaDiaria() {
     if (!userData?.selectedClinicaId) return;
     setSalvando(true);
     try {
-      const dataStr = JSON.stringify(form) + userData.uid + new Date().toISOString();
-      const hash = await gerarHashSHA256(dataStr);
+      const { hash, payload: payloadOrdenado } = await gerarHashRegistro(
+        {
+          ...form,
+          userName: userData.displayName || userData.rtNome || "Usuário",
+          areaAtuacao: unidade?.areaAtuacao || "N/A",
+          dataRef: new Date().toLocaleDateString("pt-BR"),
+        },
+        userData.uid,
+        userData.selectedClinicaId
+      );
 
       await addDoc(collection(db, "rotinas_diarias"), {
-        ...form,
-        userId: userData.uid,
+        ...payloadOrdenado,
         tenantId: unidade?.tenantId || userData.uid,
         clinicaId: userData.selectedClinicaId,
-        userName: userData.displayName || userData.rtNome || "Usuário",
-        areaAtuacao: unidade?.areaAtuacao || "N/A",
         criadoEm: serverTimestamp(),
-        dataRef: new Date().toLocaleDateString("pt-BR"),
-        hashIntegridade: hash,
+        criadoEmServidor: serverTimestamp(),
+        hashSHA256: hash,
+        hashIntegridade: hash, // Mantido para compatibilidade retrospectiva
         smartId: gerarSmartID("DAILY"),
+        imutavel: true,
       });
       setSucesso(true);
       setForm({
@@ -1891,9 +1903,12 @@ export default function RotinaDiaria() {
                     historico.map((log) => (
                       <Card key={log.id} variant="outlined" sx={{ borderRadius: 3, borderLeft: `4px solid ${COR}` }}>
                         <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-                          <Stack direction="row" justifyContent="space-between" mb={1}>
+                          <Stack direction="row" justifyContent="space-between" mb={1} alignItems="center">
                             <Typography variant="caption" fontWeight={800} color={COR}>{log.dataRef}</Typography>
-                            <Chip label={log.areaAtuacao} size="small" sx={{ height: 16, fontSize: 9, fontWeight: 800 }} />
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <BadgeIntegridade registro={log} />
+                              <Chip label={log.areaAtuacao} size="small" sx={{ height: 16, fontSize: 9, fontWeight: 800 }} />
+                            </Stack>
                           </Stack>
                           <Stack direction="row" spacing={2} mb={1} flexWrap="wrap">
                             {log.temps?.map((t, i) => (

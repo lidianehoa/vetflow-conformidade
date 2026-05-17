@@ -30,6 +30,8 @@ import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/f
 import { usePlano } from "../hooks/usePlano";
 import { getAreaById } from "../data/rtTypes";
 import ClinicaSelector from "./ClinicaSelector";
+import { BannerPassExpirando } from "./Planos/BannerPassExpirando";
+import { usePlanoGuard } from "../hooks/usePlanoGuard";
 
 const DRAWER_WIDTH = 260;
 
@@ -44,6 +46,8 @@ const MENU_ITEMS = [
 ];
 
 export default function Layout() {
+  usePlanoGuard(); // Check active/prepaid plan access
+  
   const userData = useUserData();
   const { pode } = usePlano(userData);
   const navigate = useNavigate();
@@ -388,6 +392,8 @@ export default function Layout() {
             </Menu>
           </Toolbar>
         </AppBar>
+
+        <BannerPassExpirando />
 
         <Box sx={{ p: 0, minHeight: "calc(100vh - 64px)", pb: { xs: 8, md: 0 } }}>
           <Outlet />

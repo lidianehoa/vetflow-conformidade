@@ -70,7 +70,13 @@ export const gerarAnaliseLegislativa = async (texto, estado, cidade, tipo) => {
     const data = parseJSONSafe(result.response.text());
     if (!data) throw new Error("JSON inválido");
 
-    const hash = await gerarHashSHA256(JSON.stringify(data));
+    const payloadOrdenado = Object.keys(data)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = data[key];
+        return acc;
+      }, {});
+    const hash = await gerarHashSHA256(JSON.stringify(payloadOrdenado));
     return { ...data, smartId: gerarSmartID("LEG-AI"), hash, dataProcessamento: new Date().toISOString() };
 
   } catch (error) {

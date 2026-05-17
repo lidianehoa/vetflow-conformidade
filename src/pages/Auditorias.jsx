@@ -17,6 +17,7 @@ import { usePlano } from "../hooks/usePlano";
 import BloqueioRecurso from "../components/BloqueioRecurso";
 import ReactApexChart from "react-apexcharts";
 import RelatorioRegularizacao from "./RelatorioRegularizacao";
+import { BadgeIntegridade } from "../components/Segurança/BadgeIntegridade";
 
 function getScoreColor(score) {
   if (score >= 90) return "#1b4332";
@@ -169,6 +170,7 @@ export default function Auditorias() {
                       <TableCell sx={{ fontWeight: 700, color: "#1b4332" }}>Setor</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: "#1b4332" }}>Data</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: "#1b4332" }}>Score</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#1b4332" }}>Integridade</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: "#1b4332" }}>Ações</TableCell>
                     </TableRow>
                   </TableHead>
@@ -196,6 +198,9 @@ export default function Auditorias() {
                           <Typography variant="body2" fontWeight={800} color={getScoreColor(aud.score ?? 0)}>
                             {aud.score ?? "—"}%
                           </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <BadgeIntegridade registro={aud} />
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: "flex", gap: 0.5 }}>

@@ -46,7 +46,18 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if uid() == userId || isAdmin();
       allow create: if isAuth() && uid() == userId;
-      allow update: if uid() == userId || isAdmin();
+      allow update: if (uid() == userId || isAdmin())
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['plan', 'plano', 'planoExpiraEm', 'planoAtivadoEm', 'hotmartPedidoId', 'passConvertido']));
+      allow delete: if false;
+    }
+
+    match /usuarios/{userId} {
+      allow read: if uid() == userId || isAdmin();
+      allow create: if isAuth() && uid() == userId;
+      allow update: if (uid() == userId || isAdmin())
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['plan', 'plano', 'planoExpiraEm', 'planoAtivadoEm', 'hotmartPedidoId', 'passConvertido']));
       allow delete: if false;
     }
 
@@ -117,6 +128,9 @@ service cloud.firestore {
 
     // Pendentes da Hotmart: Protegido
     match /hotmart_pendentes/{docId} {
+      allow read, write: if false; // Só acessível via Admin SDK (Cloud Functions)
+    }
+    match /pagamentosPendentes/{docId} {
       allow read, write: if false; // Só acessível via Admin SDK (Cloud Functions)
     }
     match /erros_app/{docId} {

@@ -112,7 +112,11 @@ export default function GerarLaudo() {
     try {
       const cert = certificates.find(c => c.thumbprint === selectedCert);
       const smartId = gerarSmartID("LAUDO");
-      const hashParaAssinar = await gerarHashSHA256(JSON.stringify(form) + smartId);
+      const payloadOrdenadoStr = Object.keys(form)
+        .sort()
+        .map((k) => `${k}:${form[k]}`)
+        .join("|") + `|smartId:${smartId}`;
+      const hashParaAssinar = await gerarHashSHA256(payloadOrdenadoStr);
       
       const signature = await signHash(selectedCert, hashParaAssinar);
       

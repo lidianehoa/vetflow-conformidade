@@ -512,8 +512,16 @@ function AbaEquipe({ clinica, clinicaId }) {
     if (!membro.nome) return;
     setLoading(true);
     try {
-      const dataStr = `${membro.nome}-${membro.vencSorologia}-${membro.epiConfirmado}`;
-      const hash = await gerarHashSHA256(dataStr);
+      const dadosMembro = {
+        nome: membro.nome || "",
+        vencSorologia: membro.vencSorologia || "",
+        epiConfirmado: membro.epiConfirmado ? "true" : "false",
+      };
+      const payloadOrdenadoStr = Object.keys(dadosMembro)
+        .sort()
+        .map((k) => `${k}:${dadosMembro[k]}`)
+        .join("|");
+      const hash = await gerarHashSHA256(payloadOrdenadoStr);
       const novoMembro = {
         ...membro,
         id: Date.now().toString(),

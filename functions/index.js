@@ -5,10 +5,13 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
 
-// Mapa: produto Hotmart → plano interno (IDs das ofertas conforme especificação)
-const HOTMART_PRODUTOS = {
-  "fykjr5au": "core",   // oferta CORE
-  "x2rj5zam": "pro",    // oferta PRO
+// Mapeamento por offer code Hotmart → planos VERTOS
+// Produto base único: W105785102R — os offer codes diferenciam os planos
+const OFFER_PLANO = {
+  'b7c3rs61': { plano: 'pass_core', duracaoDias: 30 },   // Pré-pago Core  R$65,90
+  '5uvmu45v': { plano: 'pass_pro',  duracaoDias: 30 },   // Pré-pago Pro   R$127,90
+  'fykjr5au': { plano: 'core',      duracaoDias: null },  // Core recorrente R$49,90/mês
+  'x2rj5zam': { plano: 'pro',       duracaoDias: null },  // Pro recorrente  R$87,90/mês
 };
 
 // Valida assinatura do webhook Hotmart (HOTTOK) via Secrets
@@ -38,59 +41,88 @@ exports.hotmartWebhook = onRequest({ cors: false, secrets: ["HOTMART_HOTTOK"] },
 
   if (!email) return res.status(400).send("Email ausente");
 
+  // Apenas processar eventos de compra confirmada ou cancelamentos/reembolsos
+  if (
+    tipo !== "PURCHASE_APPROVED" && 
+    tipo !== "PURCHASE_COMPLETE" && 
+    tipo !== "SUBSCRIPTION_REACTIVATED" &&
+    tipo !== "SUBSCRIPTION_CANCELLATION" &&
+    tipo !== "PURCHASE_REFUNDED" &&
+    tipo !== "PURCHASE_CHARGEBACK"
+  ) {
+    return res.status(200).send("Evento ignorado");
+  }
+
   try {
     const userRecord = await admin.auth().getUserByEmail(email);
     const uid = userRecord.uid;
-    const userRef = db.collection("users").doc(uid);
-    const plano = HOTMART_PRODUTOS[ofertaId];
 
     switch (tipo) {
       case "PURCHASE_APPROVED":
+      case "PURCHASE_COMPLETE":
       case "SUBSCRIPTION_REACTIVATED": {
-        if (!plano) {
+        const config = OFFER_PLANO[ofertaId];
+        if (!config) {
           console.warn(`Oferta desconhecida: ${ofertaId}`);
           return res.status(200).send("Oferta não mapeada — ignorado");
         }
-        await userRef.set({
-          plan: plano,
+
+        const agora = new Date();
+        const updatePayload = {
+          plano: config.plano,
+          plan: config.plano, // Keep 'plan' in sync for backward compatibility
+          planoAtivadoEm: admin.firestore.Timestamp.fromDate(agora),
+          hotmartPedidoId: evento?.data?.purchase?.transaction || evento?.data?.purchase?.order_date?.toString() || null,
+          passConvertido: config.duracaoDias ? false : true,
           hotmart: {
             email,
             ofertaId,
             subscriptionCode: evento?.data?.subscription?.subscriber?.code || null,
-            ativadoEm: admin.firestore.FieldValue.serverTimestamp(),
+            ativadoEm: admin.firestore.Timestamp.fromDate(agora),
             status: "active",
           },
           trialActive: false,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-        console.log(`✅ Plano ${plano} ativado para ${uid}`);
+        };
+
+        // PASS: definir data de expiração
+        if (config.duracaoDias) {
+          const expira = new Date(agora);
+          expira.setDate(expira.getDate() + config.duracaoDias);
+          updatePayload.planoExpiraEm = admin.firestore.Timestamp.fromDate(expira);
+        } else {
+          // Recorrente: remover expiração
+          updatePayload.planoExpiraEm = null;
+        }
+
+        const batch = db.batch();
+        batch.set(db.collection("users").doc(uid), updatePayload, { merge: true });
+        batch.set(db.collection("usuarios").doc(uid), updatePayload, { merge: true });
+        await batch.commit();
+
+        console.log(`✅ Plano ${config.plano} ativado para ${uid}`);
         break;
       }
 
       case "SUBSCRIPTION_CANCELLATION":
       case "PURCHASE_REFUNDED":
       case "PURCHASE_CHARGEBACK": {
-        await userRef.set({
+        const updatePayload = {
+          plano: "free",
           plan: "free",
           hotmart: {
             status: "cancelled",
             canceladoEm: admin.firestore.FieldValue.serverTimestamp(),
           },
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-        console.log(`❌ Plano cancelado para ${uid}`);
-        break;
-      }
+        };
 
-      case "PURCHASE_COMPLETE": {
-        await userRef.set({
-          hotmart: {
-            ultimaRenovacao: admin.firestore.FieldValue.serverTimestamp(),
-            status: "active",
-          },
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-        console.log(`🔄 Renovação registrada para ${uid}`);
+        const batch = db.batch();
+        batch.set(db.collection("users").doc(uid), updatePayload, { merge: true });
+        batch.set(db.collection("usuarios").doc(uid), updatePayload, { merge: true });
+        await batch.commit();
+
+        console.log(`❌ Plano cancelado para ${uid}`);
         break;
       }
     }
@@ -99,16 +131,35 @@ exports.hotmartWebhook = onRequest({ cors: false, secrets: ["HOTMART_HOTTOK"] },
 
   } catch (err) {
     if (err.code === "auth/user-not-found") {
+      const config = OFFER_PLANO[ofertaId];
+      if (!config) {
+        console.warn(`Oferta desconhecida para pendente: ${ofertaId}`);
+        return res.status(200).send("Oferta desconhecida");
+      }
+
+      const pedidoId = evento?.data?.purchase?.transaction || evento?.data?.purchase?.order_date?.toString() || "";
+
+      // Salva na coleção antiga para compatibilidade com o cron job processarPendentes
       await db.collection("hotmart_pendentes").add({
         email,
         ofertaId,
-        plano: HOTMART_PRODUTOS[ofertaId] || "core",
+        plano: config.plano,
         evento: tipo,
         criadoEm: admin.firestore.FieldValue.serverTimestamp(),
         processado: false,
       });
-      console.log(`⏳ Pagamento pendente salvo para ${email} (ainda sem conta)`);
-      return res.status(200).send("Pendente salvo");
+
+      // Salva na nova coleção 'pagamentosPendentes' para ativação imediata no login
+      await db.collection("pagamentosPendentes").add({
+        email,
+        plano: config.plano,
+        duracaoDias: config.duracaoDias,
+        pedidoId,
+        criadoEm: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      console.log(`⏳ Pagamento pendente salvo para ${email} (ainda sem conta) nas coleções hotmart_pendentes e pagamentosPendentes`);
+      return res.status(200).send("Pendente registrado");
     }
     console.error("Erro no webhook:", err);
     return res.status(500).send("Erro interno");

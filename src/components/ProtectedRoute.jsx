@@ -1,9 +1,44 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, writeBatch, setDoc, Timestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { Box, CircularProgress } from "@mui/material";
+
+async function processarPagamentoPendente(uid, email) {
+  if (!uid || !email) return;
+  try {
+    const snap = await getDocs(
+      query(collection(db, "pagamentosPendentes"), where("email", "==", email.toLowerCase()))
+    );
+    if (snap.empty) return;
+
+    const pagamento = snap.docs[0];
+    const { plano, duracaoDias, pedidoId } = pagamento.data();
+
+    const agora = new Date();
+    const expira = new Date(agora);
+    if (duracaoDias) expira.setDate(expira.getDate() + duracaoDias);
+
+    const updatePayload = {
+      plano,
+      planoAtivadoEm: Timestamp.fromDate(agora),
+      planoExpiraEm: duracaoDias ? Timestamp.fromDate(expira) : null,
+      hotmartPedidoId: pedidoId,
+      passConvertido: false,
+      plan: plano,
+    };
+
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", uid), updatePayload, { merge: true });
+    batch.set(doc(db, "usuarios", uid), updatePayload, { merge: true });
+    batch.delete(pagamento.ref);
+    await batch.commit();
+    console.warn(`[Pending Payment] Processed payment for ${email} and updated profile for ${uid}`);
+  } catch (err) {
+    console.error("🔥 ERRO AO PROCESSAR PAGAMENTO PENDENTE NO LOGIN:", err);
+  }
+}
 
 export const UserContext = createContext(null);
 
@@ -30,6 +65,9 @@ export function UserProvider({ children }) {
       setLoading(true); 
 
       try {
+        // Process pending payments first (e.g. user bought prepaid PASS before creating account)
+        await processarPagamentoPendente(user.uid, user.email);
+
         const snap = await getDoc(doc(db, "users", user.uid));
         const profile = snap.data() || {};
 

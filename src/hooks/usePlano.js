@@ -1,10 +1,13 @@
 import { useMemo } from "react";
+import { planoAtivo } from "../utils/plano";
 
 export const LABEL_PLANO = {
-  core:    "VERTOS CORE",
-  pro:     "VERTOS PRO",
-  expired: "Plano Expirado",
-  pending: "Aguardando Plano",
+  core:      "VERTOS CORE",
+  pro:       "VERTOS PRO",
+  pass_core: "VERTOS PASS CORE",
+  pass_pro:  "VERTOS PASS PRO",
+  expired:   "Plano Expirado",
+  pending:   "Aguardando Plano",
 };
 
 const PERMISSOES_FULL = {
@@ -45,7 +48,19 @@ export const PLANO_MINIMO = {
 
 export function usePlano(userData) {
   const role = userData?.role || "user";
-  const plan = userData?.plan ?? "pending";
+  
+  const originalPlan = userData?.plano || userData?.plan || "pending";
+  let plan = originalPlan;
+
+  // Map PASS plans to their base tiers for permissions
+  if (plan === "pass_core") plan = "core";
+  if (plan === "pass_pro") plan = "pro";
+
+  // If PASS is expired, treat permissions as expired
+  const isPrePago = originalPlan === "pass_core" || originalPlan === "pass_pro";
+  if (isPrePago && !planoAtivo(userData)) {
+    plan = "expired";
+  }
   
   // Admin sempre tem todas as permissões
   const permissoes = useMemo(() => {
@@ -63,11 +78,12 @@ export function usePlano(userData) {
   }, [plan, role]);
   
   return { 
-    plan, 
-    label: role === "admin" ? "Administrador" : (LABEL_PLANO[plan] || "Sem Plano"), 
+    plan: originalPlan,
+    label: role === "admin" ? "Administrador" : (LABEL_PLANO[originalPlan] || LABEL_PLANO[plan] || "Sem Plano"), 
     pode, 
     planoMinimo,
     limites,
     isAdmin: role === "admin"
   };
 }
+
