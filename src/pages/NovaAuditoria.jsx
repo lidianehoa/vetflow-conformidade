@@ -1,3 +1,9 @@
+// ============================================================================
+// © Copyright / Propriedade Intelectual:
+// Lidiane Helena Oliveira de Almeida (Adm. de Empresas, Desenvolvedora e Médica Veterinária)
+// Todos os direitos reservados.
+// ============================================================================
+
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Box, Typography, Paper, Button, TextField, MenuItem, Select,
@@ -129,9 +135,10 @@ export default function NovaAuditoria() {
 function NovaAuditoriaFluxo() {
   const { uid, selectedClinicaId, clinicaData } = useUserData();
   const navigate = useNavigate();
-  const [smartId] = useState(() => gerarSmartId(uid));
-  const [etapa, setEtapa] = useState("inicio");
   
+  // Estados principais da auditoria (com suporte a rascunho persistente)
+  const [smartId, setSmartId] = useState("");
+  const [etapa, setEtapa] = useState("inicio");
   const [tipoRT, setTipoRT] = useState("titular");
   const [identificacao, setIdentificacao] = useState("");
   const [tipoAuditoria, setTipoAuditoria] = useState("completa");
@@ -141,6 +148,94 @@ function NovaAuditoriaFluxo() {
   const [planosNC, setPlanosNC] = useState({});
   const [evidencias, setEvidencias] = useState({});
   const [parecerRT, setParecerRT] = useState("");
+  const [secaoIdx, setSecaoIdx] = useState(0);
+
+  // Sincronização e Pré-salvamento local (Draft Autosave)
+  const draftKey = `vetflow_draft_auditoria_${uid}_${selectedClinicaId || 'geral'}`;
+  const [temRascunho, setTemRascunho] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // 1. Carrega o rascunho salvo do localStorage quando o usuário/clínica muda
+  useEffect(() => {
+    if (!uid) return;
+    setIsLoaded(false);
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.smartId) setSmartId(parsed.smartId);
+        if (parsed.etapa) setEtapa(parsed.etapa);
+        if (parsed.tipoRT) setTipoRT(parsed.tipoRT);
+        if (parsed.identificacao) setIdentificacao(parsed.identificacao);
+        if (parsed.tipoAuditoria) setTipoAuditoria(parsed.tipoAuditoria);
+        if (parsed.respostas) setRespostas(parsed.respostas);
+        if (parsed.planosNC) setPlanosNC(parsed.planosNC);
+        if (parsed.evidencias) setEvidencias(parsed.evidencias);
+        if (parsed.parecerRT) setParecerRT(parsed.parecerRT);
+        if (parsed.secaoIdx !== undefined) setSecaoIdx(parsed.secaoIdx);
+        setTemRascunho(true);
+      } else {
+        setSmartId(gerarSmartId(uid));
+        setEtapa("inicio");
+        setTipoRT("titular");
+        setIdentificacao("");
+        setTipoAuditoria("completa");
+        setRespostas({});
+        setPlanosNC({});
+        setEvidencias({});
+        setParecerRT("");
+        setSecaoIdx(0);
+        setTemRascunho(false);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar rascunho de auditoria:", e);
+      setSmartId(gerarSmartId(uid));
+    } finally {
+      setIsLoaded(true);
+    }
+  }, [uid, selectedClinicaId]);
+
+  // 2. Salva o rascunho de forma reativa a qualquer alteração de preenchimento
+  useEffect(() => {
+    if (!uid || !isLoaded || etapa === "concluido") return;
+    const draftData = {
+      smartId,
+      etapa,
+      tipoRT,
+      identificacao,
+      tipoAuditoria,
+      respostas,
+      planosNC,
+      evidencias,
+      parecerRT,
+      secaoIdx
+    };
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(draftData));
+    } catch (e) {
+      console.error("Erro ao salvar rascunho de auditoria:", e);
+    }
+  }, [uid, selectedClinicaId, isLoaded, smartId, etapa, tipoRT, identificacao, tipoAuditoria, respostas, planosNC, evidencias, parecerRT, secaoIdx]);
+
+  // Função para descartar o rascunho manualmente
+  const descartarRascunho = () => {
+    try {
+      localStorage.removeItem(draftKey);
+    } catch (e) {
+      console.error("Erro ao remover rascunho:", e);
+    }
+    setSmartId(gerarSmartId(uid));
+    setEtapa("inicio");
+    setTipoRT("titular");
+    setIdentificacao("");
+    setTipoAuditoria("completa");
+    setRespostas({});
+    setPlanosNC({});
+    setEvidencias({});
+    setParecerRT("");
+    setSecaoIdx(0);
+    setTemRascunho(false);
+  };
 
   const triggerGerarPlanoNC = async (itemId, itemText, itemClass) => {
     if (planosNC[itemId]) return;
@@ -257,6 +352,14 @@ function NovaAuditoriaFluxo() {
       setXpGanho(xpFinal);
       setBadgesDesbloqueados(bNovos);
       setEtapa("concluido");
+
+      // Limpa rascunho local após conclusão com sucesso
+      try {
+        localStorage.removeItem(draftKey);
+        setTemRascunho(false);
+      } catch (e) {
+        console.error("Erro ao limpar rascunho concluído:", e);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -275,6 +378,20 @@ function NovaAuditoriaFluxo() {
           <Grid item xs={12} md={7}>
             <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: "1.5px solid #e8f5e9" }}>
               <Typography variant="h6" fontWeight={800} color="#1b4332" mb={3}>Configuração da Auditoria</Typography>
+
+              {temRascunho && (
+                <Alert 
+                  severity="info" 
+                  action={
+                    <Button color="error" size="small" onClick={descartarRascunho} sx={{ fontWeight: 800, textTransform: "none" }}>
+                      Descartar Rascunho
+                    </Button>
+                  }
+                  sx={{ mb: 3, borderRadius: 3, border: "1px solid #b3e5fc" }}
+                >
+                  Você possui um rascunho de auditoria salvo automaticamente.
+                </Alert>
+              )}
               
               <Box sx={{ mb: 4 }}>
                 <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: 1 }}>MÉTODO DE AUDITORIA</Typography>
@@ -356,6 +473,8 @@ function NovaAuditoriaFluxo() {
               onConcluir={concluir}
               salvando={salvando}
               onVoltar={() => setEtapa("inicio")}
+              secaoIdx={secaoIdx}
+              setSecaoIdx={setSecaoIdx}
             />
           ) : (
             <AuditoriaPadrao 
@@ -721,10 +840,9 @@ function PlanoAcaoNCItem({ itemId, itemText, itemClass, planosNC, setPlanosNC, c
 }
 
 // ── SUBCOMPONENTE: TRILHA GUIADA (GAMIFICADA) ──────────────────────────
-function TrilhaGuiada({ area, respostas, setRespostas, planosNC, setPlanosNC, triggerGerarPlanoNC, clinicaData, parecerRT, setParecerRT, evidencias, setEvidencias, smartId, onConcluir, salvando, onVoltar }) {
+function TrilhaGuiada({ area, respostas, setRespostas, planosNC, setPlanosNC, triggerGerarPlanoNC, clinicaData, parecerRT, setParecerRT, evidencias, setEvidencias, smartId, onConcluir, salvando, onVoltar, secaoIdx, setSecaoIdx }) {
   const { SECOES_TRILHA } = getGamificacaoPorArea(area);
-  const [secaoIdx, setSecaoIdx] = useState(0);
-  const secao = SECOES_TRILHA[secaoIdx];
+  const secao = SECOES_TRILHA[secaoIdx] || SECOES_TRILHA[0];
 
   const handleResposta = (itemId, val, itemText, itemClass) => {
     setRespostas(prev => ({ ...prev, [itemId]: val }));

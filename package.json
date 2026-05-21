@@ -2,6 +2,7 @@
   "name": "vetflow-conformidade",
   "private": true,
   "version": "1.0.0",
+  "author": "Lidiane Helena Oliveira de Almeida (Adm. de Empresas, Desenvolvedora e Médica Veterinária)",
   "type": "module",
   "scripts": {
     "dev": "vite",

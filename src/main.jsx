@@ -1,3 +1,9 @@
+// ============================================================================
+// © Copyright / Propriedade Intelectual:
+// Lidiane Helena Oliveira de Almeida (Adm. de Empresas, Desenvolvedora e Médica Veterinária)
+// Todos os direitos reservados.
+// ============================================================================
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
