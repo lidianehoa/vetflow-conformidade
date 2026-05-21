@@ -21,7 +21,7 @@ import {
   Add as AddIcon,
   Assignment as AssignmentIcon,
 } from "@mui/icons-material";
-import { collection, addDoc, setDoc, query, where, orderBy, limit, getDocs, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, setDoc, query, where, orderBy, limit, getDocs, serverTimestamp, doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useUserData } from "../components/ProtectedRoute";
 import { TIPO_PARA_AREA } from "../data/checklistsRT";
@@ -1511,7 +1511,7 @@ export default function RotinaDiaria() {
         ...payloadOrdenado,
         tenantId: unidade?.tenantId || userData.uid,
         clinicaId: userData.selectedClinicaId,
-        criadoEm: serverTimestamp(),
+        criadoEm: Timestamp.fromDate(new Date(payloadOrdenado.criadoEm)),
         criadoEmServidor: serverTimestamp(),
         hashSHA256: hash,
         hashIntegridade: hash, // Mantido para compatibilidade retrospectiva

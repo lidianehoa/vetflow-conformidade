@@ -748,6 +748,7 @@ const diagStyles = `
     background: #fafafa;
     border-radius: 6px;
     border: 1px solid #ebebf5;
+  }
   .w2h-custo-valor { font-size: 13px; font-weight: 600; color: #1a1a2e; }
   
   .fase-sem-pendencia {

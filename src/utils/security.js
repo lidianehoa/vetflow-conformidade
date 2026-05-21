@@ -75,20 +75,36 @@ export const verificarIntegridade = async (registro) => {
   // Extrair o hash salvo e os campos que não fazem parte do payload original
   const {
     hashSHA256,
+    hashSeguranca,
+    hashIntegridade,
     criadoEmServidor,
+    atualizadoEm,
     imutavel,
     smartId,
     id,
+    tenantId,
+    clinicaId,
     ...payload
   } = registro;
 
-  if (!hashSHA256) {
+  const hashSalvo = hashSHA256 || hashSeguranca || hashIntegridade;
+
+  if (!hashSalvo) {
     return {
       integro: false,
       motivo: 'Registro sem hash — não foi gerado com gerarHashRegistro',
       hashSalvo: null,
       hashRecalculado: null,
     };
+  }
+
+  // Converte criadoEm de volta para string ISO se for um Timestamp do Firestore
+  if (payload.criadoEm) {
+    if (typeof payload.criadoEm.toDate === 'function') {
+      payload.criadoEm = payload.criadoEm.toDate().toISOString();
+    } else if (payload.criadoEm.seconds !== undefined) {
+      payload.criadoEm = new Date(payload.criadoEm.seconds * 1000).toISOString();
+    }
   }
 
   // Recalcular com a mesma ordenação usada na geração
@@ -99,8 +115,8 @@ export const verificarIntegridade = async (registro) => {
   const hashRecalculado = await gerarHashSHA256(payloadOrdenado);
 
   return {
-    integro: hashRecalculatedEquals(hashRecalculado, hashSHA256),
-    hashSalvo: hashSHA256,
+    integro: hashRecalculatedEquals(hashRecalculado, hashSalvo),
+    hashSalvo: hashSalvo,
     hashRecalculated: hashRecalculado, // para compatibilidade
     hashRecalculado
   };

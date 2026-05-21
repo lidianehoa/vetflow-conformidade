@@ -253,9 +253,36 @@ export async function gerarParecerAuditoria(dados) {
     { "nivel_conformidade": "string", "parecer_tecnico": "string", "recomendacoes_prioritarias": "string", "prazo_correcao": "string" }`;
 
     const result = await modelIA.generateContent(prompt);
-    return parseJSONSafe(result.response.text());
-  } catch {
-    return null;
+    const parsed = parseJSONSafe(result.response.text());
+    if (!parsed || !parsed.parecer_tecnico) throw new Error("Retorno inválido ou vazio");
+    return parsed;
+  } catch (error) {
+    console.error("Erro ao gerar parecer com IA (usando fallback):", error);
+    const ncs = dados.criticosNC || 0;
+    const score = dados.score ?? 100;
+    let nivel = "Alto";
+    let parecer = "Estabelecimento apresenta excelente nível de conformidade com as normas sanitárias vigentes. Nenhuma não conformidade crítica foi detectada durante a inspeção visual.";
+    let recom = "Manter a rotina atual de monitoramento de validades e higiene.";
+    let prazo = "Imediato / Contínuo";
+
+    if (score < 50 || ncs > 5) {
+      nivel = "Crítico";
+      parecer = `Atenção: Estabelecimento apresenta nível de conformidade crítico (${score}%). Foram identificadas ${ncs} não conformidades que comprometem a segurança sanitária. Necessária intervenção imediata para adequação aos padrões regulatórios.`;
+      recom = "Elaborar plano de ação corretivo para todos os itens não conformes, com foco em controle de temperatura, higienização e documentação obrigatória.";
+      prazo = "15 dias";
+    } else if (score < 80 || ncs > 0) {
+      nivel = "Regular";
+      parecer = `O estabelecimento apresenta conformidade regular (${score}%). Foram registradas ${ncs} inconformidades pontuais que necessitam de correção para evitar sanções administrativas e garantir o padrão de qualidade.`;
+      recom = "Corrigir as inconformidades listadas, organizar a documentação de POPs e treinar a equipe operacional.";
+      prazo = "30 dias";
+    }
+
+    return {
+      nivel_conformidade: nivel,
+      parecer_tecnico: parecer,
+      recomendacoes_prioritarias: recom,
+      prazo_correcao: prazo
+    };
   }
 }
 

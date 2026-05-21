@@ -35,7 +35,7 @@ try {
 
   // Modelos de IA exportados para uso global
   templateModel = getTemplateGenerativeModel(ai);
-  modelIA = getGenerativeModel(ai, { model: "gemini-3.1-flash-lite" });
+  modelIA = getGenerativeModel(ai, { model: "gemini-3.5-flash" });
   console.log("🧠 IA do Vertos inicializada com sucesso.");
 } catch (e) {
   console.error("⚠️ Falha ao inicializar IA (o restante do sistema funcionará):", e);

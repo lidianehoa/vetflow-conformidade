@@ -47,8 +47,9 @@ service cloud.firestore {
       allow read: if uid() == userId || isAdmin();
       allow create: if isAuth() && uid() == userId;
       allow update: if (uid() == userId || isAdmin())
-        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['plan', 'plano', 'planoExpiraEm', 'planoAtivadoEm', 'hotmartPedidoId', 'passConvertido']));
+        && (isAdmin() 
+            || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'plano', 'planoExpiraEm', 'planoAtivadoEm', 'hotmartPedidoId', 'passConvertido'])
+            || (resource.data.plan == 'pending' || resource.data.plan == 'free' || !('plan' in resource.data)));
       allow delete: if false;
     }
 
@@ -56,8 +57,9 @@ service cloud.firestore {
       allow read: if uid() == userId || isAdmin();
       allow create: if isAuth() && uid() == userId;
       allow update: if (uid() == userId || isAdmin())
-        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['plan', 'plano', 'planoExpiraEm', 'planoAtivadoEm', 'hotmartPedidoId', 'passConvertido']));
+        && (isAdmin() 
+            || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'plano', 'planoExpiraEm', 'planoAtivadoEm', 'hotmartPedidoId', 'passConvertido'])
+            || (resource.data.plan == 'pending' || resource.data.plan == 'free' || !('plan' in resource.data)));
       allow delete: if false;
     }
 
@@ -131,7 +133,8 @@ service cloud.firestore {
       allow read, write: if false; // Só acessível via Admin SDK (Cloud Functions)
     }
     match /pagamentosPendentes/{docId} {
-      allow read, write: if false; // Só acessível via Admin SDK (Cloud Functions)
+      allow read, delete: if isAuth() && request.auth.token.email.toLowerCase() == resource.data.email.toLowerCase();
+      allow create, update: if false; // Só acessível via Admin SDK (Cloud Functions)
     }
     match /erros_app/{docId} {
       allow create: if true;

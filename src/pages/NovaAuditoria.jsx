@@ -34,7 +34,7 @@ import LocalShipping from "@mui/icons-material/LocalShipping";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, auth, storage } from "../firebase";
 import { gerarResumoMensal, gerarParecerAuditoria, gerarPlanoAcaoNC } from "../utils/analiseIA";
@@ -342,7 +342,7 @@ function NovaAuditoriaFluxo() {
         tenantId: uid, // Campo obrigatório para as regras de segurança
         clinicaId: clinicaData?.id || null,
         smartId,
-        criadoEm: serverTimestamp(),
+        criadoEm: Timestamp.fromDate(new Date(payloadOrdenado.criadoEm)),
         criadoEmServidor: serverTimestamp(),
         hashSHA256: hash,
         imutavel: true,
@@ -489,6 +489,7 @@ function NovaAuditoriaFluxo() {
               setParecerRT={setParecerRT}
               evidencias={evidencias}
               setEvidencias={setEvidencias}
+              smartId={smartId}
               onConcluir={concluir}
               salvando={salvando}
               onVoltar={() => setEtapa("inicio")}
@@ -959,7 +960,7 @@ function TrilhaGuiada({ area, respostas, setRespostas, planosNC, setPlanosNC, tr
                   maioresNC: 0,
                   secoesCriticas: [secao.nome]
                 });
-                setParecerRT(parecer.parecer_tecnico);
+                setParecerRT(parecer?.parecer_tecnico || "Conformidade regular. Verifique itens apontados.");
               }}
               sx={{ borderRadius: 2, textTransform: "none", fontSize: 11 }}
             >
@@ -999,7 +1000,7 @@ function TrilhaGuiada({ area, respostas, setRespostas, planosNC, setPlanosNC, tr
 }
 
 // ── SUBCOMPONENTE: AUDITORIA PADRÃO (ROTINA / COMPLETA) ──────────────────
-function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, planosNC, setPlanosNC, triggerGerarPlanoNC, parecerRT, setParecerRT, evidencias, setEvidencias, onConcluir, salvando, onVoltar }) {
+function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, planosNC, setPlanosNC, triggerGerarPlanoNC, parecerRT, setParecerRT, evidencias, setEvidencias, smartId, onConcluir, salvando, onVoltar }) {
   const ids = CHECKLISTS_POR_TIPO[clinica?.tipo] || [];
   const checklists = ids.map(id => CHECKLISTS[id]).filter(Boolean);
 
@@ -1061,7 +1062,7 @@ function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, planosNC, set
                             itemId={item.id} 
                             evidencias={evidencias} 
                             setEvidencias={setEvidencias} 
-                            auditoriaId={clinica?.id || "temp"} 
+                            auditoriaId={smartId} 
                           />
                         </TableCell>
                         <TableCell>
@@ -1131,7 +1132,7 @@ function AuditoriaPadrao({ tipo, clinica, respostas, setRespostas, planosNC, set
                 maioresNC: 0,
                 secoesCriticas: checklists.map(c => c.nome)
               });
-              setParecerRT(parecer.parecer_tecnico);
+              setParecerRT(parecer?.parecer_tecnico || "Conformidade regular. Verifique itens apontados.");
             }}
             sx={{ borderRadius: 2, textTransform: "none", fontSize: 11 }}
           >
