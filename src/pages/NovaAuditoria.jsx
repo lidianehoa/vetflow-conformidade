@@ -383,9 +383,14 @@ function NovaAuditoriaFluxo() {
                 <Alert 
                   severity="info" 
                   action={
-                    <Button color="error" size="small" onClick={descartarRascunho} sx={{ fontWeight: 800, textTransform: "none" }}>
-                      Descartar Rascunho
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Button color="primary" size="small" onClick={() => setEtapa("auditoria")} sx={{ fontWeight: 800, textTransform: "none" }}>
+                        Retomar Rascunho
+                      </Button>
+                      <Button color="error" size="small" onClick={descartarRascunho} sx={{ fontWeight: 800, textTransform: "none" }}>
+                        Descartar
+                      </Button>
+                    </Stack>
                   }
                   sx={{ mb: 3, borderRadius: 3, border: "1px solid #b3e5fc" }}
                 >
@@ -433,7 +438,7 @@ function NovaAuditoriaFluxo() {
                 onClick={() => setEtapa("auditoria")}
                 sx={{ bgcolor: "#1b4332", py: 2, borderRadius: 3, fontWeight: 800 }}
               >
-                Começar Inspeção
+                {temRascunho ? "Retomar Inspeção" : "Começar Inspeção"}
               </Button>
             </Paper>
           </Grid>
