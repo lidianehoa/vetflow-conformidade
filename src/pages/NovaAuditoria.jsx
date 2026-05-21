@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Box, Typography, Paper, Button, TextField, MenuItem, Select,
+  Box, Typography, Paper, Button, TextField, MenuItem, Select, Avatar,
   FormControl, InputLabel, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, Alert, LinearProgress, Stepper, Step,
   StepLabel, Grid, CircularProgress, Divider, Accordion,
