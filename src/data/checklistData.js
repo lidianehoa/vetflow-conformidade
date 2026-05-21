@@ -337,6 +337,8 @@ export const CHECKLIST_POR_TIPO = {
   acougue:      SETORES_ACOUGUE,
   laboratorio:  SETORES_LABORATORIO,
   posto_coleta: SETORES_POSTO_COLETA,
+  industria_poa: CHECKLISTS_POR_AREA.industria_poa,
+  frigorifico:   CHECKLISTS_POR_AREA.industria_poa,
 };
 
 // ── Labels por tipo ───────────────────────────────────────────
@@ -345,6 +347,8 @@ export const LABEL_TIPO = {
   acougue:      "Açougue / Beneficiamento",
   laboratorio:  "Laboratório Clínico",
   posto_coleta: "Posto de Coleta",
+  industria_poa: "Indústria de P.O.A.",
+  frigorifico:   "Frigorífico / Abatedouro",
 };
 
 // ── Vencimentos relevantes por tipo ──────────────────────────
@@ -372,5 +376,19 @@ export const VENCIMENTOS_POR_TIPO = {
   posto_coleta: [
     { campo: "vencCrmv",   label: "CRMV — RT",                   diasAlerta: 30 },
     { campo: "vencAlvara", label: "Alvará Sanitário",             diasAlerta: 30 },
+  ],
+  industria_poa: [
+    { campo: "vencCrmv",       label: "ART / CRMV do RT",        diasAlerta: 30 },
+    { campo: "vencAlvara",     label: "Alvará Sanitário",         diasAlerta: 30 },
+    { campo: "vencSim",        label: "Registro SIM/SIE/SIF",    diasAlerta: 60 },
+    { campo: "vencLicAmbiental",label: "Licença Ambiental",      diasAlerta: 60 },
+    { campo: "vencCaixaAgua",  label: "Análise Caixa d'água",    diasAlerta: 15 },
+  ],
+  frigorifico: [
+    { campo: "vencCrmv",       label: "ART / CRMV do RT",        diasAlerta: 30 },
+    { campo: "vencAlvara",     label: "Alvará Sanitário",         diasAlerta: 30 },
+    { campo: "vencSim",        label: "Registro SIM/SIE/SIF",    diasAlerta: 60 },
+    { campo: "vencLicAmbiental",label: "Licença Ambiental",      diasAlerta: 60 },
+    { campo: "vencCaixaAgua",  label: "Análise Caixa d'água",    diasAlerta: 15 },
   ],
 };

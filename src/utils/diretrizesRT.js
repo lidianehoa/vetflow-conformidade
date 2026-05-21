@@ -170,6 +170,8 @@ export function getTextoDiretrizesEspecificas(areaId) {
     'laticinio': 'produtos_origem_animal',
     'industria_poa': 'produtos_origem_animal',
     'entreposto_poa': 'produtos_origem_animal',
+    'frigorifico': 'produtos_origem_animal',
+    'producao_origem_animal': 'produtos_origem_animal',
     'POA': 'produtos_origem_animal',
     
     'laboratorio': 'laboratorios',

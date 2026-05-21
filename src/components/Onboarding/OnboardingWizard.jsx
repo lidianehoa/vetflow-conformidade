@@ -37,6 +37,7 @@ const TIPOS_ESTABELECIMENTO = [
   { id: "acougue", label: "Açougue / Casa de Carnes", area: "industria_alimenticia" },
   { id: "laticinio", label: "Laticínio / Queijaria", area: "laticinios" },
   { id: "industria_poa", label: "Fábrica / Indústria de Origem Animal (POA)", area: "industria_poa" },
+  { id: "frigorifico", label: "Frigorífico / Abatedouro", area: "industria_poa" },
   { id: "entreposto_carne", label: "Entreposto de Carnes e Derivados", area: "industria_poa" },
   { id: "entreposto_pescado", label: "Entreposto de Pescado e Mel", area: "industria_poa" },
   { id: "fabrica_racao", label: "Fábrica de Ração / Suplementos", area: "comercio_agronegocio" },

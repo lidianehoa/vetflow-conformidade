@@ -632,7 +632,7 @@ export default function NovaClinica() {
             )}
 
             {/* Campos Específicos: Indústria POA */}
-            {formData.tipo === "industria_poa" && (
+            {(formData.tipo === "industria_poa" || formData.tipo === "frigorifico") && (
               <>
                 <Grid item xs={12} md={6}>
                   <TextField

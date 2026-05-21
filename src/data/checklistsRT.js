@@ -100,6 +100,7 @@ export const TIPO_PARA_AREA = {
   laticinio:            "producao_origem_animal",
   industria_poa:        "producao_origem_animal",
   entreposto_poa:       "producao_origem_animal",
+  frigorifico:          "producao_origem_animal",
 };
 
 // ── Mapa tipo → IDs dos checklists disponíveis ───────────────
@@ -131,6 +132,7 @@ export const CHECKLISTS_POR_TIPO = {
   laticinio:            ["LT_CK_01", "POA_CK_02", "IA_CK_01"],
   industria_poa:        ["POA_CK_01", "POA_CK_02", "POA_CK_04", "POA_CK_05", "POA_CK_06", "POA_CK_07"],
   entreposto_poa:       ["POA_CK_01", "POA_CK_02", "POA_CK_03", "POA_CK_04"],
+  frigorifico:          ["POA_CK_01", "POA_CK_02", "POA_CK_04", "POA_CK_05", "POA_CK_06", "POA_CK_07"],
 };
 
 // ── TODOS OS CHECKLISTS ───────────────────────────────────────
@@ -1133,6 +1135,7 @@ export const LABEL_TIPO = {
   laticinio:            "Laticínio / Lácteos",
   industria_poa:        "Indústria POA (SIF/SIE)",
   entreposto_poa:       "Entreposto POA",
+  frigorifico:          "Frigorífico / Abatedouro",
 };
 
 const VENCIMENTOS_BOVINOS_BASE = [
@@ -1225,5 +1228,13 @@ export const VENCIMENTOS_POR_TIPO = {
     { campo: "vencArt",         label: "A.R.T. (Anual)",          diasAlerta: 30 },
     { campo: "vencMapa",        label: "Registro Inspeção",       diasAlerta: 60 },
     { campo: "vencAlvara",      label: "Alvará Sanitário",         diasAlerta: 45 },
+  ],
+  frigorifico: [
+    { campo: "vencArt",         label: "A.R.T. (Anual)",          diasAlerta: 30 },
+    { campo: "vencMapa",        label: "Registro SIF/SIE",        diasAlerta: 60 },
+    { campo: "vencAlvara",      label: "Alvará Sanitário",         diasAlerta: 45 },
+    { campo: "vencManualBP",    label: "PPHO / PACs",             diasAlerta: 30 },
+    { campo: "vencPotabilidade",label: "Laudo de Água",           diasAlerta: 15 },
+    { campo: "vencLicAmbiental",label: "Licença Ambiental",        diasAlerta: 60 },
   ],
 };
