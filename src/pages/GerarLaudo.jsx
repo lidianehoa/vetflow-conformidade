@@ -6,7 +6,8 @@ import {
 } from "@mui/material";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, modelIA } from "../firebase";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { useUserData } from "../components/ProtectedRoute";
 import { getLaudoById, gerarNumeroLaudo } from "../data/laudoTypes";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -37,6 +38,7 @@ export default function GerarLaudo() {
   const [statusAssinatura, setStatusAssinatura] = useState("idle"); // idle, validando, concluido
   const { isReady, certificates, loadingCertificates, refreshCertificates, signHash, error: pkiError } = useWebPKI();
   const [selectedCert, setSelectedCert] = useState("");
+  const [gerandoIA, setGerandoIA] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -50,9 +52,21 @@ export default function GerarLaudo() {
             setForm(data.conteudo || {});
           }
         } else if (tipoId) {
-          setTipo(getLaudoById(tipoId));
+          const t = getLaudoById(tipoId);
+          setTipo(t);
+          
+          let initialForm = {};
+          if (t?.templateBase) {
+            const campoIa = t.campos_conteudo.find(c => c.tipo === "documento_ia");
+            if (campoIa) {
+              initialForm[campoIa.campo] = t.templateBase;
+            }
+          }
+
           if (location.state?.preFill) {
-            setForm(location.state.preFill);
+            setForm({ ...initialForm, ...location.state.preFill });
+          } else {
+            setForm(initialForm);
           }
         }
       } catch (e) {
@@ -153,6 +167,36 @@ export default function GerarLaudo() {
     content: () => printRef.current,
   });
 
+  const handleGerarDocumentoIA = async (campo) => {
+    if (!modelIA) return alert("IA não está disponível no momento.");
+    setGerandoIA(true);
+    try {
+      const dadosPreenchidos = Object.keys(form)
+        .filter(k => k !== campo && form[k])
+        .map(k => `${k}: ${form[k]}`)
+        .join("\n");
+      
+      const prompt = `Você é um redator técnico e Médico Veterinário especialista em inspeção e qualidade de alimentos.
+Sua tarefa é redigir o documento completo: "${tipo.nome}".
+Use formatação profissional de texto puro com quebras de linha para seções (não use Markdown com # ou *, pois será renderizado em um textarea).
+Estruture o documento como um manual técnico oficial (introdução, objetivo, escopo, procedimentos, embasamento legal).
+Os dados informados pelo Responsável Técnico sobre a indústria/lote são:
+${dadosPreenchidos || "Nenhum dado adicional fornecido."}
+${tipo.templateBase ? "\nSiga EXATAMENTE a estrutura deste template base preenchendo os espaços vazios:\n" + tipo.templateBase : ""}
+
+Redija APENAS o conteúdo técnico do documento de forma extensa e rica em detalhes, pronto para ser lido e assinado.`;
+      
+      const result = await modelIA.generateContent(prompt);
+      const texto = result.response.text();
+      setForm(prev => ({ ...prev, [campo]: texto }));
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao gerar documento com IA: " + err.message);
+    } finally {
+      setGerandoIA(false);
+    }
+  };
+
   if (loading) return <Box sx={{ p: 4, textAlign: "center" }}><CircularProgress sx={{ color: COR }} /></Box>;
   if (!tipo) return <Alert severity="error">Tipo de laudo não encontrado.</Alert>;
 
@@ -190,7 +234,7 @@ export default function GerarLaudo() {
 
         <Grid container spacing={3}>
           {tipo.campos_conteudo.map((c) => (
-            <Grid item xs={12} md={c.tipo === "textarea" ? 12 : 6} key={c.campo}>
+            <Grid item xs={12} md={c.tipo === "textarea" || c.tipo === "documento_ia" ? 12 : 6} key={c.campo}>
               {c.tipo === "select" ? (
                 <TextField
                   select fullWidth size="small" label={c.label} required={c.obrigatorio}
@@ -200,6 +244,30 @@ export default function GerarLaudo() {
                 >
                   {c.opcoes.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
                 </TextField>
+              ) : c.tipo === "documento_ia" ? (
+                <Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                    <Typography variant="caption" fontWeight="bold" color={COR}>{c.label}</Typography>
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      startIcon={gerandoIA ? <CircularProgress size={14} color="inherit" /> : <AutoAwesomeIcon />}
+                      disabled={gerandoIA || laudo?.status === "assinado"}
+                      onClick={() => handleGerarDocumentoIA(c.campo)}
+                      sx={{ bgcolor: COR, textTransform: "none", fontSize: "0.75rem", borderRadius: 2 }}
+                    >
+                      {gerandoIA ? "Redigindo..." : "✨ Redigir Documento Completo com IA"}
+                    </Button>
+                  </Box>
+                  <TextField
+                    fullWidth size="small" required={c.obrigatorio}
+                    multiline rows={20}
+                    placeholder="O conteúdo do manual aparecerá aqui..."
+                    value={form[c.campo] || ""}
+                    onChange={(e) => setForm({ ...form, [c.campo]: e.target.value })}
+                    disabled={laudo?.status === "assinado" || gerandoIA}
+                  />
+                </Box>
               ) : (
                 <TextField
                   fullWidth size="small" label={c.label} required={c.obrigatorio}
@@ -321,10 +389,18 @@ export default function GerarLaudo() {
           <Box sx={{ mb: 4 }}>
             <Typography variant="body1" sx={{ fontWeight: "bold", mb: 1 }}>DADOS TÉCNICOS</Typography>
             {tipo.campos_conteudo.map(c => (
-              <Box key={c.campo} sx={{ mb: 1, display: "flex", gap: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: "bold" }}>{c.label}:</Typography>
-                <Typography variant="body2">{form[c.campo] || "—"}</Typography>
-              </Box>
+              c.tipo === "documento_ia" ? (
+                <Box key={c.campo} sx={{ mt: 4, mb: 4 }}>
+                  <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", textAlign: "justify", lineHeight: 1.6 }}>
+                    {form[c.campo] || ""}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box key={c.campo} sx={{ mb: 1, display: "flex", gap: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>{c.label}:</Typography>
+                  <Typography variant="body2">{form[c.campo] || "—"}</Typography>
+                </Box>
+              )
             ))}
           </Box>
 

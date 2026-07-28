@@ -21,7 +21,10 @@ import {
   Science as ScienceIcon,
   CalendarMonth as CalendarMonthIcon,
   EmojiEvents as EmojiEventsIcon,
-  Explore as ExploreIcon
+  Explore as ExploreIcon,
+  LocalOffer as LocalOfferIcon,
+  MenuBook as MenuBookIcon,
+  Agriculture as AgricultureIcon
 } from "@mui/icons-material";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useUserData } from "./ProtectedRoute";
@@ -40,10 +43,13 @@ const MENU_ITEMS = [
   { label: " Cockpit",             icon: <DashboardIcon />,          path: "/dashboard" },
   { label: "✅ Auditar",          icon: <AssignmentIcon />,         path: "/auditorias",      recurso: "novaAuditoria", badge: "PRINCIPAL" },
   { label: "🧭 Gestor Consultoria", icon: <ExploreIcon />,            path: "/consultoria",     recurso: "novaAuditoria" },
+  { label: "🥩 Abate Bovinos",     icon: <AgricultureIcon />,        path: "/assessoria-abate", recurso: "novaAuditoria" },
   { label: "📂 Documentação",     icon: <FolderIcon />,             path: "/documentacao",    recurso: "documentos" },
   { label: "💊 Controlados",      icon: <ScienceIcon />,            path: "/controlados",     recurso: "controlados" },
   { label: "📅 Rotina Diária",    icon: <CalendarMonthIcon />,      path: "/rotina" },
-  { label: "🏥 Minhas Clínicas",   icon: <BusinessIcon />,           path: "/clinicas" },
+  { label: "🏥 Meus Estabelecimentos", icon: <BusinessIcon />,       path: "/clinicas" },
+  { label: "🏷️ Rotulagem MAPA/ANVISA", icon: <LocalOfferIcon />,    path: "/rotulos" },
+  { label: "📖 Manual do Usuário", icon: <MenuBookIcon />,          path: "/manual" },
   { label: "👤 Meu Perfil",       icon: <PersonIcon />,             path: "/perfil" },
 ];
 

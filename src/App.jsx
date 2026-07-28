@@ -24,6 +24,7 @@ import GerarDocumento from "./pages/GerarDocumento";
 import Planilhas     from "./pages/Planilhas";
 import EditarPlanilha from "./pages/EditarPlanilha";
 import GuiaConsultoria from "./pages/GuiaConsultoria";
+import AssessoriaAbate from "./pages/AssessoriaAbate";
 import Perfil        from "./pages/Perfil";
 import Controlados   from "./pages/Controlados";
 import Laudos        from "./pages/Laudos";
@@ -40,6 +41,9 @@ import Onboarding from "./pages/Onboarding";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import Renovar from "./pages/Renovar";
+import Rotulos from "./pages/Rotulos";
+import ValidadorRotulo from "./pages/ValidadorRotulo";
+import Manual from "./pages/Manual";
 
 // Layout & guards
 import Layout         from "./components/Layout";
@@ -160,6 +164,7 @@ export default function App() {
                 <Route path="/auditorias/visualizar/:id" element={<VisualizadorAuditoria />} />
                 <Route path="/documentacao"    element={<HubDocumentacao />} />
                 <Route path="/consultoria"     element={<GuiaConsultoria />} />
+                <Route path="/assessoria-abate" element={<AssessoriaAbate />} />
 
                 <Route path="/documentos/gerar/:id"      element={<GerarDocumento />} />
                 <Route path="/planilhas/editar/:id"      element={<EditarPlanilha />} />
@@ -179,6 +184,10 @@ export default function App() {
                 <Route path="/rotina"          element={<RotinaDiaria />} />
                 <Route path="/clinicas/nova"   element={<NovaClinica />} />
                 <Route path="/clinicas/:clinicaId" element={<DetalheClinica />} />
+                <Route path="/rotulos"         element={<Rotulos />} />
+                <Route path="/rotulos/novo"    element={<ValidadorRotulo />} />
+                <Route path="/rotulos/editar/:id" element={<ValidadorRotulo />} />
+                <Route path="/manual"          element={<Manual />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/login" replace />} />
