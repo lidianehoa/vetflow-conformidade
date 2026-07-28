@@ -22,11 +22,19 @@ const RELATORIOS = [
   },
   {
     id: "constatacao",
-    titulo: "Termo de Constatação e Notificação",
-    desc: "Documento oficial para notificar o proprietário sobre não conformidades críticas ou graves identificadas na auditoria. Resguarda o RT juridicamente.",
+    titulo: "Termo de Constatação e Recomendação (TCR)",
+    desc: "Documento oficial para notificar o proprietário sobre não conformidades críticas ou graves, recomendando prazos e ações corretivas. Resguarda o RT juridicamente.",
     icon: <ReportProblemIcon sx={{ fontSize: 40, color: "#d32f2f" }} />,
     bg: "#ffebee",
     tag: "Uso Específico / Alerta",
+  },
+  {
+    id: "laudo_informativo",
+    titulo: "Laudo Informativo (CRMV)",
+    desc: "Documento oficial para comunicação ao CRMV em caso de recusa da empresa em atender o TCR ou regularizar pendências críticas.",
+    icon: <ReportProblemIcon sx={{ fontSize: 40, color: "#c62828" }} />,
+    bg: "#ffcdd2",
+    tag: "Uso Específico / Denúncia",
   },
   {
     id: "plano_trabalho",

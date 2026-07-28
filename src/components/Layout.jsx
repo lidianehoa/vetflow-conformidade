@@ -21,6 +21,7 @@ import {
   Science as ScienceIcon,
   CalendarMonth as CalendarMonthIcon,
   EmojiEvents as EmojiEventsIcon,
+  Explore as ExploreIcon
 } from "@mui/icons-material";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useUserData } from "./ProtectedRoute";
@@ -36,8 +37,9 @@ import { usePlanoGuard } from "../hooks/usePlanoGuard";
 const DRAWER_WIDTH = 260;
 
 const MENU_ITEMS = [
-  { label: "Cockpit",             icon: <DashboardIcon />,          path: "/dashboard" },
+  { label: " Cockpit",             icon: <DashboardIcon />,          path: "/dashboard" },
   { label: "✅ Auditar",          icon: <AssignmentIcon />,         path: "/auditorias",      recurso: "novaAuditoria", badge: "PRINCIPAL" },
+  { label: "🧭 Gestor Consultoria", icon: <ExploreIcon />,            path: "/consultoria",     recurso: "novaAuditoria" },
   { label: "📂 Documentação",     icon: <FolderIcon />,             path: "/documentacao",    recurso: "documentos" },
   { label: "💊 Controlados",      icon: <ScienceIcon />,            path: "/controlados",     recurso: "controlados" },
   { label: "📅 Rotina Diária",    icon: <CalendarMonthIcon />,      path: "/rotina" },

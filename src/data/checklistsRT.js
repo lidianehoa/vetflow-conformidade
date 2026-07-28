@@ -106,7 +106,7 @@ export const TIPO_PARA_AREA = {
 // ── Mapa tipo → IDs dos checklists disponíveis ───────────────
 export const CHECKLISTS_POR_TIPO = {
   clinica:              ["PA_CK_01", "PA_CK_02", "PA_CK_03", "PA_CK_04", "PA_CK_05"],
-  acougue:              ["POA_CK_01", "POA_CK_02", "POA_CK_03", "POA_CK_04", "POA_CK_07"],
+  acougue:              ["CV_CK_01", "IA_CK_01", "IA_CK_02", "POA_CK_03"],
   industria_alimentos:  ["IA_CK_01", "IA_CK_02"],
   comercio_agronegocio: ["CA_CK_01"],
   producao_rural:       ["PR_CK_01", "PR_CK_02"],
@@ -157,6 +157,9 @@ export const CHECKLISTS = {
     itens: [
       { id:"LT_01_01", categoria:"Recepção", desc:"Temperatura do leite na recepção (≤ 7°C)", criterio:"Termômetro calibrado; registro em planilha de recepção", class:"CRÍTICO", peso:10 },
       { id:"LT_01_02", categoria:"Recepção", desc:"Teste de Alizarol e Densidade", criterio:"Estabilidade em 72%; densidade entre 1,028 e 1,034 g/ml", class:"CRÍTICO", peso:10 },
+      { id:"LT_01_02b", categoria:"Recepção", desc:"Triagem de Antimicrobianos (Testes Rápidos)", criterio:"Realizado antes do descarregamento; lote positivo rejeitado imediatamente", class:"CRÍTICO", peso:10 },
+      { id:"LT_01_02c", categoria:"Recepção", desc:"Pesquisa de Adulterantes e Fraudes (Amido, Formol, Peróxido, Alcalinizantes)", criterio:"Ausência total de fraudes ou substâncias não autorizadas no leite recebido", class:"CRÍTICO", peso:10 },
+      { id:"LT_01_02d", categoria:"Recepção", desc:"Índice Crioscópico e Acidez Titulável (Dornic)", criterio:"Análise registrada por lote para detecção de adição de água e acidez anômala", class:"CRÍTICO", peso:10 },
       { id:"LT_01_03", categoria:"Processamento", desc:"Eficiência da Pasteurização", criterio:"Fosfatase negativa e Peroxidase positiva (se aplicável)", class:"CRÍTICO", peso:10 },
       { id:"LT_01_04", categoria:"Processamento", desc:"Higiene de tanques e tubulações (CIP)", criterio:"Registros de concentração química e tempo de contato", class:"MAIOR", peso:5 },
       { id:"LT_01_05", categoria:"Estocagem", desc:"Cadeia de Frio — Câmaras e Túneis", criterio:"Produtos entre 1°C e 5°C; termógrafos funcionando", class:"CRÍTICO", peso:10 },
@@ -692,6 +695,40 @@ export const CHECKLISTS = {
   },
 
   // ════════════════════════════════════════════════════════════
+  // ÁREA: COMÉRCIO VAREJISTA (AÇOUGUES)
+  // ════════════════════════════════════════════════════════════
+
+  CV_CK_01: {
+    id: "CV_CK_01",
+    area: "industria_alimentos",
+    nome: "Regras Sanitárias — Açougues e Varejo de Carnes",
+    objetivo: "Verificar a conformidade do fracionamento, moagem e manipulação de carnes no varejo.",
+    frequencia: "diario",
+    responsavelPreenchimento: "RT / Supervisor",
+    legislacao: "RDC ANVISA 216/2004; Códigos Sanitários Estaduais",
+    cabecalho: [
+      { campo: "data",        label: "Data da Avaliação", tipo: "date", obrigatorio: true },
+      { campo: "nome_rt",     label: "Nome do RT",        tipo: "text", obrigatorio: true },
+    ],
+    itens: [
+      { id:"CV_CK_01_01", categoria:"Carne Moída",       desc:"Moagem realizada em sala exclusiva e climatizada (≤ 10°C)?",               criterio:"Verificar a temperatura ambiente da sala e exclusividade de uso.", class:"CRÍTICO", peso:10 },
+      { id:"CV_CK_01_02", categoria:"Carne Moída",       desc:"Carne moída mantida entre 0°C e 4°C no balcão e embalada adequadamente?",  criterio:"Ausência de variação térmica; embalagens corretas e íntegras.", class:"CRÍTICO", peso:10 },
+      { id:"CV_CK_01_03", categoria:"Carne Moída",       desc:"Ausência de aditivos, conservantes, miúdos ou raspagem de ossos na moagem?",criterio:"Utilização estrita de massas musculares esqueléticas resfriadas.", class:"CRÍTICO", peso:10 },
+      { id:"CV_CK_01_04", categoria:"Carnes Temperadas", desc:"Estabelecimento possui Licença Sanitária (Tipo II ou similar) para temperados?",criterio:"Documentação autorizando o preparo de carnes marinadas e embutidos frescais.", class:"CRÍTICO", peso:10 },
+      { id:"CV_CK_01_05", categoria:"Carnes Temperadas", desc:"Área exclusiva para manipulação de temperados (marinada)?",               criterio:"Evitar contaminação cruzada; área e utensílios segregados.", class:"CRÍTICO", peso:10 },
+      { id:"CV_CK_01_06", categoria:"Carnes Temperadas", desc:"Fichas técnicas dos ingredientes e controle de validade (condimentos)?",  criterio:"Controle rigoroso dos insumos utilizados nas receitas.", class:"MAIOR", peso:5 },
+      { id:"CV_CK_01_07", categoria:"Carnes Temperadas", desc:"Rotulagem contendo declaração clara de alergênicos e conservantes?",    criterio:"Rótulos visíveis ao consumidor sobre adição de soja, glúten, etc.", class:"CRÍTICO", peso:10 },
+      { id:"CV_CK_01_08", categoria:"Geral",             desc:"Controle rígido da validade dos cortes primários na desossa/fracionamento?",criterio:"Garantia de que cortes originados preservam rastreabilidade e frescor.", class:"MAIOR", peso:5 },
+    ],
+    acoesCorretivas: [
+      "Interromper a moagem se a temperatura da sala exceder o limite (10°C).",
+      "Descartar carnes com coloração/odor suspeito ou mistura de miúdos na moagem.",
+      "Suspender produção de temperados caso não haja licença sanitária Tipo II válida.",
+      "Adequar rotulagem imediatamente para evitar reações alérgicas no consumidor."
+    ],
+  },
+
+  // ════════════════════════════════════════════════════════════
   // ÁREA: PRODUÇÃO RURAL
   // ════════════════════════════════════════════════════════════
 
@@ -722,6 +759,9 @@ export const CHECKLISTS = {
       { id:"PR_CK_01_09", categoria:"Mortalidade",     desc:"Registro de mortalidade atualizado com causas identificadas",          criterio:"Nenhuma morte sem registro e destinação correta da carcaça",       class:"MAIOR",   peso:5 },
       { id:"PR_CK_01_10", categoria:"Instalações",     desc:"Bebedouros e cochos limpos e funcionando",                             criterio:"Sem lodo, algas ou sujidades que comprometam a qualidade",         class:"MAIOR",   peso:5 },
       { id:"PR_CK_01_11", categoria:"Instalações",     desc:"Área de descarte de carcaças adequada (compostagem, fosso, etc.)",     criterio:"Método de descarte aprovado pela defesa sanitária em funcionamento",class:"CRÍTICO",peso:10 },
+      { id:"PR_CK_01_12", categoria:"Sanidade",        desc:"Notificação compulsória de doenças (Febre Aftosa, Raiva, etc.) ao SVO",criterio:"Cumprimento da IN MAPA 50/2013 em casos suspeitos na região ou propriedade",class:"CRÍTICO",peso:10 },
+      { id:"PR_CK_01_13", categoria:"Zootecnia",       desc:"Gestão reprodutiva e controle andrológico (IATF, manejo genético)",    criterio:"Registros de protocolos reprodutivos e veterinários atualizados",   class:"MAIOR",   peso:5 },
+      { id:"PR_CK_01_14", categoria:"Nutrição",        desc:"Controle de qualidade da dieta e risco de micotoxinas em volumosos",   criterio:"Fórmula balanceada e armazenamento seguro protegido de umidade",    class:"CRÍTICO", peso:10 },
     ],
     acoesCorretivas: [
       "Agendar vacinações ou exames em atraso imediatamente",

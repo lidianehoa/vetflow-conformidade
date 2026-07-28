@@ -103,7 +103,7 @@ export default function GeradorRelatorioCRMV() {
             </Alert>
           </Grid>
           
-          {id === "constatacao" && (
+          {(id === "constatacao" || id === "laudo_informativo") && (
             <Grid item xs={12} md={6}>
               <FormControl fullWidth size="small">
                 <InputLabel>Selecione a Auditoria Crítica</InputLabel>
@@ -140,7 +140,7 @@ export default function GeradorRelatorioCRMV() {
           )}
         </Grid>
 
-        {(id === "atividades" || id === "constatacao") && (
+        {(id === "atividades" || id === "constatacao" || id === "laudo_informativo") && (
           <Box sx={{ mt: 2 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
               <Typography variant="caption" fontWeight={800} color="text.secondary">PARECER TÉCNICO / OBSERVAÇÕES</Typography>
@@ -263,7 +263,7 @@ export default function GeradorRelatorioCRMV() {
       return (
         <Box>
           <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
-            TERMO DE CONSTATAÇÃO E NOTIFICAÇÃO
+            TERMO DE CONSTATAÇÃO E RECOMENDAÇÃO (TCR)
           </Typography>
           
           <Typography variant="body1" mt={4} sx={{ textAlign: "justify", lineHeight: 1.8 }}>
@@ -302,6 +302,62 @@ export default function GeradorRelatorioCRMV() {
             <Typography variant="body1">___________________________________________________</Typography>
             <Typography variant="body1" fontWeight="bold">Representante Legal da Empresa</Typography>
             <Typography variant="body1">Ciente em: ____/____/________</Typography>
+          </Box>
+        </Box>
+      );
+    }
+
+    if (id === "laudo_informativo") {
+      const aud = auditoriasFiltradas.find(a => a.id === auditSelecionada);
+      
+      if (!aud) {
+        return <Alert severity="warning" className="no-print">Selecione uma auditoria no campo acima para basear este laudo.</Alert>;
+      }
+
+      return (
+        <Box>
+          <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
+            LAUDO INFORMATIVO AO CRMV
+          </Typography>
+          <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
+            Comunicação de Irregularidade e Recusa de Adequação
+          </Typography>
+          
+          <Typography variant="body1" mt={4} sx={{ textAlign: "justify", lineHeight: 1.8 }}>
+            Na condição de Médico Veterinário Responsável Técnico (RT), <strong>{nomeRT}</strong>, 
+            inscrito(a) sob o <strong>{crmvRT}</strong>, encaminho o presente Laudo Informativo ao 
+            Conselho Regional de Medicina Veterinária para relatar a ocorrência de não conformidades 
+            técnico-sanitárias e operacionais graves no estabelecimento <strong>{nomeEmpresa}</strong>, 
+            CNPJ <strong>{cnpjEmpresa}</strong>, bem como a recusa (ou omissão) no cumprimento do 
+            Termo de Constatação e Recomendação (TCR) emitido anteriormente.
+          </Typography>
+
+          <Typography variant="h6" fontWeight="bold" mt={4} mb={1}>1. RELATO DA OCORRÊNCIA</Typography>
+          <Typography variant="body1" sx={{ textAlign: "justify" }}>
+            As não conformidades abaixo foram registradas durante auditoria técnica realizada em 
+            <strong> {formatarData(aud.criadoEm)}</strong> (ID: {aud.smartId}):
+          </Typography>
+          
+          <Paper elevation={0} sx={{ border: "1px solid #000", p: 2, mt: 2, mb: 3, background: "#fafafa" }}>
+            <Typography variant="body2" sx={{ fontStyle: "italic", whiteSpace: "pre-wrap" }}>
+              "{parecerEditavel}"
+            </Typography>
+          </Paper>
+
+          <Typography variant="h6" fontWeight="bold" mt={4} mb={1}>2. ISENÇÃO DE RESPONSABILIDADE SOLIDÁRIA</Typography>
+          <Typography variant="body1" sx={{ textAlign: "justify", lineHeight: 1.8 }}>
+            Tendo em vista que as recomendações técnicas foram apresentadas, mas as medidas 
+            corretivas necessárias não foram implementadas pela empresa nos prazos solicitados, 
+            formalizo este laudo em conformidade com a Resolução CFMV nº 1.562/2023, com o fito de 
+            isentar minha responsabilidade técnica solidária por eventuais sanções civis, penais 
+            ou administrativas que recaiam sobre o estabelecimento devido à omissão da administração.
+          </Typography>
+
+          <Box mt={8} textAlign="center">
+            <Typography variant="body1">___________________________________________________</Typography>
+            <Typography variant="body1" fontWeight="bold">{nomeRT}</Typography>
+            <Typography variant="body1">Responsável Técnico</Typography>
+            <Typography variant="body2" mt={2}>{clinicaAtual?.cidade || "Cidade"} - {clinicaAtual?.uf || "UF"}, {dataAtual}</Typography>
           </Box>
         </Box>
       );

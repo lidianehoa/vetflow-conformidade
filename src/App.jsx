@@ -23,6 +23,7 @@ import Documentos    from "./pages/Documentos";
 import GerarDocumento from "./pages/GerarDocumento";
 import Planilhas     from "./pages/Planilhas";
 import EditarPlanilha from "./pages/EditarPlanilha";
+import GuiaConsultoria from "./pages/GuiaConsultoria";
 import Perfil        from "./pages/Perfil";
 import Controlados   from "./pages/Controlados";
 import Laudos        from "./pages/Laudos";
@@ -158,6 +159,7 @@ export default function App() {
                 <Route path="/auditorias/nova" element={<NovaAuditoria />} />
                 <Route path="/auditorias/visualizar/:id" element={<VisualizadorAuditoria />} />
                 <Route path="/documentacao"    element={<HubDocumentacao />} />
+                <Route path="/consultoria"     element={<GuiaConsultoria />} />
 
                 <Route path="/documentos/gerar/:id"      element={<GerarDocumento />} />
                 <Route path="/planilhas/editar/:id"      element={<EditarPlanilha />} />
